@@ -1,0 +1,2604 @@
+Server Node: gra809
+Client Node: gra824
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Server IB HW IP: 10.29.84.171
+
+Testing Beginning for SIZE=524288 and Trial 1
+
+Test Successful for SIZE=524288, Trial 1.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 1199.963000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0c0 PSN 0xe30bce RKey 0x0b153f VAddr 0x002ab07d8c5000
+ remote address: LID 0x433 QPN 0x1c182 PSN 0x43b142 RKey 0x03dab8 VAddr 0x002ade90fd6000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c182 PSN 0x43b142 RKey 0x03dab8 VAddr 0x002ade90fd6000
+ remote address: LID 0x42d QPN 0x3e0c0 PSN 0xe30bce RKey 0x0b153f VAddr 0x002ab07d8c5000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 242918 microseconds
+Total RDMA Elapsed time: 228345 microseconds
+Total RVMA Elapsed time: 75 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 2
+
+Test Successful for SIZE=524288, Trial 2.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 1292.504000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0c2 PSN 0x601811 RKey 0x0467d0 VAddr 0x002ac2166db000
+ remote address: LID 0x433 QPN 0x1c183 PSN 0xf8e10d RKey 0x05b71b VAddr 0x002b93c4ba5000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c183 PSN 0xf8e10d RKey 0x05b71b VAddr 0x002b93c4ba5000
+ remote address: LID 0x42d QPN 0x3e0c2 PSN 0x601811 RKey 0x0467d0 VAddr 0x002ac2166db000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 231621 microseconds
+Total RDMA Elapsed time: 224856 microseconds
+Total RVMA Elapsed time: 70 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 3
+
+Test Successful for SIZE=524288, Trial 3.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2519.000000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0c4 PSN 0x66ed01 RKey 0x05e7ad VAddr 0x002abcfcdd7000
+ remote address: LID 0x433 QPN 0x1c184 PSN 0xfd40dd RKey 0x07303e VAddr 0x002b5d44dfe000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c184 PSN 0xfd40dd RKey 0x07303e VAddr 0x002b5d44dfe000
+ remote address: LID 0x42d QPN 0x3e0c4 PSN 0x66ed01 RKey 0x05e7ad VAddr 0x002abcfcdd7000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 231890 microseconds
+Total RDMA Elapsed time: 225356 microseconds
+Total RVMA Elapsed time: 69 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 4
+
+Test Successful for SIZE=524288, Trial 4.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2538.739000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0c6 PSN 0x99301e RKey 0x084789 VAddr 0x002b4b71081000
+ remote address: LID 0x433 QPN 0x1c185 PSN 0x78625c RKey 0x062378 VAddr 0x002afcf24a2000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c185 PSN 0x78625c RKey 0x062378 VAddr 0x002afcf24a2000
+ remote address: LID 0x42d QPN 0x3e0c6 PSN 0x99301e RKey 0x084789 VAddr 0x002b4b71081000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 231027 microseconds
+Total RDMA Elapsed time: 224892 microseconds
+Total RVMA Elapsed time: 70 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 5
+
+Test Successful for SIZE=524288, Trial 5.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2499.902000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0c9 PSN 0x108c76 RKey 0x0b1a4c VAddr 0x002b7b05eab000
+ remote address: LID 0x433 QPN 0x1c186 PSN 0x700a30 RKey 0x0a3b97 VAddr 0x002b24d5e79000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c186 PSN 0x700a30 RKey 0x0a3b97 VAddr 0x002b24d5e79000
+ remote address: LID 0x42d QPN 0x3e0c9 PSN 0x108c76 RKey 0x0b1a4c VAddr 0x002b7b05eab000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 230959 microseconds
+Total RDMA Elapsed time: 224742 microseconds
+Total RVMA Elapsed time: 71 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 6
+
+Test Successful for SIZE=524288, Trial 6.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0cb PSN 0x838169 RKey 0x0b74ab VAddr 0x002ac86fc03000
+ remote address: LID 0x433 QPN 0x1c187 PSN 0xc62611 RKey 0x1ace64 VAddr 0x002aff85788000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c187 PSN 0xc62611 RKey 0x1ace64 VAddr 0x002aff85788000
+ remote address: LID 0x42d QPN 0x3e0cb PSN 0x838169 RKey 0x0b74ab VAddr 0x002ac86fc03000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 231865 microseconds
+Total RDMA Elapsed time: 225486 microseconds
+Total RVMA Elapsed time: 70 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 7
+
+Test Successful for SIZE=524288, Trial 7.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2499.902000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0cd PSN 0x4c1766 RKey 0x12a027 VAddr 0x002b083e9a1000
+ remote address: LID 0x433 QPN 0x1c188 PSN 0x2b81b3 RKey 0x06317c VAddr 0x002ae33dfef000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c188 PSN 0x2b81b3 RKey 0x06317c VAddr 0x002ae33dfef000
+ remote address: LID 0x42d QPN 0x3e0cd PSN 0x4c1766 RKey 0x12a027 VAddr 0x002b083e9a1000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 231527 microseconds
+Total RDMA Elapsed time: 225180 microseconds
+Total RVMA Elapsed time: 71 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 8
+
+Test Successful for SIZE=524288, Trial 8.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2499.902000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0ce PSN 0xfdba RKey 0x0b88bf VAddr 0x002aca1b259000
+ remote address: LID 0x433 QPN 0x1c189 PSN 0xcc9cf4 RKey 0x1b4101 VAddr 0x002b4b99cb1000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c189 PSN 0xcc9cf4 RKey 0x1b4101 VAddr 0x002b4b99cb1000
+ remote address: LID 0x42d QPN 0x3e0ce PSN 0xfdba RKey 0x0b88bf VAddr 0x002aca1b259000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 231755 microseconds
+Total RDMA Elapsed time: 225574 microseconds
+Total RVMA Elapsed time: 69 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 9
+
+Test Successful for SIZE=524288, Trial 9.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2522.717000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0d0 PSN 0xd932e RKey 0x07660d VAddr 0x002b9d51212000
+ remote address: LID 0x433 QPN 0x1c18a PSN 0x8817ee RKey 0x06438d VAddr 0x002af12576d000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c18a PSN 0x8817ee RKey 0x06438d VAddr 0x002af12576d000
+ remote address: LID 0x42d QPN 0x3e0d0 PSN 0xd932e RKey 0x07660d VAddr 0x002b9d51212000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 230986 microseconds
+Total RDMA Elapsed time: 224930 microseconds
+Total RVMA Elapsed time: 71 microseconds
+
+Testing Beginning for SIZE=524288 and Trial 10
+
+Test Successful for SIZE=524288, Trial 10.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0d2 PSN 0xcacf0e RKey 0x007a9b VAddr 0x002aebd8eaf000
+ remote address: LID 0x433 QPN 0x1c18b PSN 0xc60aa2 RKey 0x272318 VAddr 0x002ad70b3ef000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 524288 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c18b PSN 0xc60aa2 RKey 0x272318 VAddr 0x002ad70b3ef000
+ remote address: LID 0x42d QPN 0x3e0d2 PSN 0xcacf0e RKey 0x007a9b VAddr 0x002aebd8eaf000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 232595 microseconds
+Total RDMA Elapsed time: 224079 microseconds
+Total RVMA Elapsed time: 71 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 1
+
+Test Successful for SIZE=1048576, Trial 1.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0d5 PSN 0x204c0 RKey 0x279b1b VAddr 0x002b4dba205000
+ remote address: LID 0x433 QPN 0x1c18c PSN 0xbf1291 RKey 0x082a23 VAddr 0x002ab7fed45000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c18c PSN 0xbf1291 RKey 0x082a23 VAddr 0x002ab7fed45000
+ remote address: LID 0x42d QPN 0x3e0d5 PSN 0x204c0 RKey 0x279b1b VAddr 0x002b4dba205000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 236316 microseconds
+Total RDMA Elapsed time: 226441 microseconds
+Total RVMA Elapsed time: 115 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 2
+
+Test Successful for SIZE=1048576, Trial 2.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0d7 PSN 0x1c1830 RKey 0x360321 VAddr 0x002b5dc60d9000
+ remote address: LID 0x433 QPN 0x1c18d PSN 0xdf64b6 RKey 0x0bdf1f VAddr 0x002b74de129000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2100.000000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c18d PSN 0xdf64b6 RKey 0x0bdf1f VAddr 0x002b74de129000
+ remote address: LID 0x42d QPN 0x3e0d7 PSN 0x1c1830 RKey 0x360321 VAddr 0x002b5dc60d9000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 236955 microseconds
+Total RDMA Elapsed time: 226940 microseconds
+Total RVMA Elapsed time: 116 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 3
+
+Test Successful for SIZE=1048576, Trial 3.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0d9 PSN 0x56bce6 RKey 0x31b812 VAddr 0x002b0b52303000
+ remote address: LID 0x433 QPN 0x1c18e PSN 0x2a018e RKey 0x15aa55 VAddr 0x002aacd861c000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2514.514000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c18e PSN 0x2a018e RKey 0x15aa55 VAddr 0x002aacd861c000
+ remote address: LID 0x42d QPN 0x3e0d9 PSN 0x56bce6 RKey 0x31b812 VAddr 0x002b0b52303000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 234238 microseconds
+Total RDMA Elapsed time: 227192 microseconds
+Total RVMA Elapsed time: 116 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 4
+
+Test Successful for SIZE=1048576, Trial 4.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0db PSN 0x1996d7 RKey 0x2f02ad VAddr 0x002b544c6d1000
+ remote address: LID 0x433 QPN 0x1c18f PSN 0x23fc0a RKey 0x0de2ab VAddr 0x002af741d16000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2507.977000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c18f PSN 0x23fc0a RKey 0x0de2ab VAddr 0x002af741d16000
+ remote address: LID 0x42d QPN 0x3e0db PSN 0x1996d7 RKey 0x2f02ad VAddr 0x002b544c6d1000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 235353 microseconds
+Total RDMA Elapsed time: 228261 microseconds
+Total RVMA Elapsed time: 116 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 5
+
+Test Successful for SIZE=1048576, Trial 5.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0dd PSN 0xc47497 RKey 0x09ff42 VAddr 0x002b68f7542000
+ remote address: LID 0x433 QPN 0x1c190 PSN 0xc0de5b RKey 0x0da0d0 VAddr 0x002b2c14a71000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2500.671000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c190 PSN 0xc0de5b RKey 0x0da0d0 VAddr 0x002b2c14a71000
+ remote address: LID 0x42d QPN 0x3e0dd PSN 0xc47497 RKey 0x09ff42 VAddr 0x002b68f7542000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 234165 microseconds
+Total RDMA Elapsed time: 227184 microseconds
+Total RVMA Elapsed time: 116 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 6
+
+Test Successful for SIZE=1048576, Trial 6.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0df PSN 0x616495 RKey 0x0b184a VAddr 0x002aab02ab8000
+ remote address: LID 0x433 QPN 0x1c191 PSN 0xec3f81 RKey 0x05f8a3 VAddr 0x002b2a6fc49000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2513.488000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c191 PSN 0xec3f81 RKey 0x05f8a3 VAddr 0x002b2a6fc49000
+ remote address: LID 0x42d QPN 0x3e0df PSN 0x616495 RKey 0x0b184a VAddr 0x002aab02ab8000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 235279 microseconds
+Total RDMA Elapsed time: 228201 microseconds
+Total RVMA Elapsed time: 117 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 7
+
+Test Successful for SIZE=1048576, Trial 7.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0e1 PSN 0xa33100 RKey 0x456d44 VAddr 0x002ba74a05e000
+ remote address: LID 0x433 QPN 0x1c192 PSN 0x9cc6a8 RKey 0x0d94be VAddr 0x002afb362a1000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c192 PSN 0x9cc6a8 RKey 0x0d94be VAddr 0x002afb362a1000
+ remote address: LID 0x42d QPN 0x3e0e1 PSN 0xa33100 RKey 0x456d44 VAddr 0x002ba74a05e000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 236625 microseconds
+Total RDMA Elapsed time: 226627 microseconds
+Total RVMA Elapsed time: 118 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 8
+
+Test Successful for SIZE=1048576, Trial 8.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0e3 PSN 0x3aaf5f RKey 0x30b910 VAddr 0x002adb0c980000
+ remote address: LID 0x433 QPN 0x1c193 PSN 0x324aef RKey 0x0c052e VAddr 0x002b8cc8842000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c193 PSN 0x324aef RKey 0x0c052e VAddr 0x002b8cc8842000
+ remote address: LID 0x42d QPN 0x3e0e3 PSN 0x3aaf5f RKey 0x30b910 VAddr 0x002adb0c980000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 233927 microseconds
+Total RDMA Elapsed time: 226860 microseconds
+Total RVMA Elapsed time: 114 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 9
+
+Test Successful for SIZE=1048576, Trial 9.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0e5 PSN 0x483269 RKey 0x34d3cd VAddr 0x002ab2cd4d1000
+ remote address: LID 0x433 QPN 0x1c194 PSN 0x657781 RKey 0x0c474a VAddr 0x002af57bc0e000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c194 PSN 0x657781 RKey 0x0c474a VAddr 0x002af57bc0e000
+ remote address: LID 0x42d QPN 0x3e0e5 PSN 0x483269 RKey 0x34d3cd VAddr 0x002ab2cd4d1000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 235376 microseconds
+Total RDMA Elapsed time: 228340 microseconds
+Total RVMA Elapsed time: 114 microseconds
+
+Testing Beginning for SIZE=1048576 and Trial 10
+
+Test Successful for SIZE=1048576, Trial 10.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0e7 PSN 0x2d4e0d RKey 0x317085 VAddr 0x002adc35d02000
+ remote address: LID 0x433 QPN 0x1c195 PSN 0xbb264f RKey 0x9eaba5 VAddr 0x002b8715061000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 1048576 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c195 PSN 0xbb264f RKey 0x9eaba5 VAddr 0x002b8715061000
+ remote address: LID 0x42d QPN 0x3e0e7 PSN 0x2d4e0d RKey 0x317085 VAddr 0x002adc35d02000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 233546 microseconds
+Total RDMA Elapsed time: 226464 microseconds
+Total RVMA Elapsed time: 116 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 1
+
+Test Successful for SIZE=2097152, Trial 1.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2600.006000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0e9 PSN 0x440ab0 RKey 0x0a1b3f VAddr 0x002ac375876000
+ remote address: LID 0x433 QPN 0x1c196 PSN 0xca414e RKey 0x043661 VAddr 0x002b2974e35000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2514.257000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c196 PSN 0xca414e RKey 0x043661 VAddr 0x002b2974e35000
+ remote address: LID 0x42d QPN 0x3e0e9 PSN 0x440ab0 RKey 0x0a1b3f VAddr 0x002ac375876000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 240212 microseconds
+Total RDMA Elapsed time: 232427 microseconds
+Total RVMA Elapsed time: 207 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 2
+
+Test Successful for SIZE=2097152, Trial 2.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0eb PSN 0x2ff452 RKey 0x0a013b VAddr 0x002b6060672000
+ remote address: LID 0x433 QPN 0x1c197 PSN 0xdbc81c RKey 0x2324b2 VAddr 0x002b5bf195c000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2512.719000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c197 PSN 0xdbc81c RKey 0x2324b2 VAddr 0x002b5bf195c000
+ remote address: LID 0x42d QPN 0x3e0eb PSN 0x2ff452 RKey 0x0a013b VAddr 0x002b6060672000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 241707 microseconds
+Total RDMA Elapsed time: 232971 microseconds
+Total RVMA Elapsed time: 210 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 3
+
+Test Successful for SIZE=2097152, Trial 3.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0ed PSN 0xa230ef RKey 0x062316 VAddr 0x002b94f4e19000
+ remote address: LID 0x433 QPN 0x1c198 PSN 0xaa86ed RKey 0x0051a1 VAddr 0x002b8859c69000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2511.950000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c198 PSN 0xaa86ed RKey 0x0051a1 VAddr 0x002b8859c69000
+ remote address: LID 0x42d QPN 0x3e0ed PSN 0xa230ef RKey 0x062316 VAddr 0x002b94f4e19000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 236571 microseconds
+Total RDMA Elapsed time: 227898 microseconds
+Total RVMA Elapsed time: 208 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 4
+
+Test Successful for SIZE=2097152, Trial 4.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0ef PSN 0x2a024e RKey 0x06210d VAddr 0x002b6c3eefe000
+ remote address: LID 0x433 QPN 0x1c199 PSN 0x8281eb RKey 0x015206 VAddr 0x002b4f8ac74000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c199 PSN 0x8281eb RKey 0x015206 VAddr 0x002b4f8ac74000
+ remote address: LID 0x42d QPN 0x3e0ef PSN 0x2a024e RKey 0x06210d VAddr 0x002b6c3eefe000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 240302 microseconds
+Total RDMA Elapsed time: 231421 microseconds
+Total RVMA Elapsed time: 207 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 5
+
+Test Successful for SIZE=2097152, Trial 5.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0f1 PSN 0xbe5b6b RKey 0x0a53b4 VAddr 0x002af8da724000
+ remote address: LID 0x433 QPN 0x1c19a PSN 0x4eecda RKey 0x081c9f VAddr 0x002add23bad000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c19a PSN 0x4eecda RKey 0x081c9f VAddr 0x002add23bad000
+ remote address: LID 0x42d QPN 0x3e0f1 PSN 0xbe5b6b RKey 0x0a53b4 VAddr 0x002af8da724000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 241202 microseconds
+Total RDMA Elapsed time: 229420 microseconds
+Total RVMA Elapsed time: 208 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 6
+
+Test Successful for SIZE=2097152, Trial 6.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0f3 PSN 0xb6b956 RKey 0x0ba461 VAddr 0x002ad05c996000
+ remote address: LID 0x433 QPN 0x1c19b PSN 0x629d94 RKey 0x0d7a42 VAddr 0x002b4b6b172000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c19b PSN 0x629d94 RKey 0x0d7a42 VAddr 0x002b4b6b172000
+ remote address: LID 0x42d QPN 0x3e0f3 PSN 0xb6b956 RKey 0x0ba461 VAddr 0x002ad05c996000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 240706 microseconds
+Total RDMA Elapsed time: 231845 microseconds
+Total RVMA Elapsed time: 210 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 7
+
+Test Successful for SIZE=2097152, Trial 7.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2499.902000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0f5 PSN 0x960828 RKey 0x1efe9b VAddr 0x002ba1f27a7000
+ remote address: LID 0x433 QPN 0x1c19c PSN 0xe7b4ac RKey 0x013110 VAddr 0x002b8832ef4000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c19c PSN 0xe7b4ac RKey 0x013110 VAddr 0x002b8832ef4000
+ remote address: LID 0x42d QPN 0x3e0f5 PSN 0x960828 RKey 0x1efe9b VAddr 0x002ba1f27a7000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 239677 microseconds
+Total RDMA Elapsed time: 231042 microseconds
+Total RVMA Elapsed time: 209 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 8
+
+Test Successful for SIZE=2097152, Trial 8.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2505.670000 != 2599.877000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0f7 PSN 0x70266d RKey 0x061908 VAddr 0x002b3555ed0000
+ remote address: LID 0x433 QPN 0x1c19d PSN 0x7607ef RKey 0x002e96 VAddr 0x002abb2f447000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c19d PSN 0x7607ef RKey 0x002e96 VAddr 0x002abb2f447000
+ remote address: LID 0x42d QPN 0x3e0f7 PSN 0x70266d RKey 0x061908 VAddr 0x002b3555ed0000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 240344 microseconds
+Total RDMA Elapsed time: 231364 microseconds
+Total RVMA Elapsed time: 210 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 9
+
+Test Successful for SIZE=2097152, Trial 9.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0f9 PSN 0xfee99d RKey 0x0e2a0b VAddr 0x002b1b2acf7000
+ remote address: LID 0x433 QPN 0x1c19e PSN 0xe83813 RKey 0x036f11 VAddr 0x002b181b38f000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c19e PSN 0xe83813 RKey 0x036f11 VAddr 0x002b181b38f000
+ remote address: LID 0x42d QPN 0x3e0f9 PSN 0xfee99d RKey 0x0e2a0b VAddr 0x002b1b2acf7000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 240429 microseconds
+Total RDMA Elapsed time: 231731 microseconds
+Total RVMA Elapsed time: 210 microseconds
+
+Testing Beginning for SIZE=2097152 and Trial 10
+
+Test Successful for SIZE=2097152, Trial 10.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0fb PSN 0x80a399 RKey 0x0d6db0 VAddr 0x002b5ddc7bd000
+ remote address: LID 0x433 QPN 0x1c19f PSN 0xa235de RKey 0x076934 VAddr 0x002b17d5aa4000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 2097152 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c19f PSN 0xa235de RKey 0x076934 VAddr 0x002b17d5aa4000
+ remote address: LID 0x42d QPN 0x3e0fb PSN 0x80a399 RKey 0x0d6db0 VAddr 0x002b5ddc7bd000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 240048 microseconds
+Total RDMA Elapsed time: 231469 microseconds
+Total RVMA Elapsed time: 208 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 1
+
+Test Successful for SIZE=4194304, Trial 1.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0fd PSN 0x96fd7c RKey 0x1dbbf8 VAddr 0x002abf6b4f5000
+ remote address: LID 0x433 QPN 0x1c1a0 PSN 0x7a4b98 RKey 0x140ad3 VAddr 0x002abb4ec92000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2600.006000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a0 PSN 0x7a4b98 RKey 0x140ad3 VAddr 0x002abb4ec92000
+ remote address: LID 0x42d QPN 0x3e0fd PSN 0x96fd7c RKey 0x1dbbf8 VAddr 0x002abf6b4f5000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 251149 microseconds
+Total RDMA Elapsed time: 238368 microseconds
+Total RVMA Elapsed time: 398 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 2
+
+Test Successful for SIZE=4194304, Trial 2.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e0ff PSN 0xec8908 RKey 0x106f2c VAddr 0x002abd9ba90000
+ remote address: LID 0x433 QPN 0x1c1a1 PSN 0xe7167a RKey 0x1b6085 VAddr 0x002ae4031ff000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a1 PSN 0xe7167a RKey 0x1b6085 VAddr 0x002ae4031ff000
+ remote address: LID 0x42d QPN 0x3e0ff PSN 0xec8908 RKey 0x106f2c VAddr 0x002abd9ba90000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 251055 microseconds
+Total RDMA Elapsed time: 237897 microseconds
+Total RVMA Elapsed time: 394 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 3
+
+Test Successful for SIZE=4194304, Trial 3.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e101 PSN 0x8ec539 RKey 0x1bb6e2 VAddr 0x002aab96463000
+ remote address: LID 0x433 QPN 0x1c1a2 PSN 0x3cb059 RKey 0x1ad4ff VAddr 0x002b1018153000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a2 PSN 0x3cb059 RKey 0x1ad4ff VAddr 0x002b1018153000
+ remote address: LID 0x42d QPN 0x3e101 PSN 0x8ec539 RKey 0x1bb6e2 VAddr 0x002aab96463000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 251029 microseconds
+Total RDMA Elapsed time: 238543 microseconds
+Total RVMA Elapsed time: 409 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 4
+
+Test Successful for SIZE=4194304, Trial 4.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e103 PSN 0x898fb RKey 0x1de74b VAddr 0x002b932aa2a000
+ remote address: LID 0x433 QPN 0x1c1a3 PSN 0x84946c RKey 0x1bb5d8 VAddr 0x002b12314dd000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a3 PSN 0x84946c RKey 0x1bb5d8 VAddr 0x002b12314dd000
+ remote address: LID 0x42d QPN 0x3e103 PSN 0x898fb RKey 0x1de74b VAddr 0x002b932aa2a000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 250835 microseconds
+Total RDMA Elapsed time: 238310 microseconds
+Total RVMA Elapsed time: 402 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 5
+
+Test Successful for SIZE=4194304, Trial 5.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e105 PSN 0xa31ec7 RKey 0x11ad93 VAddr 0x002b3943d36000
+ remote address: LID 0x433 QPN 0x1c1a4 PSN 0xd5b4ab RKey 0x1b6e7a VAddr 0x002b994751d000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a4 PSN 0xd5b4ab RKey 0x1b6e7a VAddr 0x002b994751d000
+ remote address: LID 0x42d QPN 0x3e105 PSN 0xa31ec7 RKey 0x11ad93 VAddr 0x002b3943d36000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 251153 microseconds
+Total RDMA Elapsed time: 238738 microseconds
+Total RVMA Elapsed time: 404 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 6
+
+Test Successful for SIZE=4194304, Trial 6.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e107 PSN 0x5e7f42 RKey 0x13960d VAddr 0x002b0b73e65000
+ remote address: LID 0x433 QPN 0x1c1a5 PSN 0xf0b29e RKey 0x1439f2 VAddr 0x002b1bce721000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2508.618000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a5 PSN 0xf0b29e RKey 0x1439f2 VAddr 0x002b1bce721000
+ remote address: LID 0x42d QPN 0x3e107 PSN 0x5e7f42 RKey 0x13960d VAddr 0x002b0b73e65000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 251173 microseconds
+Total RDMA Elapsed time: 238563 microseconds
+Total RVMA Elapsed time: 402 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 7
+
+Test Successful for SIZE=4194304, Trial 7.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e109 PSN 0x61a3d2 RKey 0x12c3fc VAddr 0x002ac5796c8000
+ remote address: LID 0x433 QPN 0x1c1a6 PSN 0xe297d8 RKey 0x0f4520 VAddr 0x002abf7df3a000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a6 PSN 0xe297d8 RKey 0x0f4520 VAddr 0x002abf7df3a000
+ remote address: LID 0x42d QPN 0x3e109 PSN 0x61a3d2 RKey 0x12c3fc VAddr 0x002ac5796c8000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 250980 microseconds
+Total RDMA Elapsed time: 238587 microseconds
+Total RVMA Elapsed time: 397 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 8
+
+Test Successful for SIZE=4194304, Trial 8.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e10b PSN 0x70152a RKey 0x2d8ed4 VAddr 0x002b0c30538000
+ remote address: LID 0x433 QPN 0x1c1a7 PSN 0x18807f RKey 0x16125f VAddr 0x002b35e4519000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a7 PSN 0x18807f RKey 0x16125f VAddr 0x002b35e4519000
+ remote address: LID 0x42d QPN 0x3e10b PSN 0x70152a RKey 0x2d8ed4 VAddr 0x002b0c30538000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 251084 microseconds
+Total RDMA Elapsed time: 238463 microseconds
+Total RVMA Elapsed time: 396 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 9
+
+Test Successful for SIZE=4194304, Trial 9.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e10d PSN 0xe88966 RKey 0x0dfce0 VAddr 0x002adf4d3d8000
+ remote address: LID 0x433 QPN 0x1c1a8 PSN 0x9432e1 RKey 0x1ba8bc VAddr 0x002af918126000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a8 PSN 0x9432e1 RKey 0x1ba8bc VAddr 0x002af918126000
+ remote address: LID 0x42d QPN 0x3e10d PSN 0xe88966 RKey 0x0dfce0 VAddr 0x002adf4d3d8000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 251373 microseconds
+Total RDMA Elapsed time: 239217 microseconds
+Total RVMA Elapsed time: 393 microseconds
+
+Testing Beginning for SIZE=4194304 and Trial 10
+
+Test Successful for SIZE=4194304, Trial 10.
+Server output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ RX depth        : 512
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x42d QPN 0x3e10f PSN 0x2937f4 RKey 0x0214bc VAddr 0x002ab2bee82000
+ remote address: LID 0x433 QPN 0x1c1a9 PSN 0x84c78a RKey 0x1a56a8 VAddr 0x002b26c2b28000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: SERVER
+Results for the mailbox with Virtual Address of: 123
+The RVMA notification Buff Ptr flag is: 0
+The RVMA notification Len Ptr indicates: 4194304 bytes written
+The VAddr mailbox has this many retired queue entries: 0
+The VAddr mailbox has this many queue entries: 1
+
+Client output:
+ new post send flow is not supported, falling back to ibv_post_send
+Conflicting CPU frequency values detected: 2599.877000 != 2499.902000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: Unsupported
+ ibv_wr* API     : OFF
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x433 QPN 0x1c1a9 PSN 0x84c78a RKey 0x1a56a8 VAddr 0x002b26c2b28000
+ remote address: LID 0x42d QPN 0x3e10f PSN 0x2937f4 RKey 0x0214bc VAddr 0x002ab2bee82000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 250746 microseconds
+Total RDMA Elapsed time: 237824 microseconds
+Total RVMA Elapsed time: 395 microseconds
