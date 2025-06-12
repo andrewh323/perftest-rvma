@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
          * Testing Mailbox Contents
          * In the latency test we know the buffer will not be retired so we examine the regular buffer queue
          */
-        RVMA_Status verifiedResult = rvmaCheckBufferQueue(mailbox->bufferQueue, user_param.tst);
+        RVMA_Status verifiedResult = rvmaCheckBufferQueue(mailbox->bufferQueue, user_param.tst, user_param.size);
 
         if (verifiedResult == RVMA_SUCCESS){
             printf("The results in the buffer were verified to be correct\n");

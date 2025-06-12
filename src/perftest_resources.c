@@ -1739,10 +1739,12 @@ int create_single_mr(struct pingpong_context *ctx, struct perftest_parameters *u
 
 
 	/* Initialize buffer with random numbers except in WRITE_LAT test that it 0's */
+	// Added change to fill buffer with 'Z' for WRITE_LAT test
 	if (can_init_mem) {
 		srand(time(NULL));
 		if ((user_param->verb == WRITE || user_param->verb == WRITE_IMM) && user_param->tst == LAT) {
-			memset(ctx->buf[qp_index], 0, ctx->buff_size);
+			// memset(ctx->buf[qp_index], 0, ctx->buff_size);
+			memset(ctx->buf[qp_index], 'Z', ctx->buff_size);
 		} else {
 			uint64_t i;
 			if (user_param->has_payload_modification) {

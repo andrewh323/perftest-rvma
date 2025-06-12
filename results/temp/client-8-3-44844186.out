@@ -1,0 +1,27 @@
+Conflicting CPU frequency values detected: 2395.554000 != 3293.791000. CPU Frequency is not max.
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm BW Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: ON
+ ibv_wr* API     : ON
+ TX depth        : 128
+ CQ Moderation   : 100
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 0[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x285 QPN 0x375b PSN 0xa01174 RKey 0x004549 VAddr 0x00000001632000
+ remote address: LID 0x23d QPN 0x21bb PSN 0xb85e52 RKey 0x00459b VAddr 0x00000001f0e000
+---------------------------------------------------------------------------------------
+ #bytes     #iterations    BW peak[MB/sec]    BW average[MB/sec]   MsgRate[Mpps]
+ 8          5000             21.63              21.36  		   2.800151
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 1015363 microseconds
+Total RDMA Elapsed time: 9674 microseconds
+Total RVMA Elapsed time: 1786 microseconds

@@ -541,7 +541,7 @@ int main(int argc, char *argv[])
          * Testing Mailbox Contents
          * In the bandwidth test we know the buffer will be retired so we examine the retired buffer queue
          */
-        RVMA_Status verifiedResult = rvmaCheckBufferQueue(mailbox->retiredBufferQueue, user_param.tst);
+        RVMA_Status verifiedResult = rvmaCheckBufferQueue(mailbox->retiredBufferQueue, user_param.tst, user_param.size);
 
         if (verifiedResult == RVMA_SUCCESS){
             printf("The results in the retired buffer were verified to be correct\n");

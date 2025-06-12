@@ -316,7 +316,8 @@ RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void *virtualAddres
     return RVMA_SUCCESS;
 }
 
-RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type) {
+RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type, int msgSize) {
+    printf("Message Size: %d\n", msgSize);
     if (!bufferQueue) {
         printf("rvmaCheckBufferQueue: Buffer Queue is null\n");
         return RVMA_ERROR;
@@ -351,16 +352,23 @@ RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type) 
     if(type == LAT){
         int i = (bufferEntry->realBuffSize/2) + 1;
         currentValue = *((char *) bufferAddr + i);
+
         if(currentValue != 'Z'){
+            printf("The first char in the receiving buffer is not Z, it is: %c\n", currentValue);
                 return RVMA_FAILURE;
             }
     }else{
-        for (int i = (bufferEntry->realBuffSize/2) + 1; i < bufferEntry->realBuffSize; i += 1) {
+        for (int j = (bufferEntry->realBuffSize / 2) - 5; j <= (bufferEntry->realBuffSize / 2) + 5; j++) {
+            printf("%c", *((char *) bufferAddr + j));
+        }
+        printf("\n");
+        for (int i = (bufferEntry->realBuffSize/2) + 1; i < (bufferEntry->realBuffSize/2) + msgSize; i += 1) {
             currentValue = *((char *) bufferAddr + i);
             // In perftest_resources.c:create_single_mr:1755-1760 we default the client buffer to contain all 'Z' chars
             // so we check to make sure all the chars in this buffer are 'Z'. If they are not this indicates an issue in
             // transmission.
             if(currentValue != 'Z'){
+                printf("The char at index %d in the receiving buffer is not Z, it is: %c\n", i, currentValue);
                 return RVMA_FAILURE;
             }
         }
