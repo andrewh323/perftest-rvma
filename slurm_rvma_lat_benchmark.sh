@@ -1,8 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=rvma_lat_benchmark
 #SBATCH --output=results/%x-%j.out
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=MAIL
 #SBATCH --nodes=2
 #SBATCH --mem=16G
 #SBATCH --switches=1
@@ -22,7 +20,7 @@ SIZES=(2 4 8 16 32 64)
 #SIZES=(8192 16384 32768 65536 131072 262144)
 #SIZES=(524288 1048576 2097152 4194304)
 #SIZES=(2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536 131072 262144 524288 1048576 2097152 4194304)
-PATH_TO_BIN=""
+PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
 BASE_PORT=18515
 COUNTER=$(printf "%.0f" `echo "sqrt(${SIZES[0]}) - 1" | bc`)
 

@@ -36,6 +36,6 @@ int rvmaPutHybrid(struct ibv_qp* qp, int index, struct ibv_send_wr *wr, struct i
 
 RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void* virtualAddress);
 
-RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type);
+RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type, int msgSize);
 
 #endif //ELEC498_RVMA_H
