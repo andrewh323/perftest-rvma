@@ -56,21 +56,6 @@ endif
 bin_PROGRAMS = ib_write_lat ib_write_bw
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 
-# Non-source man pages:
-man1_MANS = \
-	man/ib_write_bw.1 \
-	man/ib_write_lat.1
-
-
-dist_man_MANS = man/perftest.1
-
-generated_mans = $(man1_MANS)
-$(generated_mans): man/%.1: man/perftest.1
-	ln -s perftest.1 $@
-
-clean-local:
-	-rm -f man/[ir]*.1
-
 if HAVE_RAW_ETH
 libperftest_a_SOURCES += src/raw_ethernet_resources.c
 noinst_HEADERS += src/raw_ethernet_resources.h

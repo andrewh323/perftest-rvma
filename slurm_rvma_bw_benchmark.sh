@@ -32,7 +32,7 @@ echo "Server Node: $server"
 echo "Client Node: $client"
 
 # getting the InfiniBand IP of the server
-server_ip=$(ssh $server "ifconfig ib0 | grep 'inet ' | awk '{print \$2}'")
+server_ip=$(ssh $server "ifconfig ib0 | grep 'inet ' | awk '{print \$2}'" | tail -n 1)
 echo "Server IB HW IP: $server_ip"
 
 for SIZE in ${SIZES[@]}; do

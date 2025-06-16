@@ -1,0 +1,26 @@
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm BW Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: ON
+ ibv_wr* API     : ON
+ TX depth        : 128
+ CQ Moderation   : 100
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 0[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x2c9 QPN 0x02b6 PSN 0x3cd3d5 RKey 0x203149 VAddr 0x00000001d9e000
+ remote address: LID 0x214 QPN 0x02b6 PSN 0xdd69d7 RKey 0x203149 VAddr 0x00000001467000
+---------------------------------------------------------------------------------------
+ #bytes     #iterations    BW peak[MB/sec]    BW average[MB/sec]   MsgRate[Mpps]
+ 8          5000             21.16              20.97  		   2.749138
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 1027221 microseconds
+Total RDMA Elapsed time: 9565 microseconds
+Total RVMA Elapsed time: 1805 microseconds
