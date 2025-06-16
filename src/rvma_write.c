@@ -352,9 +352,14 @@ RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type, 
     if(type == LAT){
         int i = (bufferEntry->realBuffSize/2) + 1;
         currentValue = *((char *) bufferAddr + i);
+        
+        for (int j = (bufferEntry->realBuffSize/2 - 2); j <= (bufferEntry->realBuffSize/2) + 4; j++) {
+            printf("%c", *((char *) bufferAddr + j));
+        }
+        printf("\n");
 
         if(currentValue != 'Z'){
-            printf("The first char in the receiving buffer is not Z, it is: %c\n", currentValue);
+            printf("The first char in the receiving buffer at index %d is not Z, it is: %c\n", i, currentValue);
                 return RVMA_FAILURE;
             }
     }else{
