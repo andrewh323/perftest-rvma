@@ -1,0 +1,24 @@
+Z set at index 4097
+---------------------------------------------------------------------------------------
+                    RDMA_Write_imm Latency Test
+ Dual-port       : OFF		Device         : mlx5_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: OFF
+ ibv_wr* API     : ON
+ TX depth        : 1
+ Mtu             : 4096[B]
+ Link type       : IB
+ Max inline data : 220[B]
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x275 QPN 0x9054 PSN 0x597834 RKey 0x17e3a3 VAddr 0x00000001882000
+ remote address: LID 0x214 QPN 0x29e6 PSN 0xd497a7 RKey 0x177b3b VAddr 0x00000001b03000
+---------------------------------------------------------------------------------------
+ #bytes #iterations    t_min[usec]    t_max[usec]  t_typical[usec]    t_avg[usec]    t_stdev[usec]   99% percentile[usec]   99.9% percentile[usec] 
+---------------------------------------------------------------------------------------
+RVMA Testing Results for machine type: CLIENT
+Total RDMA Cold Start Elapsed time: 246309 microseconds
+Total RDMA Elapsed time: 240432 microseconds
+Total RVMA Elapsed time: 7 microseconds
