@@ -1743,10 +1743,10 @@ int create_single_mr(struct pingpong_context *ctx, struct perftest_parameters *u
 		srand(time(NULL));
 		if ((user_param->verb == WRITE || user_param->verb == WRITE_IMM) && user_param->tst == LAT) {
 			memset(ctx->buf[qp_index], 0, ctx->buff_size);
-
-			int offset = ctx->buff_size/2 + 2;
+			// offset matches index i in rvma_write.c:rvmaCheckBufferQueue:354
+			int offset = ctx->buff_size/2 - 1;
 			((char *)ctx->buf[qp_index])[offset] = 'Z';
-		printf("Z set at index %d\n", offset);
+			printf("After local write: buf[%d] = 0x%02X\n", offset, ((unsigned char*)ctx->buf[qp_index])[offset]);
 		} else {
 			uint64_t i;
 			if (user_param->has_payload_modification) {

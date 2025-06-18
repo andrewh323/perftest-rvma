@@ -350,10 +350,11 @@ RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type, 
     char currentValue;
     uintptr_t bufferAddr = (uintptr_t)bufferEntry->realBuffAddr[0];
     if(type == LAT){
-        int i = (bufferEntry->realBuffSize/2) + 1;
+        // For some reason buffer index 4097 is an SOH that can't be overwritten, let's just write to 4098 instead
+        int i = (bufferEntry->realBuffSize/2) -1;
         currentValue = *((char *) bufferAddr + i);
         
-        for (int j = (bufferEntry->realBuffSize/2 - 2); j <= (bufferEntry->realBuffSize/2) + 4; j++) {
+        for (int j = i - 1; j <= i + 8; j++) {
             printf("%c", *((char *) bufferAddr + j));
         }
         printf("\n");
