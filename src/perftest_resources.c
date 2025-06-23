@@ -1742,7 +1742,6 @@ int create_single_mr(struct pingpong_context *ctx, struct perftest_parameters *u
 	if (can_init_mem) {
 		srand(time(NULL));
 		if ((user_param->verb == WRITE || user_param->verb == WRITE_IMM) && user_param->tst == LAT) {
-			memset(ctx->buf[qp_index], 0, ctx->buff_size);
 			// offset matches index i in rvma_write.c:rvmaCheckBufferQueue:354
 			int offset = ctx->buff_size/2 - 1;
 			((char *)ctx->buf[qp_index])[offset] = 'Z';
@@ -3516,7 +3515,7 @@ int run_iter_bw(struct pingpong_context *ctx,struct perftest_parameters *user_pa
 		(user_param->test_type == DURATION && user_param->state != END_STATE) ) {
 
 		/* main loop to run over all the qps and post each time n messages */
-		for (index =0 ; index < num_of_qps ; index++) {
+		for (index = 0 ; index < num_of_qps ; index++) {
 			if (user_param->rate_limit_type == SW_RATE_LIMIT && is_sending_burst == 0) {
 				if (gap_deadline > get_cycles()) {
 					/* Go right to cq polling until gap time is over. */
