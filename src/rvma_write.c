@@ -350,24 +350,15 @@ RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type, 
     char currentValue;
     uintptr_t bufferAddr = (uintptr_t)bufferEntry->realBuffAddr[0];
     if(type == LAT){
-        // For some reason buffer index 4097 is an SOH that can't be overwritten, let's just write to 4098 instead
-        int i = (bufferEntry->realBuffSize/2) -1;
+        // For some reason buffer index 4097 is an SOH that can't be overwritten, let's just write to an idx before it
+        int i = (bufferEntry->realBuffSize/2) - 1;
         currentValue = *((char *) bufferAddr + i);
-        
-        for (int j = i - 1; j <= i + 8; j++) {
-            printf("%c", *((char *) bufferAddr + j));
-        }
-        printf("\n");
 
         if(currentValue != 'Z'){
             printf("The first char in the receiving buffer at index %d is not Z, it is: %c\n", i, currentValue);
                 return RVMA_FAILURE;
             }
     }else{
-        for (int j = (bufferEntry->realBuffSize / 2) - 5; j <= (bufferEntry->realBuffSize / 2) + 5; j++) {
-            printf("%c", *((char *) bufferAddr + j));
-        }
-        printf("\n");
         for (int i = (bufferEntry->realBuffSize/2) + 1; i < (bufferEntry->realBuffSize/2) + msgSize; i += 1) {
             currentValue = *((char *) bufferAddr + i);
             // In perftest_resources.c:create_single_mr:1755-1760 we default the client buffer to contain all 'Z' chars
