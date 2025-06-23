@@ -128,6 +128,8 @@ host_triplet = @host@
 @NEURON_TRUE@am__append_3 = src/neuron_memory.c
 @HABANALABS_TRUE@am__append_4 = src/hl_memory.c
 bin_PROGRAMS = ib_write_lat$(EXEEXT) ib_write_bw$(EXEEXT) \
+	rsocket_client_lat$(EXEEXT) rsocket_server_lat$(EXEEXT) \
+	rsocket_client_bw$(EXEEXT) rsocket_server_bw$(EXEEXT) \
 	$(am__EXEEXT_1) $(am__EXEEXT_2)
 @HAVE_RAW_ETH_TRUE@am__append_5 = src/raw_ethernet_resources.c
 @HAVE_RAW_ETH_TRUE@am__append_6 = src/raw_ethernet_resources.h
@@ -239,6 +241,26 @@ raw_ethernet_lat_OBJECTS = $(am_raw_ethernet_lat_OBJECTS)
 @HAVE_RAW_ETH_TRUE@raw_ethernet_lat_DEPENDENCIES = libperftest.a \
 @HAVE_RAW_ETH_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 @HAVE_RAW_ETH_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_rsocket_client_bw_OBJECTS = src/rsocket_client_bw.$(OBJEXT)
+rsocket_client_bw_OBJECTS = $(am_rsocket_client_bw_OBJECTS)
+rsocket_client_bw_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_rsocket_client_lat_OBJECTS = src/rsocket_client_lat.$(OBJEXT)
+rsocket_client_lat_OBJECTS = $(am_rsocket_client_lat_OBJECTS)
+rsocket_client_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_rsocket_server_bw_OBJECTS = src/rsocket_server_bw.$(OBJEXT)
+rsocket_server_bw_OBJECTS = $(am_rsocket_server_bw_OBJECTS)
+rsocket_server_bw_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_rsocket_server_lat_OBJECTS = src/rsocket_server_lat.$(OBJEXT)
+rsocket_server_lat_OBJECTS = $(am_rsocket_server_lat_OBJECTS)
+rsocket_server_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -296,12 +318,34 @@ am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/raw_ethernet_send_bw.Po \
 	src/$(DEPDIR)/raw_ethernet_send_lat.Po \
 	src/$(DEPDIR)/rocm_memory.Po \
+	src/$(DEPDIR)/rsocket_client_bw.Po \
+	src/$(DEPDIR)/rsocket_client_lat.Po \
+	src/$(DEPDIR)/rsocket_server_bw.Po \
+	src/$(DEPDIR)/rsocket_server_lat.Po \
 	src/$(DEPDIR)/rvma_buffer_queue.Po \
 	src/$(DEPDIR)/rvma_common.Po \
 	src/$(DEPDIR)/rvma_mailbox_hashmap.Po \
 	src/$(DEPDIR)/rvma_write.Po src/$(DEPDIR)/write_bw.Po \
 	src/$(DEPDIR)/write_lat.Po
 am__mv = mv -f
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_@AM_V@)
+am__v_CXX_ = $(am__v_CXX_@AM_DEFAULT_V@)
+am__v_CXX_0 = @echo "  CXX     " $@;
+am__v_CXX_1 = 
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
+am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
+am__v_CXXLD_0 = @echo "  CXXLD   " $@;
+am__v_CXXLD_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -323,13 +367,17 @@ am__v_CCLD_1 =
 SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
 	$(ib_write_lat_SOURCES) $(raw_ethernet_burst_lat_SOURCES) \
 	$(raw_ethernet_bw_SOURCES) $(raw_ethernet_fs_rate_SOURCES) \
-	$(raw_ethernet_lat_SOURCES)
+	$(raw_ethernet_lat_SOURCES) $(rsocket_client_bw_SOURCES) \
+	$(rsocket_client_lat_SOURCES) $(rsocket_server_bw_SOURCES) \
+	$(rsocket_server_lat_SOURCES)
 DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(ib_write_bw_SOURCES) $(ib_write_lat_SOURCES) \
 	$(am__raw_ethernet_burst_lat_SOURCES_DIST) \
 	$(am__raw_ethernet_bw_SOURCES_DIST) \
 	$(am__raw_ethernet_fs_rate_SOURCES_DIST) \
-	$(am__raw_ethernet_lat_SOURCES_DIST)
+	$(am__raw_ethernet_lat_SOURCES_DIST) \
+	$(rsocket_client_bw_SOURCES) $(rsocket_client_lat_SOURCES) \
+	$(rsocket_server_bw_SOURCES) $(rsocket_server_lat_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -542,6 +590,14 @@ noinst_HEADERS = src/get_clock.h src/perftest_communication.h \
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 @IS_FREEBSD_FALSE@LIBMLX4 = 
 @IS_FREEBSD_TRUE@LIBMLX4 = -lmlx4
+rsocket_client_lat_SOURCES = src/rsocket_client_lat.c
+rsocket_client_lat_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_server_lat_SOURCES = src/rsocket_server_lat.c
+rsocket_server_lat_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_client_bw_SOURCES = src/rsocket_client_bw.C
+rsocket_client_bw_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_server_bw_SOURCES = src/rsocket_server_bw.C
+rsocket_server_bw_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 ib_write_lat_SOURCES = src/write_lat.c
 ib_write_lat_LDADD = libperftest.a $(LIBMATH)  $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 ib_write_bw_SOURCES = src/write_bw.c
@@ -562,7 +618,7 @@ all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .C .c .lo .o .obj
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -742,6 +798,30 @@ src/raw_ethernet_send_lat.$(OBJEXT): src/$(am__dirstamp) \
 raw_ethernet_lat$(EXEEXT): $(raw_ethernet_lat_OBJECTS) $(raw_ethernet_lat_DEPENDENCIES) $(EXTRA_raw_ethernet_lat_DEPENDENCIES) 
 	@rm -f raw_ethernet_lat$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(raw_ethernet_lat_OBJECTS) $(raw_ethernet_lat_LDADD) $(LIBS)
+src/rsocket_client_bw.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rsocket_client_bw$(EXEEXT): $(rsocket_client_bw_OBJECTS) $(rsocket_client_bw_DEPENDENCIES) $(EXTRA_rsocket_client_bw_DEPENDENCIES) 
+	@rm -f rsocket_client_bw$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(rsocket_client_bw_OBJECTS) $(rsocket_client_bw_LDADD) $(LIBS)
+src/rsocket_client_lat.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rsocket_client_lat$(EXEEXT): $(rsocket_client_lat_OBJECTS) $(rsocket_client_lat_DEPENDENCIES) $(EXTRA_rsocket_client_lat_DEPENDENCIES) 
+	@rm -f rsocket_client_lat$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rsocket_client_lat_OBJECTS) $(rsocket_client_lat_LDADD) $(LIBS)
+src/rsocket_server_bw.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rsocket_server_bw$(EXEEXT): $(rsocket_server_bw_OBJECTS) $(rsocket_server_bw_DEPENDENCIES) $(EXTRA_rsocket_server_bw_DEPENDENCIES) 
+	@rm -f rsocket_server_bw$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(rsocket_server_bw_OBJECTS) $(rsocket_server_bw_LDADD) $(LIBS)
+src/rsocket_server_lat.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rsocket_server_lat$(EXEEXT): $(rsocket_server_lat_OBJECTS) $(rsocket_server_lat_DEPENDENCIES) $(EXTRA_rsocket_server_lat_DEPENDENCIES) 
+	@rm -f rsocket_server_lat$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rsocket_server_lat_OBJECTS) $(rsocket_server_lat_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -801,6 +881,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/raw_ethernet_send_bw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/raw_ethernet_send_lat.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rocm_memory.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_client_bw.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_client_lat.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_server_bw.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_server_lat.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_buffer_queue.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_common.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_mailbox_hashmap.Po@am__quote@ # am--include-marker
@@ -813,6 +897,30 @@ $(am__depfiles_remade):
 	@echo '# dummy' >$@-t && $(am__mv) $@-t $@
 
 am--depfiles: $(am__depfiles_remade)
+
+.C.o:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
+
+.C.obj:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.C.lo:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1140,6 +1248,10 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/raw_ethernet_send_bw.Po
 	-rm -f src/$(DEPDIR)/raw_ethernet_send_lat.Po
 	-rm -f src/$(DEPDIR)/rocm_memory.Po
+	-rm -f src/$(DEPDIR)/rsocket_client_bw.Po
+	-rm -f src/$(DEPDIR)/rsocket_client_lat.Po
+	-rm -f src/$(DEPDIR)/rsocket_server_bw.Po
+	-rm -f src/$(DEPDIR)/rsocket_server_lat.Po
 	-rm -f src/$(DEPDIR)/rvma_buffer_queue.Po
 	-rm -f src/$(DEPDIR)/rvma_common.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_hashmap.Po
@@ -1209,6 +1321,10 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/raw_ethernet_send_bw.Po
 	-rm -f src/$(DEPDIR)/raw_ethernet_send_lat.Po
 	-rm -f src/$(DEPDIR)/rocm_memory.Po
+	-rm -f src/$(DEPDIR)/rsocket_client_bw.Po
+	-rm -f src/$(DEPDIR)/rsocket_client_lat.Po
+	-rm -f src/$(DEPDIR)/rsocket_server_bw.Po
+	-rm -f src/$(DEPDIR)/rsocket_server_lat.Po
 	-rm -f src/$(DEPDIR)/rvma_buffer_queue.Po
 	-rm -f src/$(DEPDIR)/rvma_common.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_hashmap.Po

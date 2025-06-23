@@ -43,11 +43,11 @@ git clone <URL>, In our situation its --> git clone https://github.com/linux-rdm
 
 -After cloning, Follow this commands:
 
--cd perftest/
+-cd perftest-rvma/
 
 -./autogen.sh
 
--./configure    Note:If you want to install in a specific directory use the optional flag --prefix=<Directory path> , e.g: ./configure --prefix=<Directory path>
+-./configure --prefix=/home/andrewh8/src/perftest-rvma/install (Changed for my reference)
 
 -make
 

@@ -53,7 +53,7 @@ if HABANALABS
 libperftest_a_SOURCES += src/hl_memory.c
 endif
 
-bin_PROGRAMS = ib_write_lat ib_write_bw
+bin_PROGRAMS = ib_write_lat ib_write_bw rsocket_client_lat rsocket_server_lat rsocket_client_bw rsocket_server_bw
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 
 if HAVE_RAW_ETH
@@ -71,6 +71,18 @@ LIBMLX4= -lmlx4
 else
 LIBMLX4=
 endif
+
+rsocket_client_lat_SOURCES = src/rsocket_client_lat.c
+rsocket_client_lat_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+
+rsocket_server_lat_SOURCES = src/rsocket_server_lat.c
+rsocket_server_lat_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+
+rsocket_client_bw_SOURCES = src/rsocket_client_bw.C
+rsocket_client_bw_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+
+rsocket_server_bw_SOURCES = src/rsocket_server_bw.C
+rsocket_server_bw_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
 ib_write_lat_SOURCES = src/write_lat.c
 ib_write_lat_LDADD = libperftest.a $(LIBMATH)  $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
