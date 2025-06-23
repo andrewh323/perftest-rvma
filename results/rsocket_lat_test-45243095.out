@@ -1,0 +1,21 @@
+Server Node: nc30319
+Client Node: nc30340
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Server IB HW IP: 10.82.83.19
+2025-06-23 17:02:36
+###############################################################################
+  nc30319.narval.calcul.quebec
+  Rocky Linux 8.10    Dell Inc. PowerEdge C6525
+  Ram: 251.35 GiB  Arch: x86_64  Kernel: 4.18.0-553.56.1.el8_10.x86_64
+  Machine type: physical  CPUs: 64
+###############################################################################
+Test Successful.
+Server output:
+Server listening on port 7471...
+Client successfully connected!
+Server received message: Hello from rsocket client!
+
+Client output:
+Connected to server 10.82.83.19:7471
+Client received message: Hello from the server! Message was received!
+RTT: 19.89 microseconds

@@ -51,7 +51,7 @@ for SIZE in ${SIZES[@]}; do
         # Wait for 1 second
         sleep 1
         # Then run on client
-        status=$(ssh $client "timeout 480 $PATH_TO_BIN/ib_write_bw $server_ip -s $SIZE -p $PORT &> $CLIENT_OUT_PATH; echo $?" )
+        status=$(ssh $client "timeout 480 $PATH_TO_BIN/ib_write_bw $server_ip -s $SIZE -p $PORT &> $CLIENT_OUT_PATH; echo $?" | tail -n 1 )
         client_pid=$!
         wait $server_pid $client_pid
 
