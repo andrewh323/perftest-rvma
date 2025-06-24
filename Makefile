@@ -450,7 +450,7 @@ CCASDEPMODE = depmode=gcc3
 CCASFLAGS = -g -O2
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -Wall -D_GNU_SOURCE -O3 -g -O2
-CPPFLAGS = 
+CPPFLAGS =  -I$(HOME)/src/rdma-core/build/include
 CSCOPE = cscope
 CTAGS = ctags
 CUDA_H_PATH = 
@@ -479,7 +479,10 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/bin/ld -m elf_x86_64
-LDFLAGS = 
+
+# Override to use custom rdma-core headers and libraries
+LDFLAGS =  -L$(HOME)/src/rdma-core/build/lib \
+	-Wl,-rpath=$(HOME)/src/rdma-core/build/lib
 LIBEFA = -lefa
 LIBMATH = -lm
 LIBMLX5 = -lmlx5
@@ -591,29 +594,29 @@ bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 LIBMLX4 = 
 #LIBMLX4 = -lmlx4
 rsocket_client_lat_SOURCES = src/rsocket_client_lat.c
-rsocket_client_lat_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_client_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_server_lat_SOURCES = src/rsocket_server_lat.c
-rsocket_server_lat_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_server_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_client_bw_SOURCES = src/rsocket_client_bw.C
-rsocket_client_bw_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_client_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_server_bw_SOURCES = src/rsocket_server_bw.C
-rsocket_server_bw_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_server_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 ib_write_lat_SOURCES = src/write_lat.c
-ib_write_lat_LDADD = libperftest.a $(LIBMATH)  $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+ib_write_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH)  $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 ib_write_bw_SOURCES = src/write_bw.c
-ib_write_bw_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+ib_write_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 #raw_ethernet_bw_SOURCES = 
 raw_ethernet_bw_SOURCES = src/raw_ethernet_send_bw.c
 #raw_ethernet_bw_LDADD = 
-raw_ethernet_bw_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+raw_ethernet_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 #raw_ethernet_lat_SOURCES = 
 raw_ethernet_lat_SOURCES = src/raw_ethernet_send_lat.c
 #raw_ethernet_lat_LDADD = 
-raw_ethernet_lat_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+raw_ethernet_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 raw_ethernet_burst_lat_SOURCES = src/raw_ethernet_send_burst_lat.c
-raw_ethernet_burst_lat_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+raw_ethernet_burst_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 raw_ethernet_fs_rate_SOURCES = src/raw_ethernet_fs_rate.c
-raw_ethernet_fs_rate_LDADD = libperftest.a $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+raw_ethernet_fs_rate_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

@@ -85,7 +85,7 @@ src/host_memory.o: src/host_memory.c \
  src/memory.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdbool.h \
  src/perftest_parameters.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/infiniband/verbs.h \
+ /home/andrewh8/src/rdma-core/build/include/infiniband/verbs.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/pthread.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sched.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sched.h \
@@ -110,13 +110,14 @@ src/host_memory.o: src/host_memory.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/bitsperlong.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/bitsperlong.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/posix_types.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/stddef.h \
+ /home/andrewh8/src/rdma-core/build/include/linux/stddef.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types_64.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/posix_types.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/infiniband/verbs_api.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/infiniband/ib_user_ioctl_verbs.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/rdma/ib_user_verbs.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/if_ether.h \
+ /home/andrewh8/src/rdma-core/build/include/infiniband/verbs_api.h \
+ /home/andrewh8/src/rdma-core/build/include/infiniband/ib_user_ioctl_verbs.h \
+ /home/andrewh8/src/rdma-core/build/include/rdma/ib_user_verbs.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/unistd.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/posix_opt.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/environments.h \
@@ -215,7 +216,7 @@ src/host_memory.h:
 src/memory.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdbool.h:
 src/perftest_parameters.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/infiniband/verbs.h:
+/home/andrewh8/src/rdma-core/build/include/infiniband/verbs.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/pthread.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sched.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sched.h:
@@ -240,13 +241,14 @@ src/perftest_parameters.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/bitsperlong.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/bitsperlong.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/posix_types.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/stddef.h:
+/home/andrewh8/src/rdma-core/build/include/linux/stddef.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types_64.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/posix_types.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/infiniband/verbs_api.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/infiniband/ib_user_ioctl_verbs.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/rdma/ib_user_verbs.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/if_ether.h:
+/home/andrewh8/src/rdma-core/build/include/infiniband/verbs_api.h:
+/home/andrewh8/src/rdma-core/build/include/infiniband/ib_user_ioctl_verbs.h:
+/home/andrewh8/src/rdma-core/build/include/rdma/ib_user_verbs.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/unistd.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/posix_opt.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/environments.h:

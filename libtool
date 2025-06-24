@@ -1,6 +1,6 @@
 #! /bin/sh
 # Generated automatically by config.status (perftest) 6.20
-# Libtool was configured on host narval3:
+# Libtool was configured on host narval1.narval.calcul.quebec:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 
 # Provide generalized library-building support services.

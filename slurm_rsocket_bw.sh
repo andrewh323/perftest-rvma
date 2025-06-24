@@ -6,6 +6,8 @@
 #SBATCH --switches=1
 #SBATCH --time=1:00:00
 
+export RDMA_CORE_LIB="$HOME/src/rdma-core/build/lib"
+
 if [ ! -d "results" ]; then
     mkdir results
     echo "Created directory: results"
@@ -34,14 +36,14 @@ CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/client-bw-$SLURM_JOB_ID.out"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 # Run server
-ssh $server "timeout 480 $PATH_TO_BIN/rsocket_server_bw &> $SERVER_OUT_PATH" &
+ssh $server "export LD_LIBRARY_PATH=$RDMA_CORE_LIB:\$LD_LIBRARY_PATH; timeout 480 $PATH_TO_BIN/rsocket_server_bw &> $SERVER_OUT_PATH" &
 server_pid=$!
 
 # Wait for 1 second
 sleep 1
 
 # Run client
-status=$(ssh $client "timeout 480 $PATH_TO_BIN/rsocket_client_bw $server_ip &> $CLIENT_OUT_PATH; echo $?" | tail -n 1)
+status=$(ssh $client "export LD_LIBRARY_PATH=$RDMA_CORE_LIB:\$LD_LIBRARY_PATH; timeout 480 $PATH_TO_BIN/rsocket_client_bw $server_ip &> $CLIENT_OUT_PATH; echo \$?" | tail -n 1)
 client_pid=$!
 wait $server_pid $client_pid
 
