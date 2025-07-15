@@ -173,8 +173,8 @@ RVMA_Status rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, 
         print_error("rvmaPostBuffer: buffer was NULL");
         return RVMA_ERROR;
     }
-    if (size < 0) {
-        print_error("rvmaPostBuffer: size was less then 1");
+    if (size < 1) {
+        print_error("rvmaPostBuffer: size was less than 1");
         return RVMA_ERROR;
     }
     if (notificationPtr == NULL) {
