@@ -130,6 +130,7 @@ host_triplet = x86_64-pc-linux-gnu
 bin_PROGRAMS = ib_write_lat$(EXEEXT) ib_write_bw$(EXEEXT) \
 	rsocket_client_lat$(EXEEXT) rsocket_server_lat$(EXEEXT) \
 	rsocket_client_bw$(EXEEXT) rsocket_server_bw$(EXEEXT) \
+	rvma_mailbox_server$(EXEEXT) rvma_mailbox_client$(EXEEXT) \
 	$(am__EXEEXT_1) $(am__EXEEXT_2)
 am__append_5 = src/raw_ethernet_resources.c
 am__append_6 = src/raw_ethernet_resources.h
@@ -261,6 +262,16 @@ rsocket_server_lat_OBJECTS = $(am_rsocket_server_lat_OBJECTS)
 rsocket_server_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
+am_rvma_mailbox_client_OBJECTS = src/rvma_mailbox_client.$(OBJEXT)
+rvma_mailbox_client_OBJECTS = $(am_rvma_mailbox_client_OBJECTS)
+rvma_mailbox_client_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_rvma_mailbox_server_OBJECTS = src/rvma_mailbox_server.$(OBJEXT)
+rvma_mailbox_server_OBJECTS = $(am_rvma_mailbox_server_OBJECTS)
+rvma_mailbox_server_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -324,7 +335,9 @@ am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/rsocket_server_lat.Po \
 	src/$(DEPDIR)/rvma_buffer_queue.Po \
 	src/$(DEPDIR)/rvma_common.Po \
+	src/$(DEPDIR)/rvma_mailbox_client.Po \
 	src/$(DEPDIR)/rvma_mailbox_hashmap.Po \
+	src/$(DEPDIR)/rvma_mailbox_server.Po \
 	src/$(DEPDIR)/rvma_write.Po src/$(DEPDIR)/write_bw.Po \
 	src/$(DEPDIR)/write_lat.Po
 am__mv = mv -f
@@ -369,7 +382,8 @@ SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
 	$(raw_ethernet_bw_SOURCES) $(raw_ethernet_fs_rate_SOURCES) \
 	$(raw_ethernet_lat_SOURCES) $(rsocket_client_bw_SOURCES) \
 	$(rsocket_client_lat_SOURCES) $(rsocket_server_bw_SOURCES) \
-	$(rsocket_server_lat_SOURCES)
+	$(rsocket_server_lat_SOURCES) $(rvma_mailbox_client_SOURCES) \
+	$(rvma_mailbox_server_SOURCES)
 DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(ib_write_bw_SOURCES) $(ib_write_lat_SOURCES) \
 	$(am__raw_ethernet_burst_lat_SOURCES_DIST) \
@@ -377,7 +391,8 @@ DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(am__raw_ethernet_fs_rate_SOURCES_DIST) \
 	$(am__raw_ethernet_lat_SOURCES_DIST) \
 	$(rsocket_client_bw_SOURCES) $(rsocket_client_lat_SOURCES) \
-	$(rsocket_server_bw_SOURCES) $(rsocket_server_lat_SOURCES)
+	$(rsocket_server_bw_SOURCES) $(rsocket_server_lat_SOURCES) \
+	$(rvma_mailbox_client_SOURCES) $(rvma_mailbox_server_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -593,6 +608,10 @@ noinst_HEADERS = src/get_clock.h src/perftest_communication.h \
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 LIBMLX4 = 
 #LIBMLX4 = -lmlx4
+rvma_mailbox_server_SOURCES = src/rvma_mailbox_server.c
+rvma_mailbox_server_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rvma_mailbox_client_SOURCES = src/rvma_mailbox_client.c
+rvma_mailbox_client_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_client_lat_SOURCES = src/rsocket_client_lat.c
 rsocket_client_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_server_lat_SOURCES = src/rsocket_server_lat.c
@@ -825,6 +844,18 @@ src/rsocket_server_lat.$(OBJEXT): src/$(am__dirstamp) \
 rsocket_server_lat$(EXEEXT): $(rsocket_server_lat_OBJECTS) $(rsocket_server_lat_DEPENDENCIES) $(EXTRA_rsocket_server_lat_DEPENDENCIES) 
 	@rm -f rsocket_server_lat$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rsocket_server_lat_OBJECTS) $(rsocket_server_lat_LDADD) $(LIBS)
+src/rvma_mailbox_client.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rvma_mailbox_client$(EXEEXT): $(rvma_mailbox_client_OBJECTS) $(rvma_mailbox_client_DEPENDENCIES) $(EXTRA_rvma_mailbox_client_DEPENDENCIES) 
+	@rm -f rvma_mailbox_client$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rvma_mailbox_client_OBJECTS) $(rvma_mailbox_client_LDADD) $(LIBS)
+src/rvma_mailbox_server.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rvma_mailbox_server$(EXEEXT): $(rvma_mailbox_server_OBJECTS) $(rvma_mailbox_server_DEPENDENCIES) $(EXTRA_rvma_mailbox_server_DEPENDENCIES) 
+	@rm -f rvma_mailbox_server$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rvma_mailbox_server_OBJECTS) $(rvma_mailbox_server_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -890,7 +921,9 @@ include src/$(DEPDIR)/rsocket_server_bw.Po # am--include-marker
 include src/$(DEPDIR)/rsocket_server_lat.Po # am--include-marker
 include src/$(DEPDIR)/rvma_buffer_queue.Po # am--include-marker
 include src/$(DEPDIR)/rvma_common.Po # am--include-marker
+include src/$(DEPDIR)/rvma_mailbox_client.Po # am--include-marker
 include src/$(DEPDIR)/rvma_mailbox_hashmap.Po # am--include-marker
+include src/$(DEPDIR)/rvma_mailbox_server.Po # am--include-marker
 include src/$(DEPDIR)/rvma_write.Po # am--include-marker
 include src/$(DEPDIR)/write_bw.Po # am--include-marker
 include src/$(DEPDIR)/write_lat.Po # am--include-marker
@@ -1257,7 +1290,9 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/rsocket_server_lat.Po
 	-rm -f src/$(DEPDIR)/rvma_buffer_queue.Po
 	-rm -f src/$(DEPDIR)/rvma_common.Po
+	-rm -f src/$(DEPDIR)/rvma_mailbox_client.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_hashmap.Po
+	-rm -f src/$(DEPDIR)/rvma_mailbox_server.Po
 	-rm -f src/$(DEPDIR)/rvma_write.Po
 	-rm -f src/$(DEPDIR)/write_bw.Po
 	-rm -f src/$(DEPDIR)/write_lat.Po
@@ -1330,7 +1365,9 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/rsocket_server_lat.Po
 	-rm -f src/$(DEPDIR)/rvma_buffer_queue.Po
 	-rm -f src/$(DEPDIR)/rvma_common.Po
+	-rm -f src/$(DEPDIR)/rvma_mailbox_client.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_hashmap.Po
+	-rm -f src/$(DEPDIR)/rvma_mailbox_server.Po
 	-rm -f src/$(DEPDIR)/rvma_write.Po
 	-rm -f src/$(DEPDIR)/write_bw.Po
 	-rm -f src/$(DEPDIR)/write_lat.Po

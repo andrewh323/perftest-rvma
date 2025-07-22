@@ -250,6 +250,17 @@ int rvmaPutHybrid(struct ibv_qp *qp, int index, struct ibv_send_wr *wr, struct i
     return ibv_post_send(qp, &wr[index], bad_wr);
 }
 
+/* 
+// Creating new RVMA put
+RVMA_Status rvmaPut(void *buf, int64_t size, struct addr_in *dest_addr, void *vaddr) {
+    // Post a buffer to the RVMA mailbox
+    int64_t threshold = size; // Set threshold to size of buffer
+    RVMA_Status status = rvmaPostBuffer((void **)&buf, size, notifBuffPtrAddr, notifLenPtrAddr, vaddr, dest_addr, threshold, EPOCH_BYTES);
+    // How to set up qp and wr?
+    ibv_post_send(qp, wr, bad_wr)
+    return status;
+} */
+
 
 RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void *virtualAddress) {
     static int bufferStatus = 0; // default to active/being used

@@ -170,7 +170,7 @@ struct rvsocket {
 extern "C" {
 #endif
 
-int rvsocket(int domain, int type, int protocol);
+int rvsocket(int domain, int type, int protocol, RVMA_Mailbox *mailboxPtr);
 int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen);
 int rvlisten(int socket, int backlog);
 int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen);
