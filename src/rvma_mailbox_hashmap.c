@@ -9,6 +9,8 @@
  ***/
 
 #include "rvma_mailbox_hashmap.h"
+#include <rdma/rdma_cma.h>
+
 
 RVMA_Mailbox* setupMailbox(void *virtualAddress, int hashmapCapacity){
     RVMA_Mailbox *mailboxPtr;
@@ -37,7 +39,8 @@ RVMA_Mailbox* setupMailbox(void *virtualAddress, int hashmapCapacity){
     mailboxPtr->retiredBufferQueue = retiredBufferQueue;
     mailboxPtr->virtualAddress = virtualAddress;
     mailboxPtr->key = hashFunction(virtualAddress, hashmapCapacity);
-
+    mailboxPtr->ec = rdma_create_event_channel();
+    rdma_create_id(mailboxPtr->ec, &mailboxPtr->cm_id, NULL, RDMA_PS_TCP);
     return mailboxPtr;
 }
 
@@ -169,4 +172,81 @@ RVMA_Status retireBuffer(RVMA_Mailbox* RVMA_Mailbox, RVMA_Buffer_Entry* entry){
     }
 
     return enqueueRetiredBuffer(RVMA_Mailbox->retiredBufferQueue, entry);
+}
+
+int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *remote_addr) {
+    struct rdma_cm_event *event;
+
+    // Resolve address
+    if (rdma_resolve_addr(mailboxPtr->cm_id, NULL, (struct sockaddr *)remote_addr, 2000)) {
+        perror("rdma_resolve_addr");
+        return -1;
+    }
+    if (rdma_get_cm_event(mailboxPtr->ec, &event)) {
+        perror("rdma_get_cm_event");
+        return -1;
+    }
+    if(event->event != RDMA_CM_EVENT_ADDR_RESOLVED) {
+        rdma_ack_cm_event(event);
+        fprintf(stderr, "rdma_resolve_addr failed: %s\n", rdma_event_str(event->event));
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+
+    // Resolve route
+    if (rdma_resolve_route(mailboxPtr->cm_id, 2000)) {
+        perror("rdma_resolve_route");
+        return -1;
+    }
+    if (rdma_get_cm_event(mailboxPtr->ec, &event)) {
+        perror("rdma_get_cm_event");
+        return -1;
+    }
+    if(event->event != RDMA_CM_EVENT_ROUTE_RESOLVED) {
+        fprintf(stderr, "rdma_resolve_route failed: %s\n", rdma_event_str(event->event));
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+    rdma_ack_cm_event(event);
+
+    // Create QP
+    struct ibv_qp_init_attr qp_attr = {
+        .send_cq = mailboxPtr->cq,
+        .recv_cq = mailboxPtr->cq,
+        .qp_type = IBV_QPT_RC,
+        .cap = {
+            .max_send_wr = 16,
+            .max_recv_wr = 16,
+            .max_send_sge = 1,
+            .max_recv_sge = 1
+        }
+    };
+
+    if(rdma_create_qp(mailboxPtr->cm_id, mailboxPtr->pd, &qp_attr)) {
+        perror("rdma_create_qp");
+        return -1;
+    }
+
+    mailboxPtr->qp = mailboxPtr->cm_id->qp;
+
+    // Connect
+    if (rdma_connect(mailboxPtr->cm_id, NULL)) {
+        perror("rdma_connect");
+        return -1;
+    }
+    if (rdma_get_cm_event(mailboxPtr->ec, &event)) {
+        perror("rdma_get_cm_event");
+        return -1;
+    }
+    if(event->event != RDMA_CM_EVENT_ESTABLISHED) {
+        fprintf(stderr, "rdma_connect failed: %s\n", rdma_event_str(event->event));
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+
+    rdma_ack_cm_event(event);
+
+    printf("Mailbox connected successfully!\n");
+
+    return 0;
 }

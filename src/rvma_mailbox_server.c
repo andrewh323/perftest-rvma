@@ -1,0 +1,88 @@
+/*
+Test if mailbox is set up correctly - DONE
+Test if connection is establised - DONE
+    - Assuming vaddr is prenegotiated and known
+Test if rvma_write is successful
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <rdma/rdma_cma.h>
+
+#include "rvma_mailbox_hashmap.h"
+#include "rvma_write.h"
+
+int main(int argc, char **argv) {
+    int port = 7471;
+    int vaddr = 135;
+    struct sockaddr_in server_addr;
+    struct rdma_cm_event *event;
+    
+    memset(&server_addr, 0, sizeof(server_addr));
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = INADDR_ANY; // Bind to all interfaces
+
+    // Calls newMailboxIntoHashmap, which calls setupMailbox, which gets the
+    // key, bufferQueue, ec, rdma cm_id
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+    if (!windowPtr) {
+        fprintf(stderr, "Failed to initialize RVMA window mailbox\n");
+        return -1;
+    }
+
+    RVMA_Mailbox *mailboxPtr = searchHashmap(windowPtr->hashMapPtr, &vaddr);
+    if (!mailboxPtr) {
+        fprintf(stderr, "Failed to get mailbox for vaddr = %d\n", vaddr);
+        return -1;
+    }
+
+    // Bind cm_id to address
+    rdma_bind_addr(mailboxPtr->cm_id, (struct sockaddr *)&server_addr);
+    
+    // Listen for incoming connections
+    printf("Listening for incoming connections...\n");
+    rdma_listen(mailboxPtr->cm_id, 1);
+
+    rdma_get_cm_event(mailboxPtr->ec, &event);
+    struct rdma_cm_id *client_cm_id = event->id;
+
+    // Define protection domain
+    printf("Defining protection domain for qp\n");
+    struct ibv_pd *pd = ibv_alloc_pd(client_cm_id->verbs);
+    if (!pd) {
+        perror("ibv_alloc_pd failed");
+        return -1;
+    }
+
+    // Define memory region
+    printf("Defining memory region for qp\n");
+    int mr_size = QUEUE_CAPACITY * sizeof(RVMA_Buffer_Entry*);
+    struct ibv_mr *mr = ibv_reg_mr(pd, mailboxPtr->virtualAddress, mr_size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
+
+    // Create QP
+    struct ibv_qp_init_attr qp_attr = {
+        .send_cq = mailboxPtr->cq,
+        .recv_cq = mailboxPtr->cq,
+        .qp_type = IBV_QPT_RC,
+        .cap = {
+            .max_send_wr = 16,
+            .max_recv_wr = 16,
+            .max_send_sge = 1,
+            .max_recv_sge = 1
+        }
+    };
+    if (rdma_create_qp(client_cm_id, mailboxPtr->pd, &qp_attr)) {
+        perror("rdma_create_qp");
+        return -1;
+    }
+
+    // Accept incoming connection
+    rdma_accept(client_cm_id, NULL);
+    rdma_ack_cm_event(event);
+
+    printf("Server accepted connection and created qp\n");
+}

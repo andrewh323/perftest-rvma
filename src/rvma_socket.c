@@ -37,6 +37,7 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
+static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 static struct index_map idm;
 struct rvsocket;
 
@@ -162,7 +163,7 @@ struct rvsocket {
             struct rs_iomap *target_iomap; // Target I/O map (for data retrieval)
             
             int rbuf_msg_index; // Receive buffer index, local mailbox?
-            int rbuf_bytes_avail; // Bytes available in the receive buffer (byte/op counter)?
+            int rbuf_bytes_avail; // Bytes available in the receive buffer
             struct ibv_mr *rmr; // Receive memory region
             uint8_t *rbuf; // Receive buffer (mailbox buffer?)
 
@@ -176,7 +177,7 @@ struct rvsocket {
             struct ds_dest *conn_dest; // Destination for rconnect()ed datagrams
             
             int udp_sock; // UDP socket for exchanging connection data
-            int epfd; // epoll fd for waiting on completion (not needed?)
+            int epfd; // epoll fd for waiting on completion
             int rqe_avail; // Number of receive queue entries available
             struct ds_smsg *smsg_free; // Pool of small send buffers
 
@@ -207,8 +208,8 @@ struct rvsocket {
 };
 
 
-// Create rvsocket fd, add to rvma mailbox and return the vaddr
-int rvsocket(int domain, int type, int protocol) {
+// Create rvsocket, add to window and return the vaddr
+int rvsocket(int domain, int type, int protocol, RVMA_Mailbox *mailboxPtr) {
 	struct rvsocket *rs;
     int index, ret;
 
@@ -223,13 +224,14 @@ int rvsocket(int domain, int type, int protocol) {
         rs->cm_id->route.addr.src_addr.sa_family = domain;
         index = rs->cm_id->channel->fd;
 
-    } else {
+    } else { // datagram
         ret = ds_init(rs, domain);
         if (ret)
             goto err;
         index = rs->udp_sock;
     }
-    ret = rs_insert(rs, index);
+
+    ret = rvs_insert_into_mailbox(rs, mailboxPtr);
     if (ret < 0)
         goto err;
 
@@ -241,9 +243,13 @@ err:
 }
 
 
-int rvs_insert_into_mailbox(RVMA_Win *rvma_window, int vaddr) {
+// Insert rvsocket into mailbox and return pointer to the rvsocket
+int rvs_insert_into_mailbox(struct rvsocket *rs, RVMA_Mailbox *mailboxPtr) {
     // Insert rvsocket into an RVMA mailbox
-    
+    pthread_mutex_lock(&mut);
+	rs->index = mailboxPtr; // Point rvsocket to mailbox
+	pthread_mutex_unlock(&mut);
+	return rs->index;
 }
 
 
@@ -334,51 +340,37 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
 }
 
 
-int rvmaPutShim(struct rvsocket *rs) {
-    // Allocate and initialize notification buffer pointer
+RVMA_Status rvmaPut(void *buf, int64_t size, struct addr_in *dest_addr, void *vaddr) {
+    // buf: Pointer to the buffer to send
+    // size: Size of the buffer to send
+    // dest_addr: Address of destination mailbox
+    // vaddr: vaddr of mailbox being sent from
+
+    int64_t threshold = size; // Set threshold to size of buffer (bytes)
     int *notifBuffPtr = malloc(sizeof(int));
     *notifBuffPtr = 0;
 
     int **notifBuffPtrAddr = malloc(sizeof(int*));
     *notifBuffPtrAddr = notifBuffPtr;
-    rs->rvma_notifBuffPtrAddr = (void **)notifBuffPtrAddr; // Point allocated address to the pointer
 
-    int* notifLenPtr = malloc(sizeof(int));
+    int *notifLenPtr = malloc(sizeof(int));
     *notifLenPtr = 0;
 
     int **notifLenPtrAddr = malloc(sizeof(int*));
     *notifLenPtrAddr = notifLenPtr;
-    rs->rvma_notifLenPtrAddr = (void **) notifLenPtrAddr;
 
-    rs->rvma_vaddr = 123;
-
-    return 0;
+    RVMA_Status status = rvmaPostBuffer((void **)&buf, size, (void **)notifBuffPtrAddr, (void **)notifLenPtrAddr, dest_addr, window, threshold, EPOCH_BYTES);
+    // How to set up qp and wr?
+    // ibv_post_send(qp, wr, bad_wr);
+    return status;
 }
 
 
-ssize_t rvsend(int socket, const void *buf, size_t len, RVMA_Win *rvma_window) {
-    // At this point rvsocket should be setup between mailboxes, with IP+port connection
-    // Step 1: post a receive buffer to mailbox on target
-        // This requires RVMA mailbox address and buffer length
-        // Also requires physical memory address of the buffer
-        // Buffer consists of threshold value, addr of completion pointer,
-        // address to write completed buffer length
-    // Step 2: Just send data to the target mailbox
+ssize_t rvsend(int socket, const void *buf, size_t len) {
 
-    struct rvsocket *rs;
-
-    rs = idm_at(&idm, socket);
-
-    int ret = rvmaPutShim(rs);
-
-    RVMA_Status status = rvmaPostBuffer((void **)&buf, len, rs->rvma_notifBuffPtrAddr, rs->rvma_notifLenPtrAddr, rs->rvma_vaddr, rvma_window, len, EPOCH_BYTES);
-
-    // rvma write to mailbox buffer
-    
-    return 0;
 }
 
 
 ssize_t rvrecv(int socket, void *buf, size_t len, int flags) {
-
+    // Read from mailbox buffer
 }

@@ -35,6 +35,7 @@ int main() {
 	// htons converts port number from host byte order to network byte order
 	// This is important because different systems may have different architectures
 	addr.sin_port = htons(PORT);
+	
 	// This tells the server to accept connections from any network interface
 	// INADDR_ANY is a constant that represents any address (0.0.0.0)
 	addr.sin_addr.s_addr = INADDR_ANY; // Bind to any address
