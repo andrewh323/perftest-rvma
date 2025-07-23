@@ -1,34 +1,41 @@
-/*
-Test if mailbox is set up correctly - DONE
-Test if connection is establised
-Test if rvma_write is successful
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <rdma/rdma_cma.h>
+#include <arpa/inet.h>
 
 #include "rvma_mailbox_hashmap.h"
 #include "rvma_write.h"
 
+uint64_t construct_vaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port) {
+    uint64_t res = (uint64_t)reserved << 48 | ((uint64_t)ip_host_order << 16) | port;
+    return res;
+}
+
 int main(int argc, char **argv) {
     int port = 7471;
-    int vaddr = 135;
+    uint16_t reserved = 0x0001; // Reserved 16 bits for vaddr structure
 
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
-    inet_pton(AF_INET, argv[1], &server_addr.sin_addr);
+    if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) != 1) {
+        perror("inet_pton failed");
+        return 1;
+    };
+
+    // Convert IP to host byte order and construct vaddr
+    uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
+    uint64_t vaddr = construct_vaddr(reserved, ip_host_order, port);
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
     RVMA_Mailbox *mailboxPtr = searchHashmap(windowPtr->hashMapPtr, &vaddr);
 
     if (!mailboxPtr) {
-        fprintf(stderr, "Failed to get mailbox for vaddr = %d\n", vaddr);
+        fprintf(stderr, "Failed to get mailbox for vaddr = %" PRIu64 "\n", vaddr);
         exit(1);
     }
 

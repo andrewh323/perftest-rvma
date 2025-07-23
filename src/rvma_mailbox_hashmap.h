@@ -7,6 +7,7 @@
 
 #include "rvma_common.h"
 #include "rvma_buffer_queue.h"
+#include <arpa/inet.h>
 
 #define HASHMAP_CAPACITY 50
 
@@ -47,5 +48,7 @@ RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, void *virtualAddress
 RVMA_Status retireBuffer(RVMA_Mailbox* RVMA_Mailbox, RVMA_Buffer_Entry* entry);
 
 RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, void* key);
+
+int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *remote_addr);
 
 #endif //ELEC498_RVMA_MAILBOX_HASHMAP_H
