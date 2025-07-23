@@ -256,7 +256,6 @@ RVMA_Status rvmaPut(void *buf, int64_t size, struct addr_in *dest_addr, void *va
     // Post a buffer to the RVMA mailbox
     int64_t threshold = size; // Set threshold to size of buffer
     RVMA_Status status = rvmaPostBuffer((void **)&buf, size, notifBuffPtrAddr, notifLenPtrAddr, vaddr, dest_addr, threshold, EPOCH_BYTES);
-    // How to set up qp and wr?
     ibv_post_send(qp, wr, bad_wr)
     return status;
 } */

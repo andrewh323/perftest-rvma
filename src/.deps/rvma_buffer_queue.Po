@@ -126,7 +126,21 @@ src/rvma_buffer_queue.o: src/rvma_buffer_queue.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/inttypes.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/malloc.h \
  src/get_clock.h src/perftest_counters.h src/memory.h config.h \
- src/rvma_mailbox_hashmap.h src/rvma_buffer_queue.h
+ src/rvma_mailbox_hashmap.h src/rvma_buffer_queue.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netinet/in.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/socket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_iovec.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket_type.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sockaddr.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/socket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/socket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/sockios.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/sockios.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_osockaddr.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket2.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/in.h
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdc-predef.h:
 src/rvma_write.h:
 src/rvma_common.h:
@@ -260,3 +274,17 @@ src/memory.h:
 config.h:
 src/rvma_mailbox_hashmap.h:
 src/rvma_buffer_queue.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netinet/in.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/socket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_iovec.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket_type.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sockaddr.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/socket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/socket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/sockios.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/sockios.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_osockaddr.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket2.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/in.h:
