@@ -222,6 +222,14 @@ int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *rem
         }
     };
 
+    if (!mailboxPtr->pd) {
+        mailboxPtr->pd = ibv_alloc_pd(mailboxPtr->cm_id->verbs);
+        if (!mailboxPtr->pd) {
+            perror("ibv_alloc_pd failed");
+            return -1;
+        }
+    }
+
     if(rdma_create_qp(mailboxPtr->cm_id, mailboxPtr->pd, &qp_attr)) {
         perror("rdma_create_qp");
         return -1;

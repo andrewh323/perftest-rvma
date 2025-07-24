@@ -52,7 +52,7 @@ uint64_t construct_vaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t por
 int main(int argc, char **argv) {
 
     int port = 7471;
-    const char *iface_name = "ib0";
+    const char *iface_name = "ib0"; // Search for RDMA device
     uint32_t ip_host_order = get_server_ip(iface_name); // Get IP for vaddr construction
     struct in_addr addr;
     uint16_t reserved = 0x0001; // Reserved 16 bits for vaddr structure
@@ -104,11 +104,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Define memory region
-    printf("Defining memory region for qp\n");
-    int mr_size = QUEUE_CAPACITY * sizeof(RVMA_Buffer_Entry*);
-    struct ibv_mr *mr = ibv_reg_mr(pd, mailboxPtr->virtualAddress, mr_size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
-
     mailboxPtr->cq = ibv_create_cq(client_cm_id->verbs, 16, NULL, NULL, 0);
     if (!mailboxPtr->cq) {
         perror("ibv_create_cq failed");
@@ -131,9 +126,13 @@ int main(int argc, char **argv) {
         perror("rdma_create_qp");
         return -1;
     }
+    
+    // Link mailbox qp and cm_id
+    mailboxPtr->cm_id = client_cm_id;
+    mailboxPtr->qp = client_cm_id->qp;
 
     // Accept incoming connection
-    rdma_accept(client_cm_id, NULL);
+    rdma_accept(mailboxPtr->cm_id, NULL);
     rdma_ack_cm_event(event);
 
     printf("Server accepted connection and created qp\n");
