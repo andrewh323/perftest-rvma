@@ -340,31 +340,6 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
 }
 
 
-RVMA_Status rvmaPut(void *buf, int64_t size, struct addr_in *dest_addr, void *vaddr) {
-    // buf: Pointer to the buffer to send
-    // size: Size of the buffer to send
-    // dest_addr: Address of destination mailbox
-    // vaddr: vaddr of mailbox being sent from
-
-    int64_t threshold = size; // Set threshold to size of buffer (bytes)
-    int *notifBuffPtr = malloc(sizeof(int));
-    *notifBuffPtr = 0;
-
-    int **notifBuffPtrAddr = malloc(sizeof(int*));
-    *notifBuffPtrAddr = notifBuffPtr;
-
-    int *notifLenPtr = malloc(sizeof(int));
-    *notifLenPtr = 0;
-
-    int **notifLenPtrAddr = malloc(sizeof(int*));
-    *notifLenPtrAddr = notifLenPtr;
-
-    RVMA_Status status = rvmaPostBuffer((void **)&buf, size, (void **)notifBuffPtrAddr, (void **)notifLenPtrAddr, dest_addr, window, threshold, EPOCH_BYTES);
-    // How to set up qp and wr?
-    // ibv_post_send(qp, wr, bad_wr);
-    return status;
-}
-
 
 ssize_t rvsend(int socket, const void *buf, size_t len) {
 

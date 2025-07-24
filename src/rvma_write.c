@@ -208,7 +208,7 @@ RVMA_Status rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, 
         return RVMA_ERROR;
     }
 
-    if (mlock(buffer, size * sizeof(buffer)) == -1) {
+    if (mlock(*buffer, size)) {
         print_error("rvmaPostBuffer: buffer memory couldn't be pinned");
         return RVMA_ERROR;
     }
@@ -216,7 +216,7 @@ RVMA_Status rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, 
     RVMA_Status res;
     res = enqueue(mailbox->bufferQueue, entry);
     if (res != RVMA_SUCCESS) {
-        if (munlock(buffer, size * sizeof(buffer)) == -1)
+        if (munlock(*buffer, size))
             print_error("rvmaPostBuffer: buffer memory couldn't be unpinned");
         free(entry);
         print_error("rvmaPostBuffer: buffer entry failed to be added to mailbox queue");
@@ -250,15 +250,81 @@ int rvmaPutHybrid(struct ibv_qp *qp, int index, struct ibv_send_wr *wr, struct i
     return ibv_post_send(qp, &wr[index], bad_wr);
 }
 
-/* 
-// Creating new RVMA put
-RVMA_Status rvmaPut(void *buf, int64_t size, struct addr_in *dest_addr, void *vaddr) {
+
+/*
+RVMA PUT STEPS
+    1. Post receive buffer to target mailbox
+    2. Address translation (this was done before the put in client code)
+    3. Prepare payload to be written into memory (ibv_reg_mr?)
+    4. Perform completion check
+        - Increment counter and check it against threshold
+        - If buffer is complete, write address of buffer to completion pointer address
+        - Also write length of data buffer?
+*/
+RVMA_Status rvmaPut(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
+    // Set buffer variables
+    int64_t threshold = size; // Set threshold to size of buffer (bytes)
+
+    int *notifBuffPtr = malloc(sizeof(int));
+    *notifBuffPtr = 0;
+
+    int *notifLenPtr = malloc(sizeof(int));
+    *notifLenPtr = 0;
+
+    void *data = buf;
+
     // Post a buffer to the RVMA mailbox
-    int64_t threshold = size; // Set threshold to size of buffer
-    RVMA_Status status = rvmaPostBuffer((void **)&buf, size, notifBuffPtrAddr, notifLenPtrAddr, vaddr, dest_addr, threshold, EPOCH_BYTES);
-    ibv_post_send(qp, wr, bad_wr)
+    RVMA_Status status = rvmaPostBuffer(&data, size, (void **)&notifBuffPtr, (void **)&notifLenPtr, vaddr, window, threshold, EPOCH_BYTES);
+
+    // Get mailbox for qp
+    RVMA_Mailbox *mailbox = searchHashmap(window->hashMapPtr, vaddr);
+    if (mailbox == NULL) {
+        perror("rvmaPut: No Mailbox associated with virtual address");
+        status = RVMA_ERROR;
+    }
+
+    struct ibv_send_wr 	*bad_wr = NULL;
+
+    // Define memory region for sge
+    struct ibv_mr *mr = ibv_reg_mr(mailbox->pd, buf, size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
+    if (!mr) {
+        perror("rvmaPut: ibv_reg_mr failed");
+        status = RVMA_ERROR;
+    }
+
+    // Completion check here?
+    // If buffer is complete, write the address of buffer to completion pointer
+    // Also write length of buffer
+
+    // Build sge
+    struct ibv_sge sge = {
+        .addr = (uintptr_t)buf,
+        .length = size,
+        .lkey = mr->lkey
+    };
+
+    // Build wr
+    struct ibv_send_wr wr = {
+        .wr_id = (uintptr_t)buf,
+        .sg_list = &sge,
+        .num_sge = 1,
+        .opcode = IBV_WR_SEND,
+        .send_flags = IBV_SEND_SIGNALED // Signaled or unsignaled?
+    };
+
+    // Send function
+    if (ibv_post_send(mailbox->qp, &wr, &bad_wr)) {
+        perror("rvmaPut: ibv_post_send failed");
+        status = RVMA_ERROR;
+    }
+
+    // Deregister memory once finished
+    ibv_dereg_mr(mr);
+    if (status != RVMA_ERROR) {
+        printf("rvmaPut succeeded!\n");
+    }
     return status;
-} */
+}
 
 
 RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void *virtualAddress) {

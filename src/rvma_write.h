@@ -34,6 +34,8 @@ RVMA_Status rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, 
 
 int rvmaPutHybrid(struct ibv_qp* qp, int index, struct ibv_send_wr *wr, struct ibv_send_wr **bad_wr);
 
+RVMA_Status rvmaPut(void *buf, int64_t size, void *vaddr, RVMA_Win *window);
+
 RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void* virtualAddress);
 
 RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type, int msgSize);
