@@ -51,13 +51,13 @@ int main(int argc, char **argv) {
 
     int64_t size = strlen(message) + 1;
 
-    char *buffer = malloc(size);
     // Should I make the buffer size fixed? Or have a preallocated buffer pool?
+    char *buffer = malloc(size);
+    memcpy(buffer, message, size);
 
-    // Do an rvmaPut on the vaddr
-    RVMA_Status status = rvmaPut((void *)buffer, size, &vaddr, windowPtr);
+    // Perform rvmaPut on vaddr
+    RVMA_Status status = rvmaSend((void *)buffer, size, &vaddr, windowPtr);
 
     // Free data buffer memory once finished
     free(buffer);
-
 }
