@@ -368,7 +368,7 @@ void test_enqueueRetiredBufferNullEntry(){
 }
 
 void test_dequeue(){
-    bool status = (dequeue(bq_test_queue, bq_test_entry) == RVMA_FAILURE) ? false : true;
+    bool status = (dequeue(bq_test_queue) == RVMA_FAILURE) ? false : true;
     if (!status){ // failed test case due to failure to remove entry from buffer queue
         printTestFailed(bq_TestCounter,"TC-BQ31");
         testFailed(bq_TestCounter);
@@ -380,7 +380,7 @@ void test_dequeue(){
 }
 
 void test_dequeueNullQueue(){
-    bool status = (dequeue(NULL, bq_test_entry) != RVMA_FAILURE) ? false : true;
+    bool status = (dequeue(NULL) != RVMA_FAILURE) ? false : true;
     if (!status){ // failed test case due to failure to remove entry from buffer queue
         printTestFailed(bq_TestCounter,"TC-BQ32");
         testFailed(bq_TestCounter);
@@ -390,7 +390,7 @@ void test_dequeueNullQueue(){
 }
 
 void test_dequeueNullEntry(){
-    bool status = (dequeue(bq_test_queue, NULL) != RVMA_FAILURE) ? false : true;
+    bool status = (dequeue(bq_test_queue) != RVMA_FAILURE) ? false : true;
     if (!status){ // failed test case due to failure to remove entry from buffer queue
         printTestFailed(bq_TestCounter,"TC-BQ33");
         testFailed(bq_TestCounter);
@@ -400,7 +400,7 @@ void test_dequeueNullEntry(){
 }
 
 void test_dequeueNonexistentEntry(){
-    bool status = (dequeue(bq_test_queue, bq_test_entry_2) != RVMA_FAILURE) ? false : true;
+    bool status = (dequeue(bq_test_queue) != RVMA_FAILURE) ? false : true;
     if (!status){ // failed test case due to failure to catch error of nonexisitant entry
         printTestFailed(bq_TestCounter,"TC-BQ35: tried to remove nonexistant entry");
         testFailed(bq_TestCounter);

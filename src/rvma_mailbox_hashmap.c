@@ -164,10 +164,8 @@ RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, void* key){
 
 RVMA_Status retireBuffer(RVMA_Mailbox* RVMA_Mailbox, RVMA_Buffer_Entry* entry){
 
-    RVMA_Status res = dequeue(RVMA_Mailbox->bufferQueue, entry);
-
-    if(res != RVMA_SUCCESS){
-        print_error("retireBuffer: dequeue of entry failed");
+    entry = dequeue(RVMA_Mailbox->bufferQueue);
+    if (entry == NULL) {
         return RVMA_ERROR;
     }
 

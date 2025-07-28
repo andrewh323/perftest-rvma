@@ -1,10 +1,3 @@
-/*
-Test if mailbox is set up correctly - DONE
-Test if connection is establised - DONE
-    Test conversion of IP address into vaddr - DONE
-Test if rvma_write is successful
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,4 +129,6 @@ int main(int argc, char **argv) {
     rdma_ack_cm_event(event);
 
     printf("Server accepted connection and created qp\n");
+
+    RVMA_Status status = rvmaRecv(&vaddr, windowPtr);
 }

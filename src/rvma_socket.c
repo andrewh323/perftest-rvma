@@ -208,7 +208,20 @@ struct rvsocket {
 };
 
 
-// Create rvsocket, add to window and return the vaddr
+/* 
+RVSOCKETS IS JUST A SOCKET-LIKE AP FOR RVMA
+COMPONENT TRANSLATION IS OUTLINED AS FOLLOWS:
+    - rvsocket: Defines RVMA mailboxes and sets up connection with cm_id
+    - rvbind: Calls rdma_bind_addr to bind address and cm_id
+    - rvlisten: Calls rdma_listen to listen for incoming connection requests
+    - rvaccept: Calls rdma_accept to accept connection request
+    - rvconnect: Calls rdma_connect to connect to a specified address
+    - rvsend/rvrecv: Calls ibv_post_send/recv
+*/
+
+
+// Create rvsocket using rdma_create_id, add to window and return the vaddr
+// Call mailbox/window inits
 int rvsocket(int domain, int type, int protocol, RVMA_Mailbox *mailboxPtr) {
 	struct rvsocket *rs;
     int index, ret;
@@ -240,16 +253,6 @@ int rvsocket(int domain, int type, int protocol, RVMA_Mailbox *mailboxPtr) {
 err:
     rs_free(rs);
     return ret;
-}
-
-
-// Insert rvsocket into mailbox and return pointer to the rvsocket
-int rvs_insert_into_mailbox(struct rvsocket *rs, RVMA_Mailbox *mailboxPtr) {
-    // Insert rvsocket into an RVMA mailbox
-    pthread_mutex_lock(&mut);
-	rs->index = mailboxPtr; // Point rvsocket to mailbox
-	pthread_mutex_unlock(&mut);
-	return rs->index;
 }
 
 
@@ -347,5 +350,5 @@ ssize_t rvsend(int socket, const void *buf, size_t len) {
 
 
 ssize_t rvrecv(int socket, void *buf, size_t len, int flags) {
-    // Read from mailbox buffer
+    // Read from mailbox buffer with rvmaRecv
 }

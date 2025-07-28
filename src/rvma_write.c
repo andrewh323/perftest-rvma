@@ -9,6 +9,7 @@
  ***/
 
 #include "rvma_write.h"
+#define MAX_RECV_SIZE 1024
 
 RVMA_Win *rvmaInitWindowMailboxKey(void *virtualAddress, key_t key) {
 
@@ -261,8 +262,7 @@ RVMA PUT STEPS
         - If buffer is complete, write address of buffer to completion pointer address
         - Also write length of data buffer?
 */
-RVMA_Status rvmaPut(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
-    // Set buffer variables
+RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
     int64_t threshold = size; // Set threshold to size of buffer (bytes)
 
     int *notifBuffPtr = malloc(sizeof(int));
@@ -283,7 +283,7 @@ RVMA_Status rvmaPut(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
         status = RVMA_ERROR;
     }
 
-    struct ibv_send_wr 	*bad_wr = NULL;
+    struct ibv_send_wr *bad_wr = NULL;
 
     // Define memory region for sge
     struct ibv_mr *mr = ibv_reg_mr(mailbox->pd, buf, size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
@@ -308,7 +308,7 @@ RVMA_Status rvmaPut(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
         .wr_id = (uintptr_t)buf,
         .sg_list = &sge,
         .num_sge = 1,
-        .opcode = IBV_WR_SEND,
+        .opcode = IBV_WR_SEND, // Send or write? Sockets uses send
         .send_flags = IBV_SEND_SIGNALED // Signaled or unsignaled?
     };
 
@@ -325,6 +325,100 @@ RVMA_Status rvmaPut(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
     }
     return status;
 }
+
+// Simply read the buffer from mailbox buffer queue
+RVMA_Status rvmaRecv(void *vaddr, RVMA_Win *window) {
+
+    RVMA_Mailbox *mailbox = searchHashmap(window->hashMapPtr, vaddr);
+    if (mailbox == NULL) {
+        perror("rvmaRecv: No Mailbox associated with virtual address");
+        return RVMA_ERROR;
+    }
+
+    // Retrieve buffer and dequeue it
+    RVMA_Buffer_Entry *entry = dequeue(mailbox->bufferQueue);
+    if (entry == NULL) {
+        perror("rvmaRecv: No posted buffer available in mailbox");
+        return RVMA_ERROR;
+    }
+
+    // Wait on notification pointers
+    volatile int *notif = *(int **)entry->notifBuffPtrAddr;
+    volatile int *len = *(int **)entry->notifLenPtrAddr;
+
+    // Read buffer contents
+    void *message_buf = *(entry->realBuffAddr);
+    int64_t msg_size = *len;
+
+    printf("rvmaRecv: Received %ld bytes from mailbox buffer:\n", msg_size);
+    fwrite(message_buf, 1, msg_size, stdout);
+    printf("\n");
+
+    return RVMA_SUCCESS;
+}
+
+/*
+RVMA_Status rvmaRecv(void *vaddr, RVMA_Win *window) {
+
+    RVMA_Mailbox *mailbox = searchHashmap(window->hashMapPtr, vaddr);
+    if (mailbox == NULL) {
+        perror("rvmaRecv: No Mailbox associated with virtual address");
+        return RVMA_ERROR;
+    }
+
+    struct ibv_wc wc;
+
+    // Define recv buffer and register mr
+    char *recv_buf = malloc(MAX_RECV_SIZE);
+    memset(recv_buf, 0, MAX_RECV_SIZE);
+
+    struct ibv_mr *recv_mr = ibv_reg_mr(mailbox->pd, recv_buf, MAX_RECV_SIZE, IBV_ACCESS_LOCAL_WRITE);
+
+    // Build sge
+    struct ibv_sge sge = {
+        .addr = (uintptr_t)recv_buf,
+        .length = MAX_RECV_SIZE,
+        .lkey = recv_mr->lkey
+    };
+
+    // Build recv_wr
+    struct ibv_recv_wr recv_wr = {
+        .wr_id = (uintptr_t)recv_buf,
+        .sg_list = &sge,
+        .num_sge = 1,
+        .next = NULL
+    };
+
+    struct ibv_recv_wr *bad_wr = NULL;
+
+    // Post recv
+    if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
+        perror("ibv_post_recv failed");
+        return RVMA_ERROR;
+    }
+
+    // Poll cq
+    int num_wc;
+    printf("Receive wr posted, now polling cq...\n");
+
+    do {
+        num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
+    } while (num_wc == 0);
+
+    if (wc.status != IBV_WC_SUCCESS) {
+        fprintf(stderr, "Recv failed: %s\n", ibv_wc_status_str(wc.status));
+        return RVMA_ERROR;
+    }
+    else {
+        printf("Server received message: %s\n", recv_buf);
+    }
+
+    // Free resources
+    ibv_dereg_mr(recv_mr);
+    free(recv_buf);
+
+    return RVMA_SUCCESS;
+} */
 
 
 RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void *virtualAddress) {
