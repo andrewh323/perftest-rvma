@@ -20,6 +20,7 @@ typedef struct {
     epoch_type epochType;
     void **notifBuffPtrAddr;
     void **notifLenPtrAddr;
+    struct ibv_mr *mr;
 } RVMA_Buffer_Entry;
 
 typedef struct {

@@ -46,6 +46,7 @@ int main(int argc, char **argv) {
     }
     printf("Client connected to server %s:%d\n", argv[1], port);
 
+
     // Define data buffer to send
     const char *message = "Hello server! This message is from the client!";
 
@@ -57,6 +58,18 @@ int main(int argc, char **argv) {
 
     // Perform rvmaPut on vaddr
     RVMA_Status status = rvmaSend((void *)buffer, size, &vaddr, windowPtr);
+/* 
+    // FOR TESTING A 2ND SEND
+    sleep(1); // Alternative ideas: Prepost multiple recvs, CQEs with ACK
+    const char *message2 = "Hello server! This is message 2 from the client!";
+    size = strlen(message2) + 1;
+
+    char *buffer2 = malloc(size);
+    memcpy(buffer2, message2, size);
+
+    status = rvmaSend((void *)buffer2, size, &vaddr, windowPtr);
+    free(buffer2);
+ */
 
     // Free data buffer memory once finished
     free(buffer);
