@@ -58,9 +58,7 @@ RVMA_Buffer_Entry* createBufferEntry(void **buffer, int64_t size, void **notific
         print_error("createBufferEntry: epochType is not a valid entry");
         return  NULL;
     }
-
-    RVMA_Buffer_Entry* entry;
-    entry = (RVMA_Buffer_Entry*)malloc(sizeof(RVMA_Buffer_Entry));
+    RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry*)malloc(sizeof(RVMA_Buffer_Entry));
     if(entry == NULL){
         print_error("createBufferEntry: Buffer entry couldn't be allocated");
         return  NULL;
@@ -144,19 +142,14 @@ RVMA_Status enqueueRetiredBuffer(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* en
 }
 
 RVMA_Buffer_Entry* dequeue(RVMA_Buffer_Queue* queue){
-    RVMA_Buffer_Entry *entry;
     if(queue == NULL){
         print_error("dequeue: queue is null");
-        return NULL;
-    }
-    if(entry == NULL){
-        print_error("dequeue: entry is null");
         return NULL;
     }
 
     if(isEmpty(queue) == RVMA_TRUE) return NULL;
 
-    entry = queue->pBufferEntry[queue->start];
+    RVMA_Buffer_Entry *entry = queue->pBufferEntry[queue->start];
     queue->pBufferEntry[queue->start] = NULL;
 
     queue->start = (queue->start + 1) % queue->capacity;

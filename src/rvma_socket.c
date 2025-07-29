@@ -209,9 +209,9 @@ struct rvsocket {
 
 
 /* 
-RVSOCKETS IS JUST A SOCKET-LIKE AP FOR RVMA
+RVSOCKETS IS JUST A SOCKET-LIKE API FOR RVMA
 COMPONENT TRANSLATION IS OUTLINED AS FOLLOWS:
-    - rvsocket: Defines RVMA mailboxes and sets up connection with cm_id
+    - rvsocket: Initializes RVMA mailbox/window and sets up connection with cm_id
     - rvbind: Calls rdma_bind_addr to bind address and cm_id
     - rvlisten: Calls rdma_listen to listen for incoming connection requests
     - rvaccept: Calls rdma_accept to accept connection request

@@ -89,7 +89,6 @@ int main(int argc, char **argv) {
     struct rdma_cm_id *client_cm_id = event->id;
 
     // Define protection domain
-    printf("Defining protection domain for qp\n");
     struct ibv_pd *pd = ibv_alloc_pd(client_cm_id->verbs);
     mailboxPtr->pd = pd;
     if (!pd) {
@@ -130,5 +129,12 @@ int main(int argc, char **argv) {
 
     printf("Server accepted connection and created qp\n");
 
-    RVMA_Status status = rvmaRecv(&vaddr, windowPtr);
+    // Recv indefinitely for testing
+    while (1) {
+        RVMA_Status status = rvmaRecv(&vaddr, windowPtr);
+        if (status != RVMA_SUCCESS) {
+            perror("Error receiving message");
+            break;
+        }
+    }
 }
