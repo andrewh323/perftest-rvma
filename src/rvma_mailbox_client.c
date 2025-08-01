@@ -8,6 +8,7 @@
 #include "rvma_mailbox_hashmap.h"
 #include "rvma_write.h"
 
+
 uint64_t construct_vaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port) {
     uint64_t res = (uint64_t)reserved << 48 | ((uint64_t)ip_host_order << 16) | port;
     return res;
