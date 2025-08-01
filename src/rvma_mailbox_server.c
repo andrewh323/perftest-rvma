@@ -11,7 +11,7 @@
 #include "rvma_write.h"
 
 
-uint32_t get_server_ip(const char *iface_name) {
+uint32_t get_host_ip(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;
     uint32_t ip = 0;
 
@@ -46,20 +46,22 @@ int main(int argc, char **argv) {
 
     int port = 7471;
     const char *iface_name = "ib0"; // Search for RDMA device
-    uint32_t ip_host_order = get_server_ip(iface_name); // Get IP for vaddr construction
-    struct in_addr addr;
     uint16_t reserved = 0x0001; // Reserved 16 bits for vaddr structure
-    addr.s_addr = htonl(ip_host_order); // Convert to network byte order for printing
-    printf("IP address found: %s\n", inet_ntoa(addr));
 
-    struct sockaddr_in server_addr;
+    struct sockaddr_in client_addr;
     struct rdma_cm_event *event;
-    memset(&server_addr, 0, sizeof(server_addr));
+    memset(&client_addr, 0, sizeof(client_addr));
 
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    server_addr.sin_addr.s_addr = INADDR_ANY; // Bind to all interfaces
+    client_addr.sin_family = AF_INET;
+    client_addr.sin_port = htons(port);
+    if (inet_pton(AF_INET, argv[1], &client_addr.sin_addr) != 1) {
+        perror("inet_pton failed");
+        return -1;
+    };
 
+    client_addr.sin_addr.s_addr = INADDR_ANY; // Bind to all interfaces
+
+    uint32_t ip_host_order = ntohl(client_addr.sin_addr.s_addr);
     // Construct virtual address
     uint64_t vaddr = construct_vaddr(reserved, ip_host_order, port);
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
@@ -79,7 +81,7 @@ int main(int argc, char **argv) {
     }
 
     // Bind cm_id to address
-    rdma_bind_addr(mailboxPtr->cm_id, (struct sockaddr *)&server_addr);
+    rdma_bind_addr(mailboxPtr->cm_id, (struct sockaddr *)&client_addr);
     
     // Listen for incoming connections
     printf("Listening for incoming connections...\n");

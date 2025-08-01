@@ -263,9 +263,9 @@ int rvmaPutHybrid(struct ibv_qp *qp, int index, struct ibv_send_wr *wr, struct i
 RVMA PUT STEPS
     1. Post receive buffer to target mailbox
     2. Address translation (this was done before the put in client code)
-    3. Prepare payload to be written into memory (ibv_reg_mr?)
+    3. Prepare payload to be written into memory (ibv_reg_mr)
     4. Perform completion check
-        - Increment counter and check it against threshold
+        - Increment counter and check it against threshold (Counter is hardware only)
         - If buffer is complete, write address of buffer to completion pointer address
         - Also write length of data buffer?
 */
@@ -314,7 +314,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
         .wr_id = (uintptr_t)data,
         .sg_list = &sge,
         .num_sge = 1,
-        .opcode = IBV_WR_SEND, // Send or write? Sockets uses send
+        .opcode = IBV_WR_SEND,
         .send_flags = IBV_SEND_SIGNALED // Signaled or unsignaled?
     };
 
@@ -347,7 +347,8 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Win *window) {
         return RVMA_ERROR;
     }
 
-    int *notifBuffPtr = malloc(sizeof(int));
+    // Set notification pointer to buffer address
+    uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
     *notifBuffPtr = 0;
 
     int *notifLenPtr = malloc(sizeof(int));
@@ -356,14 +357,7 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Win *window) {
     RVMA_Status status = rvmaPostBuffer((void**)&recv_buf, MAX_RECV_SIZE, (void **)&notifBuffPtr,
                                         (void **)&notifLenPtr, vaddr, window, MAX_RECV_SIZE, EPOCH_BYTES);
 
-    if (status != RVMA_SUCCESS){
-        free(recv_buf);
-        free(notifBuffPtr);
-        free(notifLenPtr);
-        return status;
-    }
-
-    // Pop buffer entry from 
+    // Pop buffer entry from queue
     RVMA_Buffer_Entry *entry = dequeue(mailbox->bufferQueue);
     if (!entry) {
         perror("rvmaRecv: Buffer queue is empty");
@@ -396,18 +390,25 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Win *window) {
     // Poll cq
     int num_wc;
     printf("Receive wr posted, now polling cq...\n");
-
     do {
         num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
     } while (num_wc == 0);
 
-    if (wc.status != IBV_WC_SUCCESS) {
-        fprintf(stderr, "Recv failed: %s\n", ibv_wc_status_str(wc.status));
-        return RVMA_ERROR;
+    if (wc.status == IBV_WC_SUCCESS) {
+        // Update threshold count (for hardware completion)
+        entry->epochCount += wc.byte_len;
+        // if(entry->epochCount == counter...)
+
+        // Write buffer head address and length to notification pointers
+        *(uintptr_t *)(entry->notifBuffPtrAddr) = (uintptr_t)(recv_buf);
+        *(int *)(entry->notifLenPtrAddr) = wc.byte_len;
+        printf("Notification buffer address: %p\n", (void *)(entry->notifBuffPtrAddr));
+        printf("Server received message: %s\n", recv_buf);
+        // Send ACK here for completion?
     }
     else {
-        printf("Server received message: %s\n", recv_buf);
-        // Send ACK here for completion? For multiple messages
+        perror("rvmaRecv: ibv_poll_cq failed");
+        return RVMA_ERROR;
     }
 
     // Free resources
