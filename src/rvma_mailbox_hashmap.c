@@ -207,19 +207,7 @@ int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *rem
     }
     rdma_ack_cm_event(event);
 
-    // Create QP
-    struct ibv_qp_init_attr qp_attr = {
-        .send_cq = mailboxPtr->cq,
-        .recv_cq = mailboxPtr->cq,
-        .qp_type = IBV_QPT_RC,
-        .cap = {
-            .max_send_wr = 16,
-            .max_recv_wr = 16,
-            .max_send_sge = 1,
-            .max_recv_sge = 1
-        }
-    };
-
+    // Create protection domain
     if (!mailboxPtr->pd) {
         mailboxPtr->pd = ibv_alloc_pd(mailboxPtr->cm_id->verbs);
         if (!mailboxPtr->pd) {
@@ -227,6 +215,27 @@ int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *rem
             return -1;
         }
     }
+
+    // Define completion queue
+    mailboxPtr->cq = ibv_create_cq(mailboxPtr->cm_id->verbs, 16, NULL, NULL, 0);
+    if (!mailboxPtr->cq) {
+        perror("ibv_create_cq failed");
+        return -1;
+    }
+
+    // Create QP
+    struct ibv_qp_init_attr qp_attr = {
+        .send_cq = mailboxPtr->cq,
+        .recv_cq = mailboxPtr->cq,
+        .qp_type = IBV_QPT_RC, // Reliable connection
+        .sq_sig_all = 1,
+        .cap = {
+            .max_send_wr = 16,
+            .max_recv_wr = 16,
+            .max_send_sge = 1,
+            .max_recv_sge = 1
+        }
+    };
 
     if(rdma_create_qp(mailboxPtr->cm_id, mailboxPtr->pd, &qp_attr)) {
         perror("rdma_create_qp");

@@ -285,14 +285,14 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
     // Get mailbox for qp
     RVMA_Mailbox *mailbox = searchHashmap(window->hashMapPtr, vaddr);
     if (mailbox == NULL) {
-        perror("rvmaPut: No Mailbox associated with virtual address");
+        perror("rvmaSend: No Mailbox associated with virtual address");
         status = RVMA_ERROR;
     }
     
     // Pop the buffer entry from the queue
     RVMA_Buffer_Entry *entry = dequeue(mailbox->bufferQueue);
     if (!entry) {
-        perror("rvmaPut: No buffer entry available in mailbox queue");
+        perror("rvmaSend: No buffer entry available in mailbox queue");
         return RVMA_ERROR;
     }
 
@@ -315,13 +315,31 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Win *window) {
         .sg_list = &sge,
         .num_sge = 1,
         .opcode = IBV_WR_SEND,
-        .send_flags = IBV_SEND_SIGNALED // Signaled or unsignaled?
+        .send_flags = IBV_SEND_SIGNALED // Signaled for completion
     };
 
     // Send function
     if (ibv_post_send(mailbox->qp, &wr, &bad_wr)) {
-        perror("rvmaPut: ibv_post_send failed");
+        perror("rvmaSend: ibv_post_send failed");
         status = RVMA_ERROR;
+    }
+
+    // Poll cq
+    struct ibv_wc wc;
+    int res;
+    do {
+        res = ibv_poll_cq(mailbox->cq, 1, &wc);
+    } while (res == 0);
+    if (res < 0) {
+        perror("rvmaSend: ibv_poll_cq failed");
+        return RVMA_ERROR;
+    }
+    if (wc.status!= IBV_WC_SUCCESS) {
+        perror("rvmaSend: ibv_poll_cq failed");
+        return RVMA_ERROR;
+    }
+    else {
+        printf("rvmaSend success!\n");
     }
 
     // Deregister memory once finished
@@ -337,8 +355,6 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Win *window) {
         perror("rvmaRecv: No Mailbox associated with virtual address");
         return RVMA_ERROR;
     }
-
-    struct ibv_wc wc;
 
     // Define recv buffer and post it to the mailbox buffer queue
     char *recv_buf = malloc(MAX_RECV_SIZE);
@@ -388,6 +404,7 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Win *window) {
     }
 
     // Poll cq
+    struct ibv_wc wc;
     int num_wc;
     printf("Receive wr posted, now polling cq...\n");
     do {
@@ -397,14 +414,12 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Win *window) {
     if (wc.status == IBV_WC_SUCCESS) {
         // Update threshold count (for hardware completion)
         entry->epochCount += wc.byte_len;
-        // if(entry->epochCount == counter...)
+        // if(entry->epochCount >= hardwareCounter) ...
 
         // Write buffer head address and length to notification pointers
         *(uintptr_t *)(entry->notifBuffPtrAddr) = (uintptr_t)(recv_buf);
         *(int *)(entry->notifLenPtrAddr) = wc.byte_len;
-        printf("Notification buffer address: %p\n", (void *)(entry->notifBuffPtrAddr));
         printf("Server received message: %s\n", recv_buf);
-        // Send ACK here for completion?
     }
     else {
         perror("rvmaRecv: ibv_poll_cq failed");
