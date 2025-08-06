@@ -41,37 +41,30 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    // Resolves address and route, creates QP and cm event
     if (establishMailboxConnection(mailboxPtr, &server_addr) != 0) {
         fprintf(stderr, "Failed to establish connection\n");
         return -1;
     }
     printf("Client connected to server %s:%d\n", argv[1], port);
 
+    for (int i = 1; i < 10; i++) {
+        // Define data buffer to send
+        char *message = malloc(100);
+        snprintf(message, 100, "Hello server! This is message %d from the client!", i);
 
-    // Define data buffer to send
-    const char *message = "Hello server! This message is from the client!";
+        int64_t size = strlen(message) + 1;
 
-    int64_t size = strlen(message) + 1;
+        char *buffer = malloc(size);
+        memcpy(buffer, message, size);
 
-    // Should I make the buffer size fixed? Or have a preallocated buffer pool?
-    char *buffer = malloc(size);
-    memcpy(buffer, message, size);
-
-    // Perform rvmaPut on vaddr
-    RVMA_Status status = rvmaSend((void *)buffer, size, &vaddr, windowPtr);
-/* 
-    // FOR TESTING A 2ND SEND
-    sleep(1); // Alternative ideas: Prepost multiple recvs, CQEs with ACK
-    const char *message2 = "Hello server! This is message 2 from the client!";
-    size = strlen(message2) + 1;
-
-    char *buffer2 = malloc(size);
-    memcpy(buffer2, message2, size);
-
-    status = rvmaSend((void *)buffer2, size, &vaddr, windowPtr);
-    free(buffer2);
- */
-
-    // Free data buffer memory once finished
-    free(buffer);
+        // Perform rvmaPut on vaddr
+        RVMA_Status status = rvmaSend((void *)buffer, size, &vaddr, windowPtr);
+        if (status != RVMA_SUCCESS) {
+            fprintf(stderr, "Failed to send message %d\n", i);
+        }
+        // Free data buffer memory once finished
+        free(buffer);
+        free(message);
+    }
 }
