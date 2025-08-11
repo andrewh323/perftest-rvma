@@ -37,6 +37,10 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
+
+#define MAX_RVSOCKETS 1024
+#define PORT 7471
+
 static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 static struct index_map idm;
 struct rvsocket;
@@ -142,7 +146,7 @@ enum rs_state {
 
 struct rvsocket {
     int type; // SOCK_STREAM or SOCK_DGRAM
-    int index; // Index of the socket in the index map
+    int index;
     // fastlocks
     union {
         struct { // data stream
@@ -201,8 +205,8 @@ struct rvsocket {
     struct rs_iomap_mr *remote_iomappings; // Remote I/O mappings
     int iomap_pending; // Flag indicating if there are pending I/O mappings
     
-    RVMA_Win *rvma_window;
-    int *rvma_vaddr;
+    RVMA_Mailbox *mailboxPtr;
+    uint64_t vaddr;
     void **rvma_notifBuffPtrAddr;
     void **rvma_notifLenPtrAddr;
 };
@@ -219,126 +223,202 @@ COMPONENT TRANSLATION IS OUTLINED AS FOLLOWS:
     - rvsend/rvrecv: Calls ibv_post_send/recv
 */
 
+uint64_t constructVaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port) {
+    uint64_t res = (uint64_t)reserved << 48 | ((uint64_t)ip_host_order << 16) | port;
+    return res;
+}
 
-// Create rvsocket using rdma_create_id, add to window and return the vaddr
-// Call mailbox/window inits
-int rvsocket(int domain, int type, int protocol, RVMA_Mailbox *mailboxPtr) {
-	struct rvsocket *rs;
+
+// Create rvsocket using rdma_create_id (called in rvmaInitWindowMailbox)
+// Return socketfd
+uint64_t rvsocket(int type, uint32_t ip_host_order, RVMA_Win *window) {
+	struct rvsocket *rvs;
     int index, ret;
+    uint16_t reserved = 0x0001;
 
     rs_configure();
-    rs = rs_alloc(NULL, type);
+
+    rvs = calloc(1, sizeof(*rvs));
+    if (!rvs)
+        return ERR(ENOMEM);
+
+    // Set rvsocket vaddr and mailbox
+    rvs->vaddr = constructVaddr(reserved, ip_host_order, PORT);
+    rvs->mailboxPtr = searchHashmap(window->hashMapPtr, &rvs->vaddr);
 
     if (type == SOCK_STREAM) {
-        ret = rdma_create_id(NULL, &rs->cm_id, rs, RDMA_PS_TCP);
-        if (ret)
-            goto err;
-
-        rs->cm_id->route.addr.src_addr.sa_family = domain;
-        index = rs->cm_id->channel->fd;
+        index = rvs->cm_id->channel->fd;
 
     } else { // datagram
-        ret = ds_init(rs, domain);
-        if (ret)
-            goto err;
-        index = rs->udp_sock;
+        // TODO
     }
+    
+    // Insert rvsocket into index map
+    ret = rs_insert(rvs, index);
 
-    ret = rvs_insert_into_mailbox(rs, mailboxPtr);
-    if (ret < 0)
-        goto err;
-
-    return rs->index;
-
-err:
-    rs_free(rs);
-    return ret;
+    // return rvsocket index (vaddr)
+    return rvs->index;
 }
 
 
 int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
-    struct rvsocket *rs;
+    struct rvsocket *rvs;
 	int ret;
 
-	rs = idm_lookup(&idm, socket);
-	if (!rs) {
-		printf("rbind: rs is NULL\n");
+	rvs = idm_lookup(&idm, socket);
+	if (!rvs) {
+		printf("rbind: rvs is NULL\n");
         return ERR(EBADF);
     }
     
     // Only implementing stream socket for now
-	ret = rdma_bind_addr(rs->cm_id, (struct sockaddr *) addr);
-    if (!ret)
-        rs->state = rs_bound;
+	ret = rdma_bind_addr(rvs->mailboxPtr->cm_id, (struct sockaddr *)addr);
+
 	return ret;
 }
 
 
 int rvlisten(int socket, int backlog) {
-    struct rvsocket *rs;
+    struct rvsocket *rvs;
+    struct rdma_cm_event *event;
     int ret;
 
-    rs = idm_lookup(&idm, socket);
-    if (!rs) {
-        printf("rlisten: rs is NULL\n");
+    rvs = idm_lookup(&idm, socket);
+    if (!rvs) {
+        printf("rlisten: rvs is NULL\n");
         return ERR(EBADF);
     }
 
-    if (rs->state == rs_listening) {
-        printf("rlisten: rs is already listening\n");
+    if (rvs->state == rs_listening) {
+        printf("rlisten: rvs is already listening\n");
         return 0;
     }
-    ret = rdma_listen(rs->cm_id, backlog);
+
+    ret = rdma_listen(rvs->mailboxPtr->cm_id, backlog);
     if (ret)
         return ret;
 
-    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, rs->accept_queue);
+    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, rvs->accept_queue);
     if (ret)
         return ret;
 
-    rs->state = rs_listening;
+    rvs->state = rs_listening;
     return 0;
 }
 
 
 int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
-    struct rvsocket *rs, *new_rs;
+    struct rvsocket *rvs, *new_rvs;
     int ret;
-    if (!addr)
-        printf("rvaccept: addr is NULL\n");
-    if (!addrlen)
-        printf("rvaccept: addrlen is NULL\n");
+    struct rdma_cm_event *event;
+    struct rdma_cm_id *client_cm_id = event->id;
 
-    rs = idm_lookup(&idm, socket);
-    if (!rs) {
-        printf("rvaccept: rs is NULL\n");
+    rvs = idm_lookup(&idm, socket);
+    if (!rvs) {
+        printf("rvaccept: rvs is NULL\n");
         return ERR(EBADF);
     }
 
-    if (rs->state != rs_listening) {
+    if (rvs->state != rs_listening) {
         printf("rvaccept: rs is not in listening state\n");
         return ERR(EBADF);
     }
+    
+    if (rdma_get_cm_event(rvs->mailboxPtr->ec, &event)) {
+        perror("rdma_get_cm_event");
+        return -1;
+    }
 
-    ret = read(rs->accept_queue[0], &new_rs, sizeof(new_rs));
-    rgetpeername(new_rs->index, addr, addrlen);
+    if (event->event != RDMA_CM_EVENT_CONNECT_REQUEST) {
+        fprintf(stderr, "Unexpected event: %s\n", rdma_event_str(event->event));
+        rdma_ack_cm_event(event);
+        return -1;
+    }
 
-    return new_rs->index;
+    // Define protection domain
+    struct ibv_pd *pd = ibv_alloc_pd(client_cm_id->verbs);
+    rvs->mailboxPtr->pd = pd;
+    if (!pd) {
+        perror("ibv_alloc_pd failed");
+        return -1;
+    }
+
+    // Create completion queue
+    struct ibv_cq *cq = ibv_create_cq(client_cm_id->verbs, 16, NULL, NULL, 0);
+    rvs->mailboxPtr->cq = cq;
+    if (!cq) {
+        perror("ibv_create_cq failed");
+        return -1;
+    }
+
+    // Create QP
+    struct ibv_qp_init_attr qp_attr = {
+        .send_cq = cq,
+        .recv_cq = cq,
+        .qp_type = IBV_QPT_RC,
+        .cap = {
+            .max_send_wr = 16,
+            .max_recv_wr = 16,
+            .max_send_sge = 1,
+            .max_recv_sge = 1
+        }
+    };
+
+    if (rdma_create_qp(client_cm_id, pd, &qp_attr)) {
+        perror("rdma_create_qp");
+        return -1;
+    }
+
+    if (rdma_accept(client_cm_id, NULL)) {
+        perror("rdma_accept");
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+
+    rdma_ack_cm_event(event);
+
+    new_rvs = calloc(1, sizeof(*new_rvs));
+    if (!new_rvs) {
+        perror("calloc");
+        return -1;
+    }
+
+    // Fill in new rvsocket fields
+    new_rvs->vaddr = rvs->vaddr; // Same vaddr as listening socket
+    new_rvs->mailboxPtr = rvs->mailboxPtr; // Same mailbox
+    new_rvs->mailboxPtr->cm_id = client_cm_id;
+    new_rvs->mailboxPtr->pd = pd;
+    new_rvs->mailboxPtr->cq = cq;
+    new_rvs->mailboxPtr->qp = client_cm_id->qp;
+    new_rvs->index = client_cm_id->channel->fd;
+
+    idm_insert(&idm, new_rvs, new_rvs->index);
+
+    if (addr && addrlen)
+        rgetpeername(new_rvs->index, addr, addrlen);
+
+    return new_rvs->index;
 }
 
 
 int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
-    struct rvsocket *rs;
+    struct rvsocket *rvs;
     int ret;
 
-    rs = idm_lookup(&idm, socket);
-    if (!rs) {
-        printf("rvconnect: rs is NULL\n");
+    rvs = idm_lookup(&idm, socket);
+    if (!rvs) {
+        printf("rvconnect: rvs is NULL\n");
         return ERR(EBADF);
     }
-    
-    memcpy(&rs->cm_id->route.addr.dst_addr, addr, addrlen);
-    ret = rs_do_connect(rs);
+
+    // Resolve address
+    if (rdma_resolve_addr(rvs->mailboxPtr->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
+        perror("rdma_resolve_addr");
+        return -1;
+    }
+
+    memcpy(&rvs->mailboxPtr->cm_id->route.addr.dst_addr, addr, addrlen);
+    ret = rs_do_connect(rvs);
     return ret;
 }
 

@@ -40,7 +40,14 @@ RVMA_Mailbox* setupMailbox(void *virtualAddress, int hashmapCapacity){
     mailboxPtr->virtualAddress = virtualAddress;
     mailboxPtr->key = hashFunction(virtualAddress, hashmapCapacity);
     mailboxPtr->ec = rdma_create_event_channel();
-    rdma_create_id(mailboxPtr->ec, &mailboxPtr->cm_id, NULL, RDMA_PS_TCP);
+    int res = rdma_create_id(mailboxPtr->ec, &mailboxPtr->cm_id, NULL, RDMA_PS_TCP);
+    if (res) {
+        print_error("setupMailbox: rdma_create_id failed");
+        free(mailboxPtr->bufferQueue);
+        free(mailboxPtr->retiredBufferQueue);
+        free(mailboxPtr);
+        return NULL;
+    }
     return mailboxPtr;
 }
 
