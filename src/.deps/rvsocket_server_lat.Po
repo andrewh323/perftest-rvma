@@ -1,4 +1,4 @@
-src/rsocket_server_lat.o: src/rsocket_server_lat.c \
+src/rvsocket_server_lat.o: src/rvsocket_server_lat.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdc-predef.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdio.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libc-header-start.h \
@@ -141,13 +141,42 @@ src/rsocket_server_lat.o: src/rsocket_server_lat.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman-shared.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman_ext.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h \
- src/rvma_mailbox_hashmap.h src/rvma_common.h \
+ src/rvma_socket.h src/perftest_resources.h src/rvma_write.h \
+ src/rvma_common.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdbool.h \
  src/perftest_parameters.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/inttypes.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/malloc.h \
  src/get_clock.h src/perftest_counters.h src/memory.h config.h \
- src/rvma_buffer_queue.h src/rvma_write.h
+ src/rvma_mailbox_hashmap.h src/rvma_buffer_queue.h \
+ /home/andrewh8/src/rdma-core/build/include/infiniband/mlx5dv.h \
+ /home/andrewh8/src/rdma-core/build/include/infiniband/tm_types.h \
+ /home/andrewh8/src/rdma-core/build/include/infiniband/mlx5_api.h \
+ /home/andrewh8/src/rdma-core/build/include/infiniband/mlx5_user_ioctl_verbs.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/byteswap.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/math.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/math-vector.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libm-simd-decl-stubs.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/flt-eval-method.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-logb.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-fast.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-helper-functions.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-narrow.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/iscanonical.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/time.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netdb.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/rpc/netdb.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/sigevent_t.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/__sigval_t.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/netdb.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/fcntl.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl-linux.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/falloc.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stat.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/struct_stat.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl2.h
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdc-predef.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdio.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libc-header-start.h:
@@ -290,7 +319,9 @@ src/rsocket_server_lat.o: src/rsocket_server_lat.c \
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman-shared.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman_ext.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h:
-src/rvma_mailbox_hashmap.h:
+src/rvma_socket.h:
+src/perftest_resources.h:
+src/rvma_write.h:
 src/rvma_common.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdbool.h:
 src/perftest_parameters.h:
@@ -300,5 +331,33 @@ src/get_clock.h:
 src/perftest_counters.h:
 src/memory.h:
 config.h:
+src/rvma_mailbox_hashmap.h:
 src/rvma_buffer_queue.h:
-src/rvma_write.h:
+/home/andrewh8/src/rdma-core/build/include/infiniband/mlx5dv.h:
+/home/andrewh8/src/rdma-core/build/include/infiniband/tm_types.h:
+/home/andrewh8/src/rdma-core/build/include/infiniband/mlx5_api.h:
+/home/andrewh8/src/rdma-core/build/include/infiniband/mlx5_user_ioctl_verbs.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/byteswap.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/math.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/math-vector.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libm-simd-decl-stubs.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/flt-eval-method.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-logb.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-fast.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-helper-functions.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-narrow.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/iscanonical.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/time.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netdb.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/rpc/netdb.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/sigevent_t.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/__sigval_t.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/netdb.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/fcntl.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl-linux.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/falloc.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stat.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/struct_stat.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl2.h:

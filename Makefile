@@ -131,6 +131,7 @@ bin_PROGRAMS = ib_write_lat$(EXEEXT) ib_write_bw$(EXEEXT) \
 	rsocket_client_lat$(EXEEXT) rsocket_server_lat$(EXEEXT) \
 	rsocket_client_bw$(EXEEXT) rsocket_server_bw$(EXEEXT) \
 	rvma_mailbox_server$(EXEEXT) rvma_mailbox_client$(EXEEXT) \
+	rvsocket_client_lat$(EXEEXT) rvsocket_server_lat$(EXEEXT) \
 	$(am__EXEEXT_1) $(am__EXEEXT_2)
 am__append_5 = src/raw_ethernet_resources.c
 am__append_6 = src/raw_ethernet_resources.h
@@ -175,9 +176,9 @@ am__libperftest_a_SOURCES_DIST = src/get_clock.c \
 	src/perftest_resources.c src/perftest_counters.c \
 	src/host_memory.c src/mmap_memory.c src/rvma_write.c \
 	src/rvma_mailbox_hashmap.c src/rvma_buffer_queue.c \
-	src/rvma_common.c src/cuda_memory.c src/rocm_memory.c \
-	src/neuron_memory.c src/hl_memory.c \
-	src/raw_ethernet_resources.c
+	src/rvma_common.c src/rvma_socket.c src/indexer.c \
+	src/cuda_memory.c src/rocm_memory.c src/neuron_memory.c \
+	src/hl_memory.c src/raw_ethernet_resources.c
 am__dirstamp = $(am__leading_dot)dirstamp
 #am__objects_1 = src/cuda_memory.$(OBJEXT)
 #am__objects_2 = src/rocm_memory.$(OBJEXT)
@@ -194,6 +195,7 @@ am_libperftest_a_OBJECTS = src/get_clock.$(OBJEXT) \
 	src/mmap_memory.$(OBJEXT) src/rvma_write.$(OBJEXT) \
 	src/rvma_mailbox_hashmap.$(OBJEXT) \
 	src/rvma_buffer_queue.$(OBJEXT) src/rvma_common.$(OBJEXT) \
+	src/rvma_socket.$(OBJEXT) src/indexer.$(OBJEXT) \
 	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	$(am__objects_4) $(am__objects_5) $(am__objects_6)
 libperftest_a_OBJECTS = $(am_libperftest_a_OBJECTS)
@@ -272,6 +274,16 @@ rvma_mailbox_server_OBJECTS = $(am_rvma_mailbox_server_OBJECTS)
 rvma_mailbox_server_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
+am_rvsocket_client_lat_OBJECTS = src/rvsocket_client_lat.$(OBJEXT)
+rvsocket_client_lat_OBJECTS = $(am_rvsocket_client_lat_OBJECTS)
+rvsocket_client_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_rvsocket_server_lat_OBJECTS = src/rvsocket_server_lat.$(OBJEXT)
+rvsocket_server_lat_OBJECTS = $(am_rvsocket_server_lat_OBJECTS)
+rvsocket_server_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -317,8 +329,8 @@ depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/get_clock.Po src/$(DEPDIR)/hl_memory.Po \
-	src/$(DEPDIR)/host_memory.Po src/$(DEPDIR)/mmap_memory.Po \
-	src/$(DEPDIR)/neuron_memory.Po \
+	src/$(DEPDIR)/host_memory.Po src/$(DEPDIR)/indexer.Po \
+	src/$(DEPDIR)/mmap_memory.Po src/$(DEPDIR)/neuron_memory.Po \
 	src/$(DEPDIR)/perftest_communication.Po \
 	src/$(DEPDIR)/perftest_counters.Po \
 	src/$(DEPDIR)/perftest_parameters.Po \
@@ -338,7 +350,9 @@ am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/rvma_mailbox_client.Po \
 	src/$(DEPDIR)/rvma_mailbox_hashmap.Po \
 	src/$(DEPDIR)/rvma_mailbox_server.Po \
-	src/$(DEPDIR)/rvma_write.Po src/$(DEPDIR)/write_bw.Po \
+	src/$(DEPDIR)/rvma_socket.Po src/$(DEPDIR)/rvma_write.Po \
+	src/$(DEPDIR)/rvsocket_client_lat.Po \
+	src/$(DEPDIR)/rvsocket_server_lat.Po src/$(DEPDIR)/write_bw.Po \
 	src/$(DEPDIR)/write_lat.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -383,7 +397,8 @@ SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
 	$(raw_ethernet_lat_SOURCES) $(rsocket_client_bw_SOURCES) \
 	$(rsocket_client_lat_SOURCES) $(rsocket_server_bw_SOURCES) \
 	$(rsocket_server_lat_SOURCES) $(rvma_mailbox_client_SOURCES) \
-	$(rvma_mailbox_server_SOURCES)
+	$(rvma_mailbox_server_SOURCES) $(rvsocket_client_lat_SOURCES) \
+	$(rvsocket_server_lat_SOURCES)
 DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(ib_write_bw_SOURCES) $(ib_write_lat_SOURCES) \
 	$(am__raw_ethernet_burst_lat_SOURCES_DIST) \
@@ -392,7 +407,8 @@ DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(am__raw_ethernet_lat_SOURCES_DIST) \
 	$(rsocket_client_bw_SOURCES) $(rsocket_client_lat_SOURCES) \
 	$(rsocket_server_bw_SOURCES) $(rsocket_server_lat_SOURCES) \
-	$(rvma_mailbox_client_SOURCES) $(rvma_mailbox_server_SOURCES)
+	$(rvma_mailbox_client_SOURCES) $(rvma_mailbox_server_SOURCES) \
+	$(rvsocket_client_lat_SOURCES) $(rvsocket_server_lat_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -404,7 +420,8 @@ am__noinst_HEADERS_DIST = src/get_clock.h src/perftest_communication.h \
 	src/mmap_memory.h src/cuda_memory.h src/rocm_memory.h \
 	src/neuron_memory.h src/hl_memory.h src/rvma_write.h \
 	src/rvma_mailbox_hashmap.h src/rvma_buffer_queue.h \
-	src/rvma_common.h src/raw_ethernet_resources.h
+	src/rvma_common.h src/rvma_socket.h src/indexer.h \
+	src/raw_ethernet_resources.h
 HEADERS = $(noinst_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP) \
 	config.h.in
@@ -595,19 +612,24 @@ libperftest_a_SOURCES = src/get_clock.c src/perftest_communication.c \
 	src/perftest_parameters.c src/perftest_resources.c \
 	src/perftest_counters.c src/host_memory.c src/mmap_memory.c \
 	src/rvma_write.c src/rvma_mailbox_hashmap.c \
-	src/rvma_buffer_queue.c src/rvma_common.c $(am__append_1) \
-	$(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_8)
+	src/rvma_buffer_queue.c src/rvma_common.c src/rvma_socket.c \
+	src/indexer.c $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5) $(am__append_8)
 noinst_HEADERS = src/get_clock.h src/perftest_communication.h \
 	src/perftest_parameters.h src/perftest_resources.h \
 	src/perftest_counters.h src/memory.h src/host_memory.h \
 	src/mmap_memory.h src/cuda_memory.h src/rocm_memory.h \
 	src/neuron_memory.h src/hl_memory.h src/rvma_write.h \
 	src/rvma_mailbox_hashmap.h src/rvma_buffer_queue.h \
-	src/rvma_common.h $(am__append_6) $(am__append_9)
+	src/rvma_common.h src/rvma_socket.h src/indexer.h \
+	$(am__append_6) $(am__append_9)
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 LIBMLX4 = 
 #LIBMLX4 = -lmlx4
+rvsocket_client_lat_SOURCES = src/rvsocket_client_lat.c
+rvsocket_client_lat_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rvsocket_server_lat_SOURCES = src/rvsocket_server_lat.c
+rvsocket_server_lat_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rvma_mailbox_server_SOURCES = src/rvma_mailbox_server.c
 rvma_mailbox_server_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rvma_mailbox_client_SOURCES = src/rvma_mailbox_client.c
@@ -769,6 +791,10 @@ src/rvma_buffer_queue.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/rvma_common.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/rvma_socket.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/indexer.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/cuda_memory.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/rocm_memory.$(OBJEXT): src/$(am__dirstamp) \
@@ -856,6 +882,18 @@ src/rvma_mailbox_server.$(OBJEXT): src/$(am__dirstamp) \
 rvma_mailbox_server$(EXEEXT): $(rvma_mailbox_server_OBJECTS) $(rvma_mailbox_server_DEPENDENCIES) $(EXTRA_rvma_mailbox_server_DEPENDENCIES) 
 	@rm -f rvma_mailbox_server$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rvma_mailbox_server_OBJECTS) $(rvma_mailbox_server_LDADD) $(LIBS)
+src/rvsocket_client_lat.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rvsocket_client_lat$(EXEEXT): $(rvsocket_client_lat_OBJECTS) $(rvsocket_client_lat_DEPENDENCIES) $(EXTRA_rvsocket_client_lat_DEPENDENCIES) 
+	@rm -f rvsocket_client_lat$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rvsocket_client_lat_OBJECTS) $(rvsocket_client_lat_LDADD) $(LIBS)
+src/rvsocket_server_lat.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rvsocket_server_lat$(EXEEXT): $(rvsocket_server_lat_OBJECTS) $(rvsocket_server_lat_DEPENDENCIES) $(EXTRA_rvsocket_server_lat_DEPENDENCIES) 
+	@rm -f rvsocket_server_lat$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rvsocket_server_lat_OBJECTS) $(rvsocket_server_lat_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -903,6 +941,7 @@ include src/$(DEPDIR)/cuda_memory.Po # am--include-marker
 include src/$(DEPDIR)/get_clock.Po # am--include-marker
 include src/$(DEPDIR)/hl_memory.Po # am--include-marker
 include src/$(DEPDIR)/host_memory.Po # am--include-marker
+include src/$(DEPDIR)/indexer.Po # am--include-marker
 include src/$(DEPDIR)/mmap_memory.Po # am--include-marker
 include src/$(DEPDIR)/neuron_memory.Po # am--include-marker
 include src/$(DEPDIR)/perftest_communication.Po # am--include-marker
@@ -924,7 +963,10 @@ include src/$(DEPDIR)/rvma_common.Po # am--include-marker
 include src/$(DEPDIR)/rvma_mailbox_client.Po # am--include-marker
 include src/$(DEPDIR)/rvma_mailbox_hashmap.Po # am--include-marker
 include src/$(DEPDIR)/rvma_mailbox_server.Po # am--include-marker
+include src/$(DEPDIR)/rvma_socket.Po # am--include-marker
 include src/$(DEPDIR)/rvma_write.Po # am--include-marker
+include src/$(DEPDIR)/rvsocket_client_lat.Po # am--include-marker
+include src/$(DEPDIR)/rvsocket_server_lat.Po # am--include-marker
 include src/$(DEPDIR)/write_bw.Po # am--include-marker
 include src/$(DEPDIR)/write_lat.Po # am--include-marker
 
@@ -1272,6 +1314,7 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/get_clock.Po
 	-rm -f src/$(DEPDIR)/hl_memory.Po
 	-rm -f src/$(DEPDIR)/host_memory.Po
+	-rm -f src/$(DEPDIR)/indexer.Po
 	-rm -f src/$(DEPDIR)/mmap_memory.Po
 	-rm -f src/$(DEPDIR)/neuron_memory.Po
 	-rm -f src/$(DEPDIR)/perftest_communication.Po
@@ -1293,7 +1336,10 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/rvma_mailbox_client.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_hashmap.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_server.Po
+	-rm -f src/$(DEPDIR)/rvma_socket.Po
 	-rm -f src/$(DEPDIR)/rvma_write.Po
+	-rm -f src/$(DEPDIR)/rvsocket_client_lat.Po
+	-rm -f src/$(DEPDIR)/rvsocket_server_lat.Po
 	-rm -f src/$(DEPDIR)/write_bw.Po
 	-rm -f src/$(DEPDIR)/write_lat.Po
 	-rm -f Makefile
@@ -1347,6 +1393,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/get_clock.Po
 	-rm -f src/$(DEPDIR)/hl_memory.Po
 	-rm -f src/$(DEPDIR)/host_memory.Po
+	-rm -f src/$(DEPDIR)/indexer.Po
 	-rm -f src/$(DEPDIR)/mmap_memory.Po
 	-rm -f src/$(DEPDIR)/neuron_memory.Po
 	-rm -f src/$(DEPDIR)/perftest_communication.Po
@@ -1368,7 +1415,10 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/rvma_mailbox_client.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_hashmap.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_server.Po
+	-rm -f src/$(DEPDIR)/rvma_socket.Po
 	-rm -f src/$(DEPDIR)/rvma_write.Po
+	-rm -f src/$(DEPDIR)/rvsocket_client_lat.Po
+	-rm -f src/$(DEPDIR)/rvsocket_server_lat.Po
 	-rm -f src/$(DEPDIR)/write_bw.Po
 	-rm -f src/$(DEPDIR)/write_lat.Po
 	-rm -f Makefile

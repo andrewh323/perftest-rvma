@@ -1,15 +1,3 @@
-/*
-The server first binds address that clients will use to find the server
-Server then listens for clients to request a connection
-When a request is received by the client the server accepts the connection
-The server then posts a receive buffer to the connection
-THe client sends a message to the server and the server receives it
-The server then sends a message back to the client confirming the message was received
-The client then receives the message from the server
-The server then disconnects from the client
-The client then disconnects from the server
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,13 +16,28 @@ long ns; // Nanoseconds
 double us; // Microseconds
 
 int main(int argc, char **argv) {
+    uint16_t reserved = 0x0001;
     int sockfd;
     struct sockaddr_in server_addr;
     char buffer[1024];
+    memset(&server_addr, 0, sizeof(server_addr));
 
-    Mailbox_HashMap *hashmapPtr = initMailboxHashmap();
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) != 1) {
+        perror("inet_pton failed");
+        return -1;
+    };
 
-    sockfd = rvsocket(AF_INET, ip_host_order, hashmapPtr);
+    // Convert IP to host byte order and construct vaddr
+    uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
+
+    uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
+    printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
+
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+
+    sockfd = rvsocket(AF_INET, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
@@ -50,27 +53,38 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (rconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    printf("Attempting to connect to server %s:%d...\n", argv[1], PORT);
+
+    if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("rconnect");
         exit(EXIT_FAILURE);
     }
-    printf("Connected to server %s:%d\n", argv[1], PORT);
+    printf("Connected to server %s:%d!\n", argv[1], PORT);
 
     // Send message to the server
-    const char *message = "Hello from rsocket client!";
     clock_gettime(CLOCK_MONOTONIC, &start_time); // Start timing just before sending
-    if (rsend(sockfd, message, strlen(message) + 1, 0) < 0) {
-        perror("rsend");
-        exit(EXIT_FAILURE);
+    
+    for (int i = 1; i <= 10; i++) {
+        // Define data buffer to send
+        char *message = malloc(100);
+        snprintf(message, 100, "Hello server! This is message %d from the client!", i);
+
+        int64_t size = strlen(message) + 1;
+
+        char *buffer = malloc(size);
+        memcpy(buffer, message, size);
+
+        // Perform rvmaPut on vaddr
+        int res = rvsend(sockfd, (void *)buffer, size, windowPtr);
+        if (res < 0) {
+            fprintf(stderr, "Failed to send message %d\n", i);
+        }
+        // Free data buffer memory once finished
+        free(buffer);
+        free(message);
     }
 
-    // Receive response from the server
-    if (rrecv(sockfd, buffer, sizeof(buffer), 0) < 0) {
-        perror("rrecv");
-        exit(EXIT_FAILURE);
-    }
     clock_gettime(CLOCK_MONOTONIC, &end_time); // End timing just after receiving ACK
-    printf("Client received message: %s\n", buffer);
 
     ns = (end_time.tv_sec - start_time.tv_sec) * 1e9 + (end_time.tv_nsec - start_time.tv_nsec);
     us = ns / 1000.0;

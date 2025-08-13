@@ -38,8 +38,8 @@ ACLOCAL_AMFLAGS= -I m4
 AUTOMAKE_OPTIONS= subdir-objects
 
 noinst_LIBRARIES = libperftest.a
-libperftest_a_SOURCES = src/get_clock.c src/perftest_communication.c src/perftest_parameters.c src/perftest_resources.c src/perftest_counters.c src/host_memory.c src/mmap_memory.c src/rvma_write.c src/rvma_mailbox_hashmap.c src/rvma_buffer_queue.c src/rvma_common.c
-noinst_HEADERS = src/get_clock.h src/perftest_communication.h src/perftest_parameters.h src/perftest_resources.h src/perftest_counters.h src/memory.h src/host_memory.h src/mmap_memory.h src/cuda_memory.h src/rocm_memory.h src/neuron_memory.h src/hl_memory.h src/rvma_write.h src/rvma_mailbox_hashmap.h src/rvma_buffer_queue.h src/rvma_common.h
+libperftest_a_SOURCES = src/get_clock.c src/perftest_communication.c src/perftest_parameters.c src/perftest_resources.c src/perftest_counters.c src/host_memory.c src/mmap_memory.c src/rvma_write.c src/rvma_mailbox_hashmap.c src/rvma_buffer_queue.c src/rvma_common.c src/rvma_socket.c src/indexer.c
+noinst_HEADERS = src/get_clock.h src/perftest_communication.h src/perftest_parameters.h src/perftest_resources.h src/perftest_counters.h src/memory.h src/host_memory.h src/mmap_memory.h src/cuda_memory.h src/rocm_memory.h src/neuron_memory.h src/hl_memory.h src/rvma_write.h src/rvma_mailbox_hashmap.h src/rvma_buffer_queue.h src/rvma_common.h src/rvma_socket.h src/indexer.h
 
 if CUDA
 libperftest_a_SOURCES += src/cuda_memory.c
@@ -57,7 +57,7 @@ if HABANALABS
 libperftest_a_SOURCES += src/hl_memory.c
 endif
 
-bin_PROGRAMS = ib_write_lat ib_write_bw rsocket_client_lat rsocket_server_lat rsocket_client_bw rsocket_server_bw rvma_mailbox_server rvma_mailbox_client
+bin_PROGRAMS = ib_write_lat ib_write_bw rsocket_client_lat rsocket_server_lat rsocket_client_bw rsocket_server_bw rvma_mailbox_server rvma_mailbox_client rvsocket_client_lat rvsocket_server_lat
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 
 if HAVE_RAW_ETH
@@ -75,6 +75,12 @@ LIBMLX4= -lmlx4
 else
 LIBMLX4=
 endif
+
+rvsocket_client_lat_SOURCES = src/rvsocket_client_lat.c
+rvsocket_client_lat_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+
+rvsocket_server_lat_SOURCES = src/rvsocket_server_lat.c
+rvsocket_server_lat_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
 rvma_mailbox_server_SOURCES = src/rvma_mailbox_server.c
 rvma_mailbox_server_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)

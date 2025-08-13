@@ -38,7 +38,7 @@ RVMA_Mailbox* setupMailbox(void *virtualAddress, int hashmapCapacity){
     mailboxPtr->bufferQueue = bufferQueue;
     mailboxPtr->retiredBufferQueue = retiredBufferQueue;
     mailboxPtr->virtualAddress = virtualAddress;
-    mailboxPtr->key = hashFunction(virtualAddress, hashmapCapacity);
+    mailboxPtr->key = hashFunction(mailboxPtr->virtualAddress, hashmapCapacity);
     mailboxPtr->ec = rdma_create_event_channel();
     int res = rdma_create_id(mailboxPtr->ec, &mailboxPtr->cm_id, NULL, RDMA_PS_TCP);
     if (res) {
@@ -121,9 +121,10 @@ RVMA_Status freeHashmap(Mailbox_HashMap** hashmapPtr){
 }
 
 int hashFunction(void *virtualAddress, int capacity) {
-    uint64_t addr = (uint64_t) virtualAddress;
-    uint64_t largePrime = 2654435761;
-    return (int) ((addr * largePrime) % capacity);
+    uint64_t addr = *(uint64_t*) virtualAddress;
+    uint64_t largePrime = 11400714819323198485ULL;
+    uint64_t hash = addr * largePrime;
+    return (int) (hash % capacity);
 }
 
 RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, void *virtualAddress){
@@ -154,12 +155,15 @@ RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, void* key){
         return NULL;
     }
 
+    // Get the actual key value from the pointer
+    uint64_t key_val = *(uint64_t*)key;
+
     // Getting the bucket index for the given key
     int hashNum = hashFunction(key, hashMap->capacity);
 
     // Head of the linked list present at bucket index
     RVMA_Mailbox* mailboxPtr = hashMap->hashmap[hashNum];
-    if (mailboxPtr && mailboxPtr->key == hashNum) {
+    if (mailboxPtr && *(uint64_t*)mailboxPtr->virtualAddress == key_val) {
         return mailboxPtr;
     }
     else{
@@ -192,7 +196,6 @@ int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *rem
         return -1;
     }
     if(event->event != RDMA_CM_EVENT_ADDR_RESOLVED) {
-        rdma_ack_cm_event(event);
         fprintf(stderr, "rdma_resolve_addr failed: %s\n", rdma_event_str(event->event));
         rdma_ack_cm_event(event);
         return -1;
