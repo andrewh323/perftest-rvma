@@ -90,6 +90,7 @@ int main(int argc, char **argv) {
     us = ns / 1000.0;
 
     printf("RTT: %.2f microseconds\n", us);
+    printf("Test output");
 
     // Close the socket
     rclose(sockfd);
