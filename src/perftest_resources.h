@@ -229,7 +229,7 @@ struct pingpong_context {
 	int 					fd;
 	#endif
 	struct memory_ctx			*memory;
-    RVMA_Win                    *rvma_window;
+    RVMA_Mailbox                    *mailboxPtr;
     int                         *rvma_vaddr;
     void                        **rvma_notifBuffPtrAddr;
     void                        **rvma_notifLenPtrAddr;

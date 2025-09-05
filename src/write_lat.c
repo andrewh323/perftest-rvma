@@ -48,6 +48,7 @@
 #include "perftest_parameters.h"
 #include "perftest_resources.h"
 #include "perftest_communication.h"
+#include "rvma_write.h"
 
 /******************************************************************************
  *
@@ -366,12 +367,14 @@ int main(int argc, char *argv[])
         printf("Total RVMA Elapsed time: %ld microseconds\n", mtime);
 
     }else{
+		int vaddr = 123456;
+		RVMA_Win *window = rvmaInitWindowMailbox(&vaddr);
         printf("RVMA Testing Results for machine type: SERVER\n");
         printf("Results for the mailbox with Virtual Address of: %d\n", *ctx.rvma_vaddr);
         printf("The RVMA notification Buff Ptr flag is: %d\n", *(int *) (*ctx.rvma_notifBuffPtrAddr));
         printf("The RVMA notification Len Ptr indicates: %d bytes written\n", *(int *) (*ctx.rvma_notifLenPtrAddr));
 
-        RVMA_Mailbox *mailbox = searchHashmap(ctx.rvma_window->hashMapPtr, ctx.rvma_vaddr);
+        RVMA_Mailbox *mailbox = searchHashmap(window->hashMapPtr, ctx.rvma_vaddr);
         printf("The VAddr mailbox has this many retired queue entries: %d\n", mailbox->retiredBufferQueue->size);
         printf("The VAddr mailbox has this many queue entries: %d\n", mailbox->bufferQueue->size);
 

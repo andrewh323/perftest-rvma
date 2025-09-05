@@ -21,6 +21,7 @@ typedef struct {
     struct ibv_qp *qp; // Queue pair
     struct rdma_cm_id *cm_id; // RDMA connection manager
     struct rdma_event_channel *ec; // Event channel
+    struct ibv_context *ctx; // Device context
 
     RVMA_Buffer_Queue *bufferQueue;
     RVMA_Buffer_Queue *retiredBufferQueue;

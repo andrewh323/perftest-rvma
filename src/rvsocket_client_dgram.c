@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
 
-    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
+    sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
@@ -46,45 +46,27 @@ int main(int argc, char **argv) {
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET; // IPv4
     server_addr.sin_port = htons(PORT); // Port number
-    inet_pton(AF_INET, argv[1], &server_addr.sin_addr); // Convert IP address from text to binary form
 
     if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) <= 0) {
         perror("inet_pton");
         exit(EXIT_FAILURE);
     }
 
-    printf("Attempting to connect to server %s:%d...\n", argv[1], PORT);
-
-    if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("rconnect");
-        exit(EXIT_FAILURE);
-    }
-    printf("Connected to server %s:%d!\n", argv[1], PORT);
-
     // Send message to the server
-    clock_gettime(CLOCK_MONOTONIC, &start_time); // Start timing just before sending
-    
-    for (int i = 1; i <= 10; i++) {
-        // Define data buffer to send
-        char *message = malloc(100);
-        snprintf(message, 100, "Hello server! This is message %d from the client!", i);
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
 
-        int64_t size = strlen(message) + 1;
+    // Define data buffer to send
+    char *message = "Hello server! This is a message from the client!";
 
-        char *buffer = malloc(size);
-        memcpy(buffer, message, size);
+    int64_t size = sizeof(message);
 
-        // Perform rvmaPut on vaddr
-        int res = rvsend(sockfd, (void *)buffer, size);
-        if (res < 0) {
-            fprintf(stderr, "Failed to send message %d\n", i);
-        }
-        // Free data buffer memory once finished
-        free(buffer);
-        free(message);
+    // Perform rvmaPut on vaddr
+    int res = rvsend(sockfd, (void *)message, size);
+    if (res < 0) {
+        fprintf(stderr, "Failed to send message\n");
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &end_time); // End timing just after receiving ACK
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
 
     ns = (end_time.tv_sec - start_time.tv_sec) * 1e9 + (end_time.tv_nsec - start_time.tv_nsec);
     us = ns / 1000.0;

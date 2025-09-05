@@ -1106,7 +1106,7 @@ int alloc_ctx(struct pingpong_context *ctx,struct perftest_parameters *user_para
         /* RVMA INIT WINDOW and buffer*/
         ALLOC(ctx->rvma_vaddr, int, ctx->buff_size);
         *ctx->rvma_vaddr = 123;
-        ctx->rvma_window = rvmaInitWindowMailbox(ctx->rvma_vaddr);
+        RVMA_Win *rvma_window = rvmaInitWindowMailbox(ctx->rvma_vaddr);
 
         void **buffer;
         int rvma_buffer_size = ctx->buff_size; //* user_param->iters / 2;
@@ -1130,7 +1130,7 @@ int alloc_ctx(struct pingpong_context *ctx,struct perftest_parameters *user_para
 
         /* RVMA: Post the buffer */
         RVMA_Status status = rvmaPostBuffer(buffer, rvma_buffer_size, ctx->rvma_notifBuffPtrAddr, ctx->rvma_notifLenPtrAddr,
-                                            ctx->rvma_vaddr, ctx->rvma_window, rvma_buffer_size, EPOCH_BYTES);
+                                            ctx->rvma_vaddr, ctx->mailboxPtr, rvma_buffer_size, EPOCH_BYTES);
 
         /* Point the ctx buff var to our RVMA buffer instead */
         ctx->buf = buffer;
@@ -1465,11 +1465,6 @@ int destroy_ctx(struct pingpong_context *ctx,
 
     if(user_param->machine == SERVER && ctx->rvma_vaddr != NULL){
         free(ctx->rvma_vaddr);
-        ctx->rvma_vaddr = NULL;
-    }
-
-    if(user_param->machine == SERVER && ctx->rvma_window != NULL){
-        rvmaCloseWin(ctx->rvma_window);
         ctx->rvma_vaddr = NULL;
     }
 
@@ -3775,13 +3770,13 @@ int run_iter_bw_server(struct pingpong_context *ctx, struct perftest_parameters 
 
                     // our function here pass in the completion event structure ibv_wc
                     //where does the window come from? i feel like this is actually the wrong place to call this function because how am i supposed to find the RVMA window from here?
-                    RVMA_Status res = eventCompleted(&wc[i], ctx->rvma_window, ctx->rvma_vaddr);
+                    /* RVMA_Status res = eventCompleted(&wc[i], ctx->rvma_window, ctx->rvma_vaddr);
 
                     if (res != RVMA_SUCCESS){
                         fprintf(stderr, "Couldn't get rdma completion events");
                         return_value = FAILURE;
                         goto cleaning;
-                    }
+                    } */
 
 					if (user_param->test_type==DURATION && user_param->state == SAMPLE_STATE) {
 						if (user_param->report_per_port) {
@@ -4675,12 +4670,12 @@ int run_iter_lat_write_imm(struct pingpong_context *ctx,struct perftest_paramete
                 if(user_param->machine == SERVER) {
                     // our function here pass in the completion event structure ibv_wc
                     //where does the window come from? i feel like this is actually the wrong place to call this function because how am i supposed to find the RVMA window from here?
-                    RVMA_Status res = eventCompleted(&wc, ctx->rvma_window, ctx->rvma_vaddr);
+                    /* RVMA_Status res = eventCompleted(&wc, ctx->rvma_window, ctx->rvma_vaddr);
 
                     if (res != RVMA_SUCCESS) {
                         fprintf(stderr, "Couldn't get rdma completion events");
                         return 1;
-                    }
+                    } */
                 }
 
 				/*if we're in duration mode or there

@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 
     // Recv indefinitely for testing
     while (1) {
-        RVMA_Status status = rvmaRecv(&vaddr, windowPtr);
+        RVMA_Status status = rvmaRecv(&vaddr, mailboxPtr);
         if (status != RVMA_SUCCESS) {
             perror("Error receiving message");
             break;

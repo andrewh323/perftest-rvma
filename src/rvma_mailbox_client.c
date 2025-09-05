@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
         memcpy(buffer, message, size);
 
         // Perform rvmaPut on vaddr
-        RVMA_Status status = rvmaSend((void *)buffer, size, &vaddr, windowPtr);
+        RVMA_Status status = rvmaSend((void *)buffer, size, &vaddr, mailboxPtr);
         if (status != RVMA_SUCCESS) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }

@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
 
-    listen_fd = rvsocket(AF_INET, vaddr, windowPtr);
+    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
 
 	// Now we can bind the socket to the address
 	rvbind(listen_fd, (struct sockaddr *)&client_addr, sizeof(client_addr));

@@ -25,7 +25,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen);
 
 int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen);
 
-int rvsend(int socket, void *buf, int64_t len, RVMA_Win *window);
+int rvsend(int socket, void *buf, int64_t len);
 
 int rvrecv(int socket, RVMA_Win *window);
 
