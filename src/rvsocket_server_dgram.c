@@ -61,11 +61,6 @@ int main(int argc) {
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));
 	printf("Host IP address bound to socket\n");
 
-	// Receive data from client
-    int ret = rvrecv(dgram_fd, windowPtr);
-	if (ret < 0) {
-		perror("Error receiving message");
-	}
     close(dgram_fd);
 	return 0;
 }

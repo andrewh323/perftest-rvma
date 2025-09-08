@@ -32,14 +32,14 @@
 #define MAX_RVSOCKETS 1024
 #define PORT 7471
 #define RS_OLAP_START_SIZE 2048
-#define RS_MAX_TRANSFER 65536 /* 64 KB */
+#define RS_MAX_TRANSFER 4096 /* 4 KB */
 #define RS_SNDLOWAT 2048
 #define RS_QP_MIN_SIZE 16
 #define RS_QP_MAX_SIZE 0xFFFE
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_SIZE 262144 /* 256 KB */
+#define MAX_RECV_SIZE 65536 /* 64 KB */
 
 static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 
@@ -223,25 +223,45 @@ static void rs_free(struct rvsocket *rvs) {
     free(rvs);
 }
 
-static int rvs_get_ctx(struct rvsocket *rvs){
-    struct ibv_device **dev_list;
-    struct ibv_device *ib_dev;
-
-    dev_list = ibv_get_device_list(NULL);
-    if (!dev_list) {
-        perror("Failed to get IB devices list");
-        return -1;
+// Magic function
+static int rvs_get_ctx(struct rvsocket *rvs) {
+    if (!rvs->mailboxPtr) {
+        rvs->mailboxPtr = calloc(1, sizeof(RVMA_Mailbox));
+        if (!rvs->mailboxPtr) return -1;
     }
 
-    ib_dev = dev_list[0];
-    rvs->mailboxPtr->ctx = ibv_open_device(ib_dev);
-    printf("Using device: %s\n", ibv_get_device_name(ib_dev));
+    struct ibv_device **dev_list = ibv_get_device_list(NULL);
+    if (!dev_list) return -1;
+
+    for (int i = 0; dev_list[i]; i++) {
+        struct ibv_context *ctx = ibv_open_device(dev_list[i]);
+        if (!ctx) continue;
+
+        struct ibv_device_attr dev_attr;
+        if (ibv_query_device(ctx, &dev_attr)) {
+            ibv_close_device(ctx);
+            continue;
+        }
+
+        for (int port = 1; port <= dev_attr.phys_port_cnt; port++) {
+            struct ibv_port_attr port_attr;
+            if (ibv_query_port(ctx, port, &port_attr)) continue;
+            if (port_attr.link_layer != IBV_LINK_LAYER_INFINIBAND) continue;
+
+            if ((port_attr.phys_state == IBV_PORT_ACTIVE || port_attr.phys_state == 5) &&
+                port_attr.link_layer == IBV_LINK_LAYER_INFINIBAND) {
+
+                rvs->mailboxPtr->ctx = ctx;
+                rvs->mailboxPtr->port_num = port;
+                break;
+            }
+        }
+    }
+
     ibv_free_device_list(dev_list);
-    if (!rvs->mailboxPtr->ctx) {
-        perror("Failed to open device");
-        return -1;
-    }
+    return 0;
 }
+
 
 uint64_t constructVaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port) {
     uint64_t res = (uint64_t)reserved << 48 | ((uint64_t)ip_host_order << 16) | port;
@@ -308,10 +328,7 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         if (!ret)
             rvs->state = rs_bound;
     } else { // Datagram
-        RVMA_Mailbox *mailbox = rvs->mailboxPtr;
-
-        // Define recv buffer and post it to the mailbox buffer queue
-        char *recv_buf = malloc(MAX_RECV_SIZE);
+        void *big_buf = malloc(MAX_RECV_SIZE);
 
         // Set notification pointer to buffer address
         uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
@@ -323,22 +340,29 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         // Define threshold as max number of transfers that fit in the buffer
         int threshold = MAX_RECV_SIZE / RS_MAX_TRANSFER;
 
-        RVMA_Status status = rvmaPostBuffer((void**)&recv_buf, MAX_RECV_SIZE, (void **)&notifBuffPtr,
-                                        (void **)&notifLenPtr, rvs->vaddr, mailbox, threshold, EPOCH_OPS);
-
-        ret = bind(rvs->udp_sock, addr, addrlen);
         ret = rvs_get_ctx(rvs);
 
         struct ibv_pd *pd = ibv_alloc_pd(rvs->mailboxPtr->ctx);
         if (!pd) {
             perror("ibv_alloc_pd failed");
-            ibv_dealloc_pd(pd);
             return -1;
         }
         rvs->mailboxPtr->pd = pd;
 
+        struct ibv_mr *mr = ibv_reg_mr(pd, big_buf, MAX_RECV_SIZE, IBV_ACCESS_LOCAL_WRITE);
+        if (!mr) {
+            perror("ibv_reg_mr failed");
+            ibv_dealloc_pd(pd);
+            return -1;
+        }
+
+        RVMA_Status status = rvmaPostBuffer((void**)&big_buf, MAX_RECV_SIZE, (void **)&notifBuffPtr,
+                                        (void **)&notifLenPtr, rvs->vaddr, rvs->mailboxPtr, threshold, EPOCH_OPS);
+
+        ret = bind(rvs->udp_sock, addr, addrlen);
+
         // Create completion queue
-        struct ibv_cq *cq = ibv_create_cq(rvs->mailboxPtr->ctx, 16, NULL, NULL, 0);
+        struct ibv_cq *cq = ibv_create_cq(rvs->mailboxPtr->ctx, 128, NULL, NULL, 0);
         if (!cq) {
             perror("ibv_create_cq failed");
             ibv_dealloc_pd(pd);
@@ -368,25 +392,63 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         }
         rvs->mailboxPtr->qp = qp;
 
+        // MUST SET QP TO INIT
+        struct ibv_qp_attr attr = {0};
+        attr.qp_state = IBV_QPS_INIT;
+        attr.pkey_index = 0;
+        attr.port_num = rvs->mailboxPtr->port_num;
+        attr.qkey = 0x11111111;
+
+        if (ibv_modify_qp(qp, &attr,
+                        IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_QKEY)) {
+            perror("ibv_modify_qp to INIT failed");
+            return -1;
+        }
+        
         // Prepost initial receive buffers
-        for (int i = 0; i < 10; i++) {
-            char *buf = malloc(RS_MAX_TRANSFER);
-            struct ibv_mr *mr = ibv_reg_mr(pd, buf, RS_MAX_TRANSFER, IBV_ACCESS_LOCAL_WRITE);
-            struct ibv_sge sge = { (uintptr_t)buf, RS_MAX_TRANSFER, mr->lkey };
+        // TODO: Handle logic for when big buffer is full; create new big buffer and post it
+        // Use threshold to determine when to create new buffer
+        for (int i = 0; i < 4; i++) {
+            uint32_t offset = i * RS_MAX_TRANSFER;
+            RVMA_Buffer_Entry *entry = malloc(sizeof(RVMA_Buffer_Entry));
+            if (!entry) {
+                perror("malloc failed");
+                return -1;
+            }
+            entry->realBuff = big_buf;
+            entry->realBuffAddr = (uint8_t *)big_buf + offset;
+            entry->realBuffSize = RS_MAX_TRANSFER;
+            entry->mr = mr;
+            entry->epochCount = i;
+
+            // Build sge and wr
+            struct ibv_sge sge = {
+                .addr = (uintptr_t)entry->realBuffAddr,
+                .length = entry->realBuffSize,
+                .lkey = entry->mr->lkey };
+            
             struct ibv_recv_wr wr = {
-                .wr_id = (uintptr_t)buf,
+                .wr_id = (uintptr_t)entry,
                 .sg_list = &sge,
                 .num_sge = 1,
                 .next = NULL
             };
-            struct ibv_recv_wr *bad_wr;
+            struct ibv_recv_wr *bad_wr = NULL;
 
-            ibv_post_recv(rvs->mailboxPtr->qp, &wr, &bad_wr);
+            printf("Posting buffer %d\n", i);
+            if (ibv_post_recv(rvs->mailboxPtr->qp, &wr, &bad_wr)) {
+                perror("ibv_post_recv failed");
+                free(entry);
+                return -1;
+            }
+            printf("Enqueuing buffer\n");
             // Enqueue new buffer
-            // enqueue(rvs->mailboxPtr->bufferQueue, buf);
+            if (enqueue(rvs->mailboxPtr->bufferQueue, entry) != RVMA_SUCCESS) {
+                fprintf(stderr, "enqueue failed\n");
+            }
         }
     }
-	return ret;
+	return 0;
 }
 
 

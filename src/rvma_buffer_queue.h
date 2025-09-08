@@ -13,6 +13,7 @@ typedef enum {
 } epoch_type;
 
 typedef struct {
+    void *realBuff;
     void **realBuffAddr;
     int64_t realBuffSize;
     int64_t epochCount;

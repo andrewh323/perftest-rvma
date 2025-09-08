@@ -502,91 +502,9 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
 
 
 RVMA_Status rvmaRecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
-
-    // Define recv buffer and post it to the mailbox buffer queue
-    char *recv_buf = malloc(MAX_RECV_SIZE);
-    if (!recv_buf) {
-        perror("rvmaRecv: malloc failed");
-        return RVMA_ERROR;
-    }
-
-    // Set notification pointer to buffer address
-    uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
-    *notifBuffPtr = 0;
-
-    int *notifLenPtr = malloc(sizeof(int));
-    *notifLenPtr = 0;
-
-    int64_t threshold = 1; // Set threshold to number of ops expected
-    // Should be MAX_BUFF_SIZE / OFFSET_SIZE (offset is MTU dgram size, 64KB max for IPv4)
-    // This enables fragmentation -- need logic to handle this
-    // || data (offset 64) | data (offset 128) | ... | data (offset n*64) ||
-    // What about when a buffer fills up? Need to post a new one
-
-
-    RVMA_Status status = rvmaPostBuffer((void**)&recv_buf, MAX_RECV_SIZE, (void **)&notifBuffPtr,
-                                        (void **)&notifLenPtr, vaddr, mailbox, threshold, EPOCH_OPS);
-    if (status != RVMA_SUCCESS) {
-        perror("rvmaRecvfrom: rvmaPostBuffer failed");
-        return RVMA_ERROR;
-    }
-    // Pop buffer entry from queue
-    RVMA_Buffer_Entry *entry = dequeue(mailbox->bufferQueue);
-    if (!entry) {
-        perror("rvmaRecv: Buffer queue is empty");
-        return RVMA_ERROR;
-    }
-
-    // Build sge
-    struct ibv_sge sge = {
-        .addr = (uintptr_t)(*entry->realBuffAddr),
-        .length = entry->realBuffSize,
-        .lkey = entry->mr->lkey
-    };
-
-    // Build recv_wr
-    struct ibv_recv_wr recv_wr = {
-        .wr_id = (uintptr_t)(*entry->realBuffAddr),
-        .sg_list = &sge,
-        .num_sge = 1,
-        .next = NULL
-    };
-
-    struct ibv_recv_wr *bad_wr = NULL;
-
-    // Post recv
-    if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
-        perror("ibv_post_recv failed");
-        return RVMA_ERROR;
-    }
-
-    // Poll cq
-    struct ibv_wc wc;
-    int num_wc;
-    printf("Receive wr posted, now polling cq...\n");
-    do {
-        num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
-    } while (num_wc == 0);
-
-    if (wc.status == IBV_WC_SUCCESS) {
-        // Update threshold count (for hardware completion)
-        entry->epochCount += wc.byte_len;
-        // if(entry->epochCount >= hardwareCounter) ...
-
-        // Write buffer head address and length to notification pointers
-        *(uintptr_t *)(entry->notifBuffPtrAddr) = (uintptr_t)(recv_buf);
-        *(int *)(entry->notifLenPtrAddr) = wc.byte_len;
-        printf("Server received message: %s\n", recv_buf);
-    }
-    else {
-        perror("rvmaRecv: ibv_poll_cq failed");
-        return RVMA_ERROR;
-    }
-
-    // Free resources
-    ibv_dereg_mr(entry->mr);
-    free(recv_buf);
-
+    // Poll cq for completion
+    // Use wr_id to find buffer entry
+    // Return buffer contents and repost the buffer
     return RVMA_SUCCESS;
 }
 
