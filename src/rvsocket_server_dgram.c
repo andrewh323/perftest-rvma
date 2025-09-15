@@ -57,9 +57,11 @@ int main(int argc) {
 
     dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
 
-	// Bind host address for datagram socket
+	// Bind host address for datagram socket (also posts recvs)
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));
 	printf("Host IP address bound to socket\n");
+
+    // rvrecv(dgram_fd)
 
     close(dgram_fd);
 	return 0;

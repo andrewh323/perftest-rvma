@@ -39,11 +39,22 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_SIZE 65536 /* 64 KB */
+#define MAX_RECV_SIZE 16*1024 /* 16 KB */
+
+enum {
+	RS_OP_DATA,
+	RS_OP_RSVD_DATA_MORE,
+	RS_OP_WRITE, /* opcode is not transmitted over the network */
+	RS_OP_RSVD_DRA_MORE,
+	RS_OP_SGL,
+	RS_OP_RSVD,
+	RS_OP_IOMAP_SGL,
+	RS_OP_CTRL
+};
 
 static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 
-#define rs_send_wr_id(data) ((uint64_t) data)
+#define rvs_send_wr_id(data) ((uint64_t) data)
 
 static struct index_map idm;
 struct rvsocket;
@@ -57,6 +68,18 @@ struct rs_sge {
 struct rs_msg {
 	uint32_t op;
 	uint32_t data;
+};
+
+struct ds_qp;
+
+struct ds_rmsg {
+	struct ds_qp	*qp;
+	uint32_t	offset;
+	uint32_t	length;
+};
+
+struct ds_smsg {
+	struct ds_smsg	*next;
 };
 
 struct rs_iomap {
@@ -83,11 +106,13 @@ struct ds_header {
 	} addr;
 };
 
-struct ds_dest {
-	union socket_addr addr;	/* must be first */
-	struct ds_qp	  *qp;
-	struct ibv_ah	  *ah;
-	uint32_t	   qpn;
+struct rv_dest {
+    struct ibv_ah *ah;
+    uint32_t qpn;
+    uint32_t qkey;
+    struct sockaddr_storage dest_addr;
+    socklen_t addrlen;
+    uint64_t vaddr;
 };
 
 struct ds_qp {
@@ -95,7 +120,7 @@ struct ds_qp {
 	struct rsocket	  *rs;
 	struct rdma_cm_id *cm_id;
 	struct ds_header  hdr;
-	struct ds_dest	  dest;
+	struct rv_dest	  dest;
 
 	struct ibv_mr	  *smr;
 	struct ibv_mr	  *rmr;
@@ -103,6 +128,7 @@ struct ds_qp {
 
 	int		  cq_armed;
 };
+
 
 /*
  * rsocket states are ordered as passive, connecting, connected, disconnected.
@@ -127,6 +153,7 @@ enum rs_state {
 
 
 struct rvsocket {
+
     int type; // SOCK_STREAM or SOCK_DGRAM
     int index;
     // fastlocks
@@ -142,8 +169,6 @@ struct rvsocket {
         };
         struct { // datagram
             struct ds_qp *qp_list; // Datagram QP list
-            void *dest_map; // For mapping dest socket addr to QP
-            struct ds_dest *conn_dest; // Destination for datagrams
             
             int udp_sock; // UDP socket for exchanging connection data
             int epfd; // epoll fd for waiting on completion
@@ -152,6 +177,7 @@ struct rvsocket {
 
         };
     };
+    int qp_port;
     int state;
     int err;
     int sqe_avail;
@@ -166,11 +192,13 @@ struct rvsocket {
         struct rs_msg *rmsg; // Receive message (for stream)
         struct ds_rmsg *dmsg; // Datagram message (for datagram)
     };
+    uint8_t *sbuf;
     struct rs_iomap_mr *remote_iomappings;
     int iomap_pending; // Flag indicating if there are pending I/O mappings
     
     RVMA_Mailbox *mailboxPtr;
     uint64_t vaddr;
+    struct rv_dest *dest;
 };
 
 static int rs_insert(struct rvsocket *rvs, int index)
@@ -188,24 +216,10 @@ static void rs_remove(struct rvsocket *rvs)
 	pthread_mutex_unlock(&mut);
 }
 
-static int ds_init(struct rvsocket *rvs, int domain)
-{
-	rvs->udp_sock = socket(domain, SOCK_DGRAM, 0);
-	if (rvs->udp_sock < 0)
-		return rvs->udp_sock;
-
-	rvs->epfd = epoll_create(2);
-	if (rvs->epfd < 0)
-		return rvs->epfd;
-
-	return 0;
-}
-
-
 static void ds_free(struct rvsocket *rvs) {
     // TODO
+    return;
 }
-
 
 static void rs_free(struct rvsocket *rvs) {
     if (rvs->type == SOCK_DGRAM) {
@@ -223,49 +237,63 @@ static void rs_free(struct rvsocket *rvs) {
     free(rvs);
 }
 
-// Magic function
-static int rvs_get_ctx(struct rvsocket *rvs) {
-    if (!rvs->mailboxPtr) {
-        rvs->mailboxPtr = calloc(1, sizeof(RVMA_Mailbox));
-        if (!rvs->mailboxPtr) return -1;
+int rvs_resolve_dest(struct rvsocket *rvs, struct sockaddr *addr, socklen_t addrlen, struct rv_dest *dest) {
+    struct rdma_cm_id *cm_id;
+    struct rdma_conn_param conn_param;
+    struct ibv_ah_attr ah_attr;
+    int ret;
+
+    // Create a new cm_id for route resolution
+    ret = rdma_create_id(rvs->mailboxPtr->ec, &cm_id, NULL, RDMA_PS_UDP);
+    if (ret) return ret;
+
+    // Resolve addr and route
+    ret = rdma_resolve_addr(cm_id, NULL, addr, 2000);
+    if (ret) {
+        rdma_destroy_id(cm_id);
+        return ret;
+    }
+    ret = rdma_resolve_route(cm_id, 2000);
+    if (ret) {
+        rdma_destroy_id(cm_id);
+        return ret;
     }
 
-    struct ibv_device **dev_list = ibv_get_device_list(NULL);
-    if (!dev_list) return -1;
+    struct rdma_route *route = &cm_id->route;
+    struct ibv_sa_path_rec *path = &route->path_rec[0];
 
-    for (int i = 0; dev_list[i]; i++) {
-        struct ibv_context *ctx = ibv_open_device(dev_list[i]);
-        if (!ctx) continue;
+    // Build AH
+    memset(&ah_attr, 0, sizeof(ah_attr));
+    ah_attr.is_global     = 0; // Only using IB device so only LID needed
+    ah_attr.dlid          = be16toh(path->dlid);
+    ah_attr.sl            = path->sl;
+    ah_attr.port_num      = rvs->qp_port;
+    ah_attr.grh.dgid      = path->dgid;
+    ah_attr.grh.hop_limit = path->hop_limit;
+    ah_attr.grh.traffic_class = path->traffic_class;
 
-        struct ibv_device_attr dev_attr;
-        if (ibv_query_device(ctx, &dev_attr)) {
-            ibv_close_device(ctx);
-            continue;
-        }
-
-        for (int port = 1; port <= dev_attr.phys_port_cnt; port++) {
-            struct ibv_port_attr port_attr;
-            if (ibv_query_port(ctx, port, &port_attr)) continue;
-            if (port_attr.link_layer != IBV_LINK_LAYER_INFINIBAND) continue;
-
-            if ((port_attr.phys_state == IBV_PORT_ACTIVE || port_attr.phys_state == 5) &&
-                port_attr.link_layer == IBV_LINK_LAYER_INFINIBAND) {
-
-                rvs->mailboxPtr->ctx = ctx;
-                rvs->mailboxPtr->port_num = port;
-                break;
-            }
-        }
+    dest->ah = ibv_create_ah(rvs->mailboxPtr->pd, &ah_attr);
+    if (!dest->ah) {
+        rdma_destroy_id(cm_id);
+        return -1;
     }
 
-    ibv_free_device_list(dev_list);
-    return 0;
+    dest->qpn = cm_id->qp->qp_num;
+    dest->qkey = 0x11111111; // Example qkey
 }
 
 
 uint64_t constructVaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port) {
     uint64_t res = (uint64_t)reserved << 48 | ((uint64_t)ip_host_order << 16) | port;
     return res;
+}
+
+uint16_t extract_port(uint64_t vaddr) {
+    return (uint16_t)(vaddr & 0xFFFF);
+}
+
+uint32_t extract_ip(uint64_t vaddr) {
+    return (uint32_t)((vaddr >> 16) & 0xFFFFFFFF);
 }
 
 
@@ -281,6 +309,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     
     rvs->type = type;
     rvs->index = -1;
+    rvs->qp_port = extract_port(vaddr);
 
     // Set rvsocket vaddr and mailbox
     rvs->vaddr = vaddr;
@@ -291,17 +320,13 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         return -1;
     }
 
+    rvs->mailboxPtr->type = type; // Set mailbox type
+
     if (type == SOCK_STREAM) {
         // Use the mailbox's CM ID (already set with RDMA_PS_TCP)
         index = rvs->mailboxPtr->cm_id->channel->fd;
     } else { // datagram
-        // Create UDP socket
-        ret = ds_init(rvs, SOCK_DGRAM);
-        if (ret) {
-            rs_free(rvs);
-            return ret;
-        }
-        index = rvs->udp_sock;
+        index = 0; // TODO
     }
     // Insert rvsocket into index map
     ret = rs_insert(rvs, index);
@@ -328,127 +353,11 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         if (!ret)
             rvs->state = rs_bound;
     } else { // Datagram
-        void *big_buf = malloc(MAX_RECV_SIZE);
-
-        // Set notification pointer to buffer address
-        uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
-        *notifBuffPtr = 0;
-
-        int *notifLenPtr = malloc(sizeof(int));
-        *notifLenPtr = 0;
-
-        // Define threshold as max number of transfers that fit in the buffer
-        int threshold = MAX_RECV_SIZE / RS_MAX_TRANSFER;
-
-        ret = rvs_get_ctx(rvs);
-
-        struct ibv_pd *pd = ibv_alloc_pd(rvs->mailboxPtr->ctx);
-        if (!pd) {
-            perror("ibv_alloc_pd failed");
-            return -1;
-        }
-        rvs->mailboxPtr->pd = pd;
-
-        struct ibv_mr *mr = ibv_reg_mr(pd, big_buf, MAX_RECV_SIZE, IBV_ACCESS_LOCAL_WRITE);
-        if (!mr) {
-            perror("ibv_reg_mr failed");
-            ibv_dealloc_pd(pd);
-            return -1;
-        }
-
-        RVMA_Status status = rvmaPostBuffer((void**)&big_buf, MAX_RECV_SIZE, (void **)&notifBuffPtr,
-                                        (void **)&notifLenPtr, rvs->vaddr, rvs->mailboxPtr, threshold, EPOCH_OPS);
-
+        if (rvs->state == rs_init) {
         ret = bind(rvs->udp_sock, addr, addrlen);
-
-        // Create completion queue
-        struct ibv_cq *cq = ibv_create_cq(rvs->mailboxPtr->ctx, 128, NULL, NULL, 0);
-        if (!cq) {
-            perror("ibv_create_cq failed");
-            ibv_dealloc_pd(pd);
-            return -1;
         }
-        rvs->mailboxPtr->cq = cq;
-
-        // Create QP
-        struct ibv_qp_init_attr qp_attr = {
-            .send_cq = cq,
-            .recv_cq = cq,
-            .qp_type = IBV_QPT_UD,
-            .cap = {
-                .max_send_wr = 16,
-                .max_recv_wr = 16,
-                .max_send_sge = 1,
-                .max_recv_sge = 1
-            }
-        };
-
-        struct ibv_qp *qp = ibv_create_qp(pd, &qp_attr);
-        if (!qp) {
-            perror("ibv_create_qp");
-            ibv_destroy_cq(cq);
-            ibv_dealloc_pd(pd);
-            return -1;
-        }
-        rvs->mailboxPtr->qp = qp;
-
-        // MUST SET QP TO INIT
-        struct ibv_qp_attr attr = {0};
-        attr.qp_state = IBV_QPS_INIT;
-        attr.pkey_index = 0;
-        attr.port_num = rvs->mailboxPtr->port_num;
-        attr.qkey = 0x11111111;
-
-        if (ibv_modify_qp(qp, &attr,
-                        IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_QKEY)) {
-            perror("ibv_modify_qp to INIT failed");
-            return -1;
-        }
-        
-        // Prepost initial receive buffers
-        // TODO: Handle logic for when big buffer is full; create new big buffer and post it
-        // Use threshold to determine when to create new buffer
-        for (int i = 0; i < 4; i++) {
-            uint32_t offset = i * RS_MAX_TRANSFER;
-            RVMA_Buffer_Entry *entry = malloc(sizeof(RVMA_Buffer_Entry));
-            if (!entry) {
-                perror("malloc failed");
-                return -1;
-            }
-            entry->realBuff = big_buf;
-            entry->realBuffAddr = (uint8_t *)big_buf + offset;
-            entry->realBuffSize = RS_MAX_TRANSFER;
-            entry->mr = mr;
-            entry->epochCount = i;
-
-            // Build sge and wr
-            struct ibv_sge sge = {
-                .addr = (uintptr_t)entry->realBuffAddr,
-                .length = entry->realBuffSize,
-                .lkey = entry->mr->lkey };
-            
-            struct ibv_recv_wr wr = {
-                .wr_id = (uintptr_t)entry,
-                .sg_list = &sge,
-                .num_sge = 1,
-                .next = NULL
-            };
-            struct ibv_recv_wr *bad_wr = NULL;
-
-            printf("Posting buffer %d\n", i);
-            if (ibv_post_recv(rvs->mailboxPtr->qp, &wr, &bad_wr)) {
-                perror("ibv_post_recv failed");
-                free(entry);
-                return -1;
-            }
-            printf("Enqueuing buffer\n");
-            // Enqueue new buffer
-            if (enqueue(rvs->mailboxPtr->bufferQueue, entry) != RVMA_SUCCESS) {
-                fprintf(stderr, "enqueue failed\n");
-            }
-        }
+	return ret;
     }
-	return 0;
 }
 
 
@@ -687,19 +596,83 @@ int rvsend(int socket, void *buf, int64_t len) {
 
     rvs = idm_at(&idm, socket);
     vaddr = rvs->vaddr;
-
-    if (rvs->type == SOCK_DGRAM) {
-        if (rvmaSendto(buf, len, &vaddr, rvs->mailboxPtr) != RVMA_SUCCESS) {
-            fprintf(stderr, "rvmaSendto failed\n");
-            return -1;
-        }
-    } else {
+    if (rvs->type == SOCK_STREAM) {
         if (rvmaSend(buf, len, &vaddr, rvs->mailboxPtr) != RVMA_SUCCESS) {
-            fprintf(stderr, "rvmaSend failed\n");
-            return -1;
+        fprintf(stderr, "rvmaSend failed\n");
+        return -1;
         }
     }
+    else {
+        fprintf(stderr, "rvsend: Socket type is not datagram\n");
+    }
     return 0;
+}
+
+int rvsendto(int socket, void *buf, int64_t len) {
+    struct rvsocket *rvs;
+    uint64_t vaddr;
+
+    rvs = idm_at(&idm, socket);
+    vaddr = rvs->vaddr;
+    struct rv_dest *dest = rvs->dest;
+    int ret;
+
+    int *notifBuffPtr = malloc(sizeof(int));
+    *notifBuffPtr = 0;
+
+    int *notifLenPtr = malloc(sizeof(int));
+    *notifLenPtr = 0;
+
+    int64_t threshold = RS_MAX_TRANSFER/MAX_RECV_SIZE;
+
+    RVMA_Status status = rvmaPostBuffer(&buf, len, (void **)notifBuffPtr, (void **)notifLenPtr, (void *)vaddr,
+                                        rvs->mailboxPtr, threshold, EPOCH_OPS);
+    if(status != RVMA_SUCCESS) {
+        perror("rvmasendto: rvmaPostBuffer failed");
+        return -1;
+    }
+    RVMA_Buffer_Entry *entry = dequeue(rvs->mailboxPtr->bufferQueue);
+    if (!entry) {
+        fprintf(stderr, "rvmasendto: dequeue failed\n");
+        return -1;
+    }
+
+    if (!dest || dest->vaddr != vaddr) {
+        if (!dest) {
+            dest = malloc(sizeof(*dest));
+            rvs->dest = dest;
+        }
+
+        struct sockaddr_in to;
+        to.sin_family = AF_INET;
+        to.sin_addr.s_addr = extract_ip(vaddr);
+        to.sin_port = extract_port(vaddr);
+        ret = rvs_resolve_dest(rvs, (struct sockaddr *)&to, sizeof(to), dest);
+        if (ret) {
+            fprintf(stderr, "rvs_resolve_dest failed\n");
+            return -1;
+        }
+        dest->vaddr = vaddr;
+    }
+    // Build sge, wr
+    struct ibv_sge sge = {
+        .addr = (uintptr_t)buf,
+        .length = len,
+        .lkey = rvs->mailboxPtr->mr->lkey
+    };
+
+    struct ibv_send_wr wr = {
+        .wr.ud.ah = dest->ah,
+        .wr.ud.remote_qpn = dest->qpn,
+        .wr.ud.remote_qkey = dest->qkey,
+        .opcode = IBV_WR_SEND,
+        .send_flags = IBV_SEND_SIGNALED,
+        .sg_list = &sge,
+        .num_sge = 1
+    };
+
+        struct ibv_send_wr *bad_wr;
+    //ret = ibv_post_send(rvs->qp, &wr, &bad_wr);
 }
 
 

@@ -23,6 +23,7 @@ typedef struct {
     struct rdma_event_channel *ec; // Event channel
     struct ibv_context *ctx; // Device context
     int port_num; // Port number for datagrams
+    int type; // Socket type (SOCK_STREAM or SOCK_DGRAM)
 
     RVMA_Buffer_Queue *bufferQueue;
     RVMA_Buffer_Queue *retiredBufferQueue;

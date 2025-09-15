@@ -333,9 +333,6 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
         printf("rvmaSend success!\n");
     }
 
-    // Deregister memory once finished
-    ibv_dereg_mr(entry->mr);
-
     return RVMA_SUCCESS;
 }
 
@@ -410,9 +407,6 @@ RVMA_Status rvmaSendto(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailb
     else {
         printf("rvmaSendto success!\n");
     }
-
-    // Deregister memory once finished
-    ibv_dereg_mr(entry->mr);
 
     return RVMA_SUCCESS;
 }
