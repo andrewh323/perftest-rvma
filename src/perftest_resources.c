@@ -1106,7 +1106,6 @@ int alloc_ctx(struct pingpong_context *ctx,struct perftest_parameters *user_para
         /* RVMA INIT WINDOW and buffer*/
         ALLOC(ctx->rvma_vaddr, int, ctx->buff_size);
         *ctx->rvma_vaddr = 123;
-        RVMA_Win *rvma_window = rvmaInitWindowMailbox(ctx->rvma_vaddr);
 
         void **buffer;
         int rvma_buffer_size = ctx->buff_size; //* user_param->iters / 2;

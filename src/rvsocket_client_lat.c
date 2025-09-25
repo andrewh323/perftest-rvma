@@ -61,6 +61,7 @@ int main(int argc, char **argv) {
     }
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
+    sleep(5);
     // Send message to the server
     clock_gettime(CLOCK_MONOTONIC, &start_time); // Start timing just before sending
     
@@ -79,9 +80,6 @@ int main(int argc, char **argv) {
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
-        // Free data buffer memory once finished
-        free(buffer);
-        free(message);
     }
 
     clock_gettime(CLOCK_MONOTONIC, &end_time); // End timing just after receiving ACK

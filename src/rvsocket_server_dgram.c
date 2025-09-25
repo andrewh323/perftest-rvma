@@ -45,8 +45,7 @@ int main(int argc) {
 
     // Construct virtual address
     uint32_t host_ip = get_host_addr("ib0");
-    uint32_t ip_host_order = ntohl(host_ip);
-	uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
+	uint64_t vaddr = constructVaddr(reserved, host_ip, PORT);
 	printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
 	addr.sin_family = AF_INET;
@@ -55,13 +54,22 @@ int main(int argc) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
 
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
+
     dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
 
 	// Bind host address for datagram socket (also posts recvs)
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));
 	printf("Host IP address bound to socket\n");
 
-    // rvrecv(dgram_fd)
+    int tcp_listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    bind(tcp_listenfd, (struct sockaddr *)&addr, sizeof(addr));
+    listen(tcp_listenfd, 1);
+    socklen_t addrlen = sizeof(addr);
+    rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
+
+    printf("Posting recv...\n");
+    rvrecv(dgram_fd, windowPtr);
 
     close(dgram_fd);
 	return 0;

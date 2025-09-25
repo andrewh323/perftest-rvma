@@ -36,9 +36,9 @@ int rvmaPutHybrid(struct ibv_qp* qp, int index, struct ibv_send_wr *wr, struct i
 
 RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox);
 
-RVMA_Status rvmaSendto(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox);
-
 RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox);
+
+RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox);
 
 RVMA_Status rvmaRecvfrom(void *vaddr, RVMA_Mailbox *mailbox);
 

@@ -52,16 +52,21 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    int tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
+    rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+
+    sleep(3);
+
     // Send message to the server
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     // Define data buffer to send
-    char *message = "Hello server! This is a message from the client!";
+    char message[] = "Hello server! This is a message from the client!";
 
-    int64_t size = sizeof(message);
+    int64_t size = strlen(message) + 1;
 
     // Perform rvmaPut on vaddr
-    int res = rvsend(sockfd, (void *)message, size);
+    int res = rvsendto(sockfd, message, size);
     if (res < 0) {
         fprintf(stderr, "Failed to send message\n");
     }
