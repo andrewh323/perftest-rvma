@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <time.h>
+#include <stdint.h>
 #include <rdma/rsocket.h>
 #include <arpa/inet.h>
 
@@ -11,9 +11,14 @@
 
 #define PORT 7471
 
-struct timespec start_time, end_time;
-long ns; // Nanoseconds
-double us; // Microseconds
+
+static inline uint64_t rdtsc(){
+    unsigned int lo, hi;
+    // Serialize to prevent out-of-order execution affecting timing
+    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
+    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi << 32) | lo;
+}
 
 int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
@@ -61,33 +66,22 @@ int main(int argc, char **argv) {
     }
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
-    sleep(5);
+    sleep(1); // Wait for client to post receive
     // Send message to the server
-    clock_gettime(CLOCK_MONOTONIC, &start_time); // Start timing just before sending
-    
     for (int i = 1; i <= 10; i++) {
         // Define data buffer to send
         char *message = malloc(100);
         snprintf(message, 100, "Hello server! This is message %d from the client!", i);
-
         int64_t size = strlen(message) + 1;
-
         char *buffer = malloc(size);
         memcpy(buffer, message, size);
-
+        
         // Perform rvmaPut on vaddr
         int res = rvsend(sockfd, (void *)buffer, size);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
     }
-
-    clock_gettime(CLOCK_MONOTONIC, &end_time); // End timing just after receiving ACK
-
-    ns = (end_time.tv_sec - start_time.tv_sec) * 1e9 + (end_time.tv_nsec - start_time.tv_nsec);
-    us = ns / 1000.0;
-
-    printf("RTT: %.2f microseconds\n", us);
 
     // Close the socket
     rclose(sockfd);

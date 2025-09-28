@@ -305,9 +305,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             perror("ibv_create_qp failed");
             return -1;
         }
-
         printf("QP created: %p, type=%d, pd=%p\n", qp, qp->qp_type, qp->pd);
-
         ibv_query_port(ctx, 1, &port_attr);
         printf("Port state=%d, lid=0x%x\n",
             port_attr.state, port_attr.lid);
@@ -324,14 +322,12 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             perror("INIT transition failed");
             return -1;
         }
-
         // RTR
         attr.qp_state = IBV_QPS_RTR;
         if(ibv_modify_qp(qp, &attr, IBV_QP_STATE)) {
             perror("RTR transition failed");
             return -1;
         }
-        
         // RTS
         attr.qp_state = IBV_QPS_RTS;
         attr.sq_psn = lrand48() & 0xffffff;
@@ -347,11 +343,12 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
         rvs->index = rvs->udp_sock;
+        index = rvs->index;
     }
-    
     // Insert rvsocket into index map
     ret = rs_insert(rvs, index);
     if (ret < 0) {
+        printf("Failed to insert rvsocket at index %d\n", index);
         rs_free(rvs);
         return ret;
     }
@@ -788,7 +785,7 @@ int rvsend(int socket, void *buf, int64_t len) {
     return 0;
 }
 
-int rvsendto(int socket, void *buf, int64_t len) {
+int rvsendto(int socket, void **buf, int64_t len) {
     struct rvsocket *rvs;
     uint64_t vaddr;
 
@@ -804,7 +801,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
     int64_t threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER;
 
-    RVMA_Status status = rvmaPostBuffer(&buf, len, (void **)notifBuffPtr, (void **)notifLenPtr, vaddr,
+    RVMA_Status status = rvmaPostBuffer(buf, len, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
                                         rvs->mailboxPtr, threshold, EPOCH_OPS);
     if(status != RVMA_SUCCESS) {
         perror("rvsendto: rvmaPostBuffer failed");
@@ -815,9 +812,6 @@ int rvsendto(int socket, void *buf, int64_t len) {
         fprintf(stderr, "rvsendto: dequeue failed\n");
         return -1;
     }
-
-    entry->mr = ibv_reg_mr(rvs->mailboxPtr->pd, entry->realBuff, len,
-                        IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
 
     printf("Send: MR pd=%p, QP pd=%p, addr=%p, len=%ld\n",
        entry->mr->pd,
@@ -832,6 +826,11 @@ int rvsendto(int socket, void *buf, int64_t len) {
         }
         dest->vaddr = vaddr;
     }
+
+    entry->realBuff = *buf;
+    entry->mr = ibv_reg_mr(rvs->mailboxPtr->pd, entry->realBuff, len,
+                        IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+
     // Build sge, wr
     struct ibv_sge sge = {
         .addr = (uintptr_t)entry->realBuff,
@@ -882,7 +881,6 @@ int rvsendto(int socket, void *buf, int64_t len) {
             printf("Send completion success!\n");
             break;
         }
-        usleep(1000); // 1 ms
     } while (--max_retry > 0);
 
     if (max_retry == 0) {

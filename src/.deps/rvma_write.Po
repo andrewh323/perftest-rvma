@@ -1,6 +1,5 @@
 src/rvma_write.o: src/rvma_write.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdc-predef.h \
- src/rvma_write.h src/rvma_common.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdint.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdint.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libc-header-start.h \
@@ -18,6 +17,7 @@ src/rvma_write.o: src/rvma_write.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/wchar.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdint-intn.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdint-uintn.h \
+ src/rvma_write.h src/rvma_common.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdlib.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stddef.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/waitflags.h \
@@ -142,8 +142,6 @@ src/rvma_write.o: src/rvma_write.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket2.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/in.h
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdc-predef.h:
-src/rvma_write.h:
-src/rvma_common.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdint.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdint.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libc-header-start.h:
@@ -161,6 +159,8 @@ src/rvma_common.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/wchar.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdint-intn.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdint-uintn.h:
+src/rvma_write.h:
+src/rvma_common.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdlib.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stddef.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/waitflags.h:

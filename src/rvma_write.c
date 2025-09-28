@@ -7,10 +7,11 @@
  * Reviewers: Nicholas Chivaran, Samantha Hawco
  *
  ***/
-
+#include <stdint.h>
 #include "rvma_write.h"
 #define MAX_RECV_SIZE 16*1024
 #define RS_MAX_TRANSFER 500
+#define CPU_FREQ_GHZ 2.3955 // From /proc/cpuinfo
 
 RVMA_Win *rvmaInitWindowMailboxKey(void *virtualAddress, key_t key) {
 
@@ -256,6 +257,14 @@ int rvmaPutHybrid(struct ibv_qp *qp, int index, struct ibv_send_wr *wr, struct i
     return ibv_post_send(qp, &wr[index], bad_wr);
 }
 
+// Function to measure clock cycles
+static inline uint64_t rdtsc(){
+    unsigned int lo, hi;
+    // Serialize to prevent out-of-order execution affecting timing
+    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
+    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi << 32) | lo;
+}
 
 /*
 RVMA PUT STEPS
@@ -265,9 +274,14 @@ RVMA PUT STEPS
     4. Perform completion check
         - Increment counter and check it against threshold (Counter is hardware only)
         - If buffer is complete, write address of buffer to completion pointer address
-        - Also write length of data buffer?
 */
 RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox) {
+    // Start timer before buffer setup
+    if (mailbox->cycles == NULL) {
+        mailbox->cycles = 0;
+    }
+    uint64_t start = rdtsc();
+
     int64_t threshold = size; // Set threshold to size of buffer (bytes)
 
     int *notifBuffPtr = malloc(sizeof(int));
@@ -277,7 +291,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     *notifLenPtr = 0;
 
     // Post a buffer to the RVMA mailbox
-    RVMA_Status status = rvmaPostBuffer(&buf, size, (void **)&notifBuffPtr, (void **)&notifLenPtr,
+    RVMA_Status status = rvmaPostBuffer(&buf, size, (void *)notifBuffPtr, (void *)notifLenPtr,
                                         vaddr, mailbox, threshold, EPOCH_BYTES);
     
     // Pop the buffer entry from the queue
@@ -314,6 +328,11 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
         perror("rvmaSend: ibv_post_send failed");
         status = RVMA_ERROR;
     }
+    // End timer and update total elapsed time
+    uint64_t end = rdtsc();
+    mailbox->cycles += end - start;
+    double elapsed_us = mailbox->cycles / (CPU_FREQ_GHZ * 1e3);
+    printf("Total elapsed time: %.3f microseconds\n", elapsed_us);
 
     // Poll cq
     struct ibv_wc wc;
@@ -351,8 +370,8 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
     int *notifLenPtr = malloc(sizeof(int));
     *notifLenPtr = 0;
 
-    RVMA_Status status = rvmaPostBuffer((void**)&recv_buf, MAX_RECV_SIZE, (void **)&notifBuffPtr,
-                                        (void **)&notifLenPtr, vaddr, mailbox, MAX_RECV_SIZE, EPOCH_BYTES);
+    RVMA_Status status = rvmaPostBuffer((void**)&recv_buf, MAX_RECV_SIZE, (void *)notifBuffPtr,
+                                        (void *)notifLenPtr, vaddr, mailbox, MAX_RECV_SIZE, EPOCH_BYTES);
     if (status != RVMA_SUCCESS) {
         perror("rvmaRecv: rvmaPostBuffer failed");
         return RVMA_ERROR;
@@ -430,8 +449,8 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
 
     int64_t threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER; // Set threshold to number of ops expected
 
-    RVMA_Status status = rvmaPostBuffer((void**)&recv_buf, RS_MAX_TRANSFER, (void **)&notifBuffPtr,
-                                        (void **)&notifLenPtr, vaddr, mailbox, threshold, EPOCH_OPS);
+    RVMA_Status status = rvmaPostBuffer((void *)recv_buf, RS_MAX_TRANSFER, (void *)notifBuffPtr,
+                                        (void *)notifLenPtr, vaddr, mailbox, threshold, EPOCH_OPS);
     if (status != RVMA_SUCCESS) {
         perror("rvrecvfrom: rvmaPostBuffer failed");
         return RVMA_ERROR;
@@ -444,31 +463,29 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
         return RVMA_ERROR;
     }
 
-    entry->mr = ibv_reg_mr(mailbox->pd, entry->realBuff, RS_MAX_TRANSFER,
+    entry->mr = ibv_reg_mr(mailbox->pd, recv_buf, RS_MAX_TRANSFER,
                         IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
 
     printf("Send: MR pd=%p, QP pd=%p, addr=%p, len=%ld\n",
        entry->mr->pd,
        mailbox->qp->pd,
        entry->realBuff,
-       MAX_RECV_SIZE);
+       RS_MAX_TRANSFER);
 
     // Build sge
     struct ibv_sge sge = {
-        .addr = (uintptr_t)(*entry->realBuffAddr),
-        .length = entry->realBuffSize,
+        .addr = (uintptr_t)recv_buf,
+        .length = RS_MAX_TRANSFER,
         .lkey = entry->mr->lkey
     };
 
     // Build recv_wr
     struct ibv_recv_wr recv_wr = {
-        .wr_id = (uintptr_t)(*entry->realBuffAddr),
+        .wr_id = (uintptr_t)recv_buf,
         .sg_list = &sge,
         .num_sge = 1,
         .next = NULL
     };
-
-    if (!entry->mr) { fprintf(stderr, "No MR registered for this buffer!\n"); }
 
     struct ibv_recv_wr *bad_wr = NULL;
 
@@ -482,25 +499,24 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
     // Poll cq
     struct ibv_wc wc;
     int num_wc;
-
     do {
         num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
     } while (num_wc == 0);
 
-    if (wc.status == IBV_WC_SUCCESS) {
-        // Update threshold count (for hardware completion)
-        entry->epochCount += wc.byte_len;
-        // if(entry->epochCount >= hardwareCounter) ...
-
-        // Write buffer head address and length to notification pointers
-        *(uintptr_t *)(entry->notifBuffPtrAddr) = (uintptr_t)(recv_buf);
-        *(int *)(entry->notifLenPtrAddr) = wc.byte_len;
-        printf("Server received message: %p\n", recv_buf);
-    }
-    else {
-        perror("rvmaRecv: ibv_poll_cq failed");
+    if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
+        fprintf(stderr, "recv completion error: %s (%d)\n",
+                ibv_wc_status_str(wc.status), wc.status);
         return RVMA_ERROR;
     }
+
+    // Update threshold count (for hardware completion)
+    entry->epochCount += wc.byte_len;
+    // if(entry->epochCount >= hardwareCounter) ...
+
+    // Write buffer head address and length to notification pointers
+    *(uintptr_t *)(entry->notifBuffPtrAddr) = (uintptr_t)(recv_buf);
+    *(int *)(entry->notifLenPtrAddr) = wc.byte_len;
+    printf("Server received (%d bytes): %s\n", wc.byte_len, recv_buf);
     return RVMA_SUCCESS;
 }
 
