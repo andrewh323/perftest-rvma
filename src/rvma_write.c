@@ -10,8 +10,18 @@
 #include <stdint.h>
 #include "rvma_write.h"
 #define MAX_RECV_SIZE 16*1024
-#define RS_MAX_TRANSFER 500
-#define CPU_FREQ_GHZ 2.3955 // From /proc/cpuinfo
+#define RS_MAX_TRANSFER 500 // MTU is 4KB
+#define CPU_FREQ_GHZ 2.4 // From /proc/cpuinfo
+
+
+// Function to measure clock cycles
+static inline uint64_t rdtsc(){
+    unsigned int lo, hi;
+    // Serialize to prevent out-of-order execution affecting timing
+    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
+    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi << 32) | lo;
+}
 
 RVMA_Win *rvmaInitWindowMailboxKey(void *virtualAddress, key_t key) {
 
@@ -54,6 +64,8 @@ RVMA_Win *rvmaInitWindowMailboxKey(void *virtualAddress, key_t key) {
 }
 
 RVMA_Win *rvmaInitWindowMailbox(void *virtualAddress) {
+    uint64_t start, end, cycles;
+    start = rdtsc();
     if (virtualAddress == NULL){
         print_error("rvmaInitWindowMailbox: Virtual address is null");
         return NULL;
@@ -84,6 +96,11 @@ RVMA_Win *rvmaInitWindowMailbox(void *virtualAddress) {
 
     windowPtr->hashMapPtr = hashMapPtr;
     windowPtr->key = -1;
+
+    end = rdtsc();
+    cycles = end - start;
+    double elapsed_us = cycles / (CPU_FREQ_GHZ * 1e3);
+    printf("Window init setup time: %.3f microseconds\n", elapsed_us);
 
     return windowPtr;
 }
@@ -257,15 +274,6 @@ int rvmaPutHybrid(struct ibv_qp *qp, int index, struct ibv_send_wr *wr, struct i
     return ibv_post_send(qp, &wr[index], bad_wr);
 }
 
-// Function to measure clock cycles
-static inline uint64_t rdtsc(){
-    unsigned int lo, hi;
-    // Serialize to prevent out-of-order execution affecting timing
-    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
-    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)hi << 32) | lo;
-}
-
 /*
 RVMA PUT STEPS
     1. Post receive buffer to target mailbox
@@ -332,7 +340,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     uint64_t end = rdtsc();
     mailbox->cycles += end - start;
     double elapsed_us = mailbox->cycles / (CPU_FREQ_GHZ * 1e3);
-    printf("Total elapsed time: %.3f microseconds\n", elapsed_us);
+    printf("Total elapsed time for sends: %.3f microseconds\n", elapsed_us);
 
     // Poll cq
     struct ibv_wc wc;
@@ -440,6 +448,8 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
         return RVMA_ERROR;
     }
 
+    void *recv_ptr = recv_buf;
+
     // Set notification pointer to buffer address
     uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
     *notifBuffPtr = 0;
@@ -449,7 +459,7 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
 
     int64_t threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER; // Set threshold to number of ops expected
 
-    RVMA_Status status = rvmaPostBuffer((void *)recv_buf, RS_MAX_TRANSFER, (void *)notifBuffPtr,
+    RVMA_Status status = rvmaPostBuffer(&recv_ptr, RS_MAX_TRANSFER, (void *)notifBuffPtr,
                                         (void *)notifLenPtr, vaddr, mailbox, threshold, EPOCH_OPS);
     if (status != RVMA_SUCCESS) {
         perror("rvrecvfrom: rvmaPostBuffer failed");
@@ -463,9 +473,6 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
         return RVMA_ERROR;
     }
 
-    entry->mr = ibv_reg_mr(mailbox->pd, recv_buf, RS_MAX_TRANSFER,
-                        IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-
     printf("Send: MR pd=%p, QP pd=%p, addr=%p, len=%ld\n",
        entry->mr->pd,
        mailbox->qp->pd,
@@ -474,14 +481,14 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
 
     // Build sge
     struct ibv_sge sge = {
-        .addr = (uintptr_t)recv_buf,
+        .addr = (uintptr_t)recv_ptr,
         .length = RS_MAX_TRANSFER,
         .lkey = entry->mr->lkey
     };
 
     // Build recv_wr
     struct ibv_recv_wr recv_wr = {
-        .wr_id = (uintptr_t)recv_buf,
+        .wr_id = (uintptr_t)recv_ptr,
         .sg_list = &sge,
         .num_sge = 1,
         .next = NULL
@@ -508,7 +515,6 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
                 ibv_wc_status_str(wc.status), wc.status);
         return RVMA_ERROR;
     }
-
     // Update threshold count (for hardware completion)
     entry->epochCount += wc.byte_len;
     // if(entry->epochCount >= hardwareCounter) ...
@@ -516,7 +522,10 @@ RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
     // Write buffer head address and length to notification pointers
     *(uintptr_t *)(entry->notifBuffPtrAddr) = (uintptr_t)(recv_buf);
     *(int *)(entry->notifLenPtrAddr) = wc.byte_len;
-    printf("Server received (%d bytes): %s\n", wc.byte_len, recv_buf);
+    char *app_data = recv_buf + 40; // First 40 bytes are garbage because of GRH
+    int app_len = wc.byte_len - 40; // Happens when global routing is enabled (for RoCE)
+    printf("Server received (%d bytes): %.*s\n", app_len, app_len, app_data);
+
     return RVMA_SUCCESS;
 }
 

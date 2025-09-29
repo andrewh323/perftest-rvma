@@ -10,6 +10,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
+#define PORT2 123
 
 int main(int argc, char **argv) {
 	uint16_t reserved = 0x0001;

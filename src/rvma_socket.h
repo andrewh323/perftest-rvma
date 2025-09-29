@@ -23,9 +23,15 @@ int rvlisten(int socket, int backlog);
 
 int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen);
 
+int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen);
+
 int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen);
 
+int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
 int rvsend(int socket, void *buf, int64_t len);
+
+int rvsendto(int socket, void **buf, int64_t len);
 
 int rvrecv(int socket, RVMA_Win *window);
 

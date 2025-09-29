@@ -54,8 +54,6 @@ int main(int argc) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
 
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
-
     dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
 
 	// Bind host address for datagram socket (also posts recvs)
@@ -69,7 +67,10 @@ int main(int argc) {
     rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
     printf("Posting recv...\n");
-    rvrecv(dgram_fd, windowPtr);
+    int ret = rvrecv(dgram_fd, windowPtr);
+    if (ret < 0) {
+        perror("Error receiving message");
+    }
 
     close(dgram_fd);
 	return 0;

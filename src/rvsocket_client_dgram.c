@@ -11,15 +11,10 @@
 
 #define PORT 7471
 
-struct timespec start_time, end_time;
-long ns; // Nanoseconds
-double us; // Microseconds
-
 int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
     int sockfd;
     struct sockaddr_in server_addr;
-    char buffer[1024];
     memset(&server_addr, 0, sizeof(server_addr));
 
     server_addr.sin_family = AF_INET;
@@ -52,32 +47,31 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    int tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
     rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
 
     sleep(1);
-
-    // Send message to the server
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
-
     // Define data buffer to send
     char *message = malloc(100);
     strcpy(message, "Hello server! This is a message from the client!");
     int64_t size = strlen(message) + 1;
 
-    // Perform rvmaPut on vaddr
-    int res = rvsendto(sockfd, &message, size);
+    // Perform rvmasendto on rvma socket
+    int res;
+    /* for (int i = 1; i <= 10; i++) {
+        char *message = malloc(100);
+        snprintf(message, 100, "Hello server! This is message %d from the client!", i);
+        int64_t size = strlen(message) + 1;
+        char *buffer = malloc(size);
+        memcpy(buffer, message, size);
+        res = rvsendto(sockfd, &buffer, size);
+        if (res < 0) {
+            fprintf(stderr, "Failed to send message\n");
+        }
+    } */
+    res = rvsendto(sockfd, &message, size);
     if (res < 0) {
         fprintf(stderr, "Failed to send message\n");
     }
-
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
-
-    ns = (end_time.tv_sec - start_time.tv_sec) * 1e9 + (end_time.tv_nsec - start_time.tv_nsec);
-    us = ns / 1000.0;
-
-    printf("RTT: %.2f microseconds\n", us);
-
     // Close the socket
     rclose(sockfd);
     return 0;
