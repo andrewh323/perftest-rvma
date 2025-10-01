@@ -30,10 +30,8 @@
 #include "rvma_socket.h"
 #include "indexer.h"
 
-#define MAX_RVSOCKETS 1024
 #define PORT 7471
-#define RS_OLAP_START_SIZE 2048
-#define RS_MAX_TRANSFER 4056 /* MTU 4KB */
+#define RS_MAX_TRANSFER (4096 - 40) /* MTU 4KB - 40B GRH */
 #define RS_SNDLOWAT 2048
 #define RS_QP_MIN_SIZE 16
 #define RS_QP_MAX_SIZE 0xFFFE
@@ -42,6 +40,7 @@
 #define RS_SGL_SIZE 2
 #define MAX_RECV_SIZE 16*1024 /* 16 KB */
 #define CPU_FREQ_GHZ 2.4
+#define MAX_RECV_BUFS 16
 
 enum {
 	RS_OP_DATA,
@@ -297,6 +296,14 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         }
         // Save qp to rvs
         rvs->mailboxPtr->qp = qp;
+
+        printf("QP created, now posting pool of recv buffers...\n");
+        RVMA_Status status = rvmaPostRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, vaddr, EPOCH_OPS);
+        if (status != RVMA_SUCCESS) {
+            perror("rvmaPostRecvPool failed");
+            return -1;
+        }
+
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
         rvs->index = rvs->udp_sock;
@@ -452,13 +459,16 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
     }
 
     // Fill in new rvsocket fields
-    new_rvs->vaddr = rvs->vaddr; // Same vaddr as listening socket
-    new_rvs->mailboxPtr = rvs->mailboxPtr; // Same mailbox - Should be new mailbox with new vaddr
+    new_rvs->vaddr = rvs->vaddr;
+    new_rvs->mailboxPtr = rvs->mailboxPtr;
     new_rvs->mailboxPtr->cm_id = client_cm_id;
     new_rvs->mailboxPtr->pd = pd;
     new_rvs->mailboxPtr->cq = cq;
     new_rvs->mailboxPtr->qp = client_cm_id->qp;
     new_rvs->index = client_cm_id->channel->fd;
+
+    // Prepost recv buffer pool
+    RVMA_Status status = rvmaPostRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, rvs->vaddr, EPOCH_BYTES);
 
     // Insert new rvsocket into index map
     rs_insert(new_rvs, new_rvs->index);
@@ -731,10 +741,18 @@ int rvsend(int socket, void *buf, int64_t len) {
 }
 
 int rvsendto(int socket, void **buf, int64_t len) {
+    uint64_t start, end, elapsed;
     struct rvsocket *rvs;
     uint64_t vaddr;
 
+    start = rdtsc();
+
     rvs = idm_at(&idm, socket);
+
+    if (rvs->mailboxPtr->cycles == NULL) {
+        rvs->mailboxPtr->cycles = 0;
+    }
+
     vaddr = rvs->vaddr;
     struct rv_dest *dest = rvs->dest;
 
@@ -745,16 +763,10 @@ int rvsendto(int socket, void **buf, int64_t len) {
 
     int64_t threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER;
 
-    RVMA_Status status = rvmaPostBuffer(buf, len, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
+    RVMA_Buffer_Entry *entry = rvmaPostBuffer(buf, len, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
                                         rvs->mailboxPtr, threshold, EPOCH_OPS);
-    if(status != RVMA_SUCCESS) {
-        perror("rvsendto: rvmaPostBuffer failed");
-        return -1;
-    }
-
-    RVMA_Buffer_Entry *entry = dequeue(rvs->mailboxPtr->bufferQueue);
     if (!entry) {
-        fprintf(stderr, "rvsendto: dequeue failed\n");
+        fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
         return -1;
     }
 
@@ -790,8 +802,14 @@ int rvsendto(int socket, void **buf, int64_t len) {
 
     if (ibv_post_send(rvs->mailboxPtr->qp, &wr, &bad_wr)) {
         perror("rvmasendto: ibv_post_send failed");
-        status = RVMA_ERROR;
+        return RVMA_ERROR;
     }
+
+    end = rdtsc();
+    elapsed = end - start;
+    double elapsed_us = elapsed / (CPU_FREQ_GHZ * 1e3);
+    printf("rvsendto time: %.3f microseconds\n", elapsed_us);
+    rvs->mailboxPtr->cycles += elapsed;
 
     // Poll cq
     struct ibv_wc wc;
@@ -810,7 +828,7 @@ int rvsendto(int socket, void **buf, int64_t len) {
     else {
         printf("rvmasendto success!\n");
     }
-    return status;
+    return RVMA_SUCCESS;
 }
 
 
@@ -825,7 +843,7 @@ int rvrecv(int socket, RVMA_Win *windowPtr) {
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
 
     if (rvs->type == SOCK_DGRAM) {
-        if (rvrecvfrom(&vaddr, mailbox) != RVMA_SUCCESS) {
+        if (rvrecvfrom(mailbox) != RVMA_SUCCESS) {
             fprintf(stderr, "rvmaRecvfrom failed\n");
             return -1;
         }

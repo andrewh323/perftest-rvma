@@ -51,13 +51,10 @@ int main(int argc, char **argv) {
 	printf("Client successfully connected!\n");
 
 	// Receive data from client
-	for (int i = 0; i < 10; i++) {
-        int ret = rvrecv(conn_fd, windowPtr);
-        if (ret < 0) {
-            perror("Error receiving message");
-            break;
-        }
-    }
+	int ret = rvrecv(conn_fd, windowPtr);
+	if (ret < 0) {
+		perror("Error receiving message");
+	}
 
 	// Close the connection
 	rclose(conn_fd);

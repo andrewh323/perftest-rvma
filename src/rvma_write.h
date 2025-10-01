@@ -30,7 +30,7 @@ RVMA_Status rvmaCloseWin(RVMA_Win*);
 
 int64_t rvmaWinGetEpoch(RVMA_Win*);
 
-RVMA_Status rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, void *virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType);
+RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, void *virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType);
 
 int rvmaPutHybrid(struct ibv_qp* qp, int index, struct ibv_send_wr *wr, struct ibv_send_wr **bad_wr);
 
@@ -38,9 +38,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
 
 RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox);
 
-RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox);
-
-RVMA_Status rvmaRecvfrom(void *vaddr, RVMA_Mailbox *mailbox);
+RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox);
 
 RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void* virtualAddress);
 

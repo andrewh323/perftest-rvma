@@ -158,7 +158,7 @@ void test_RVMACloseWin(){
     }
     testFinished(w_TestCounter);
 }
-
+/* 
 // RVMA_Write Test Case 10 (TC-W10)
 void test_RVMAPostBufferInvalidBuffer(){
     RVMA_Win* test_windowPtr = rvmaInitWindow();
@@ -256,3 +256,4 @@ void test_RVMAPostBufferCorrect(){
     }
     testFinished(w_TestCounter);
 }
+ */

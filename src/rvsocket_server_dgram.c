@@ -64,6 +64,7 @@ int main(int argc) {
     bind(tcp_listenfd, (struct sockaddr *)&addr, sizeof(addr));
     listen(tcp_listenfd, 1);
     socklen_t addrlen = sizeof(addr);
+    // Accept connection to exchange UD connection info
     rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
     printf("Posting recv...\n");

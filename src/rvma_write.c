@@ -9,8 +9,9 @@
  ***/
 #include <stdint.h>
 #include "rvma_write.h"
+
 #define MAX_RECV_SIZE 16*1024
-#define RS_MAX_TRANSFER 500 // MTU is 4KB
+#define RS_MAX_TRANSFER (4096 - 40) // MTU is 4KB
 #define CPU_FREQ_GHZ 2.4 // From /proc/cpuinfo
 
 
@@ -186,43 +187,18 @@ RVMA_Status rvmaCloseWin(RVMA_Win *window) {
 }
 
 
-RVMA_Status rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, void *virtualAddress,
+RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, void *virtualAddress,
                RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType) {
-
-    if (buffer == NULL) {
-        print_error("rvmaPostBuffer: buffer was NULL");
-        return RVMA_ERROR;
-    }
-    if (size < 1) {
-        print_error("rvmaPostBuffer: size was less than 1");
-        return RVMA_ERROR;
-    }
-    if (notificationPtr == NULL) {
-        print_error("rvmaPostBuffer: notificationPtr was NULL");
-        return RVMA_ERROR;
-    }
-    if (virtualAddress == NULL) {
-        print_error("rvmaPostBuffer: virtualAddress was NULL");
-        return RVMA_ERROR;
-    }
-    if (mailbox == NULL) {
-        print_error("rvmaPostBuffer: mailbox was NULL");
-        return RVMA_ERROR;
-    }
-    if (notificationLenPtr == NULL) {
-        print_error("rvmaPostBuffer: notificationLenPtr was NULL");
-        return RVMA_ERROR;
-    }
 
     RVMA_Buffer_Entry *entry = createBufferEntry(buffer, size, notificationPtr, notificationLenPtr, epochThreshold, epochType);
     if (entry == NULL) {
         print_error("rvmaPostBuffer: error while malloc new buffer entry");
-        return RVMA_ERROR;
+        return NULL;
     }
 
     if (mlock(*buffer, size)) {
         print_error("rvmaPostBuffer: buffer memory couldn't be pinned");
-        return RVMA_ERROR;
+        return NULL;
     }
 
     // Define memory region for buffer
@@ -230,13 +206,9 @@ RVMA_Status rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, 
     if(!mr) {
         print_error("rvmaPostBuffer: ibv_reg_mr failed");
         free(entry);
-        return RVMA_ERROR;
+        return NULL;
     }
-
     entry->mr = mr;
-    if (!entry->mr) {
-        printf("rvmaPostBuffer: mr is NULL!\n");
-    }
 
     RVMA_Status res = enqueue(mailbox->bufferQueue, entry);
     if (res != RVMA_SUCCESS) {
@@ -244,11 +216,70 @@ RVMA_Status rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, 
             print_error("rvmaPostBuffer: buffer memory couldn't be unpinned");
         free(entry);
         print_error("rvmaPostBuffer: buffer entry failed to be added to mailbox queue");
-        return RVMA_ERROR;
+        return NULL;
     }
 
+    return entry;
+}
+
+
+RVMA_Status rvmaPostRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch_type epochType) {
+    for (int i = 0; i < num_bufs; i++) {
+        char *recv_buf = malloc(MAX_RECV_SIZE);
+        if (!recv_buf) {
+            print_error("rvmaPostRecvPool: malloc failed");
+            return RVMA_ERROR;
+        }
+        void *recv_ptr = recv_buf;
+
+        // Setup notification pointers (per-buffer notification)
+        uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
+        *notifBuffPtr = 0;
+        int *notifLenPtr = malloc(sizeof(int));
+        *notifLenPtr = 0;
+
+        int64_t threshold = 1;
+        if (epochType == EPOCH_OPS) {
+            threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER;
+        }
+        else if (epochType == EPOCH_BYTES) {
+            threshold = MAX_RECV_SIZE;
+        }
+        else {
+            print_error("rvmaPostRecvPool: invalid epoch type");
+            return RVMA_ERROR;
+        }
+
+        RVMA_Buffer_Entry *entry = rvmaPostBuffer(&recv_ptr, MAX_RECV_SIZE, (void *)notifBuffPtr,
+                                            (void *)notifLenPtr, vaddr, mailbox, threshold, epochType);
+        if (!entry) {
+            print_error("rvmaPostRecvPool: rvmaPostBuffer failed");
+            return RVMA_ERROR;
+        }
+
+        // Build sge and wr, then post recv
+        struct ibv_sge sge = {
+            .addr = (uintptr_t)recv_ptr,
+            .length = MAX_RECV_SIZE,
+            .lkey = entry->mr->lkey
+        };
+
+        struct ibv_recv_wr recv_wr = {
+            .wr_id = (uintptr_t)entry,
+            .sg_list = &sge,
+            .num_sge = 1,
+            .next = NULL
+        };
+
+        struct ibv_recv_wr *bad_wr = NULL;
+        if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
+            perror("rvmaPostRecvPool: ibv_post_recv failed");
+            return RVMA_ERROR;
+        }
+    }
     return RVMA_SUCCESS;
 }
+
 
 int rvmaPutHybrid(struct ibv_qp *qp, int index, struct ibv_send_wr *wr, struct ibv_send_wr **bad_wr) {
     if (!qp) {
@@ -299,16 +330,12 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     *notifLenPtr = 0;
 
     // Post a buffer to the RVMA mailbox
-    RVMA_Status status = rvmaPostBuffer(&buf, size, (void *)notifBuffPtr, (void *)notifLenPtr,
+    RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, size, (void *)notifBuffPtr, (void *)notifLenPtr,
                                         vaddr, mailbox, threshold, EPOCH_BYTES);
-    
-    // Pop the buffer entry from the queue
-    RVMA_Buffer_Entry *entry = dequeue(mailbox->bufferQueue);
     if (!entry) {
-        perror("rvmaSend: No buffer entry available in mailbox queue");
+        print_error("rvmaSend: rvmaPostBuffer failed");
         return RVMA_ERROR;
     }
-
     // Retrieve buffer entry info
     void *data = *(entry->realBuffAddr);
     int64_t dataSize = entry->realBuffSize;
@@ -334,13 +361,14 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     // Send function
     if (ibv_post_send(mailbox->qp, &wr, &bad_wr)) {
         perror("rvmaSend: ibv_post_send failed");
-        status = RVMA_ERROR;
+        return RVMA_ERROR;
     }
     // End timer and update total elapsed time
     uint64_t end = rdtsc();
-    mailbox->cycles += end - start;
-    double elapsed_us = mailbox->cycles / (CPU_FREQ_GHZ * 1e3);
-    printf("Total elapsed time for sends: %.3f microseconds\n", elapsed_us);
+    uint64_t elapsed = end - start;
+    double elapsed_us = elapsed / (CPU_FREQ_GHZ * 1e3);
+    printf("rvmaSend time: %.3f microseconds\n", elapsed_us);
+    mailbox->cycles += elapsed;
 
     // Poll cq
     struct ibv_wc wc;
@@ -359,173 +387,112 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     else {
         printf("rvmaSend success!\n");
     }
-    return status;
-}
-
-
-RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
-    // Define recv buffer and post it to the mailbox buffer queue
-    char *recv_buf = malloc(MAX_RECV_SIZE);
-    if (!recv_buf) {
-        perror("rvmaRecv: malloc failed");
-        return RVMA_ERROR;
-    }
-
-    // Set notification pointer to buffer address
-    uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
-    *notifBuffPtr = 0;
-
-    int *notifLenPtr = malloc(sizeof(int));
-    *notifLenPtr = 0;
-
-    RVMA_Status status = rvmaPostBuffer((void**)&recv_buf, MAX_RECV_SIZE, (void *)notifBuffPtr,
-                                        (void *)notifLenPtr, vaddr, mailbox, MAX_RECV_SIZE, EPOCH_BYTES);
-    if (status != RVMA_SUCCESS) {
-        perror("rvmaRecv: rvmaPostBuffer failed");
-        return RVMA_ERROR;
-    }
-    // Pop buffer entry from queue
-    RVMA_Buffer_Entry *entry = dequeue(mailbox->bufferQueue);
-    if (!entry) {
-        perror("rvmaRecv: Buffer queue is empty");
-        return RVMA_ERROR;
-    }
-
-    // Build sge
-    struct ibv_sge sge = {
-        .addr = (uintptr_t)(*entry->realBuffAddr),
-        .length = entry->realBuffSize,
-        .lkey = entry->mr->lkey
-    };
-
-    // Build recv_wr
-    struct ibv_recv_wr recv_wr = {
-        .wr_id = (uintptr_t)(*entry->realBuffAddr),
-        .sg_list = &sge,
-        .num_sge = 1,
-        .next = NULL
-    };
-
-    struct ibv_recv_wr *bad_wr = NULL;
-
-    // Post recv
-    if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
-        perror("ibv_post_recv failed");
-        return RVMA_ERROR;
-    }
-
-    // Poll cq
-    struct ibv_wc wc;
-    int num_wc;
-    printf("Receive wr posted, now polling cq...\n");
-    do {
-        num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
-    } while (num_wc == 0);
-
-    if (wc.status == IBV_WC_SUCCESS) {
-        // Update threshold count (for hardware completion)
-        entry->epochCount += wc.byte_len;
-        // if(entry->epochCount >= hardwareCounter) ...
-            // Write buffer head address and length to notification pointers
-            *(uintptr_t *)(entry->notifBuffPtrAddr) = (uintptr_t)(recv_buf);
-            *(int *)(entry->notifLenPtrAddr) = wc.byte_len;
-        printf("Server received message: %s\n", recv_buf);
-    }
-    else {
-        perror("rvmaRecv: ibv_poll_cq failed");
-        return RVMA_ERROR;
-    }
-
     return RVMA_SUCCESS;
 }
 
 
-RVMA_Status rvrecvfrom(void *vaddr, RVMA_Mailbox *mailbox) {
-    // Define recv buffer and post it to the mailbox buffer queue
-    char *recv_buf = malloc(RS_MAX_TRANSFER);
-    if (!recv_buf) {
-        perror("rvmaRecv: malloc failed");
-        return RVMA_ERROR;
+// Recv buffer pool should be preposted, so just poll cq for completions
+RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
+    int num_recvs = 10;
+    int recv_count = 0;
+
+    while (recv_count < num_recvs) {
+        struct ibv_wc wc;
+        int num_wc;
+        do {
+            num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
+        } while (num_wc == 0);
+
+        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
+            return RVMA_ERROR;
+        }
+
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
+        char *recv_buf = (char *)entry->realBuff;
+        int len = wc.byte_len;
+
+        printf("Server received (%d bytes): %.*s\n", len, len, recv_buf);
+
+        // Build sge
+        struct ibv_sge sge = {
+            .addr = (uintptr_t)recv_buf,
+            .length = entry->realBuffSize,
+            .lkey = entry->mr->lkey
+        };
+
+        // Build recv_wr
+        struct ibv_recv_wr recv_wr = {
+            .wr_id = (uintptr_t)entry,
+            .sg_list = &sge,
+            .num_sge = 1,
+            .next = NULL
+        };
+        struct ibv_recv_wr *bad_wr = NULL;
+
+        // Post recv
+        if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
+            perror("ibv_post_recv failed");
+            return RVMA_ERROR;
+        }
+        recv_count++;
     }
+    return RVMA_SUCCESS;
+}
 
-    void *recv_ptr = recv_buf;
+// Receive buffer pool should already be preposted, so just poll for completions
+RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox) {
+    int num_recvs = 10; // Receive up to 10 messages
+    int recv_count = 0;
 
-    // Set notification pointer to buffer address
-    uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
-    *notifBuffPtr = 0;
+    while (recv_count < num_recvs) {
+        struct ibv_wc wc;
+        int num_wc;
 
-    int *notifLenPtr = malloc(sizeof(int));
-    *notifLenPtr = 0;
+        do {
+            num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
+        } while (num_wc == 0);
 
-    int64_t threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER; // Set threshold to number of ops expected
+        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
+            return RVMA_ERROR;
+        }
 
-    RVMA_Status status = rvmaPostBuffer(&recv_ptr, RS_MAX_TRANSFER, (void *)notifBuffPtr,
-                                        (void *)notifLenPtr, vaddr, mailbox, threshold, EPOCH_OPS);
-    if (status != RVMA_SUCCESS) {
-        perror("rvrecvfrom: rvmaPostBuffer failed");
-        return RVMA_ERROR;
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
+        if (!entry) {
+            perror("rvrecvfrom: entry is NULL");
+            return RVMA_ERROR;
+        }
+
+        char *recv_buf = (char *)entry->realBuff;
+        int len = wc.byte_len;
+
+        char *data = recv_buf + 40; // GRH offset
+        int data_len = len - 40;
+
+        printf("Server received (%d bytes): %.*s\n", data_len, data_len, data);
+
+        // Recycle recv buffer by reposting
+        struct ibv_sge sge = {
+            .addr = (uintptr_t)recv_buf,
+            .length = MAX_RECV_SIZE,
+            .lkey = entry->mr->lkey
+        };
+
+        struct ibv_recv_wr recv_wr = {
+            .wr_id = (uintptr_t)entry,
+            .sg_list = &sge,
+            .num_sge = 1,
+            .next = NULL
+        };
+
+        struct ibv_recv_wr *bad_wr = NULL;
+        if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
+            perror("rvrecvfrom: ibv_post_recv failed");
+            return RVMA_ERROR;
+        }
+        recv_count++;
     }
-
-    // Pop buffer entry from queue
-    RVMA_Buffer_Entry *entry = dequeue(mailbox->bufferQueue);
-    if (!entry) {
-        perror("rvmaRecv: Buffer queue is empty");
-        return RVMA_ERROR;
-    }
-
-    printf("Send: MR pd=%p, QP pd=%p, addr=%p, len=%ld\n",
-       entry->mr->pd,
-       mailbox->qp->pd,
-       entry->realBuff,
-       RS_MAX_TRANSFER);
-
-    // Build sge
-    struct ibv_sge sge = {
-        .addr = (uintptr_t)recv_ptr,
-        .length = RS_MAX_TRANSFER,
-        .lkey = entry->mr->lkey
-    };
-
-    // Build recv_wr
-    struct ibv_recv_wr recv_wr = {
-        .wr_id = (uintptr_t)recv_ptr,
-        .sg_list = &sge,
-        .num_sge = 1,
-        .next = NULL
-    };
-
-    struct ibv_recv_wr *bad_wr = NULL;
-
-    // Post recv
-    if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
-        perror("rvrecvfrom ibv_post_recv failed");
-        return RVMA_ERROR;
-    }
-    printf("Posted recv: addr=%p len=%d lkey=0x%x\n", sge.addr, sge.length, sge.lkey);
-
-    // Poll cq
-    struct ibv_wc wc;
-    int num_wc;
-    do {
-        num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
-    } while (num_wc == 0);
-
-    if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
-        fprintf(stderr, "recv completion error: %s (%d)\n",
-                ibv_wc_status_str(wc.status), wc.status);
-        return RVMA_ERROR;
-    }
-    // Update threshold count (for hardware completion)
-    entry->epochCount += wc.byte_len;
-    // if(entry->epochCount >= hardwareCounter) ...
-
-    // Write buffer head address and length to notification pointers
-    *(uintptr_t *)(entry->notifBuffPtrAddr) = (uintptr_t)(recv_buf);
-    *(int *)(entry->notifLenPtrAddr) = wc.byte_len;
-    char *app_data = recv_buf + 40; // First 40 bytes are garbage because of GRH
-    int app_len = wc.byte_len - 40; // Happens when global routing is enabled (for RoCE)
-    printf("Server received (%d bytes): %.*s\n", app_len, app_len, app_data);
-
     return RVMA_SUCCESS;
 }
 

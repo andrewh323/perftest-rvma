@@ -64,6 +64,7 @@ RVMA_Buffer_Entry* createBufferEntry(void **buffer, int64_t size, void **notific
         return  NULL;
     }
 
+    entry->realBuff = *buffer;
     entry->realBuffAddr = buffer;
     entry->realBuffSize = size;
     entry->epochCount = 0;

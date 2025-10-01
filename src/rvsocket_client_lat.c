@@ -11,6 +11,7 @@
 
 #define PORT 7471
 #define PORT2 123
+#define CPU_FREQ_GHZ 2.4 // From /proc/cpuinfo
 
 int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
@@ -33,6 +34,8 @@ int main(int argc, char **argv) {
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
 
     sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     if (sockfd < 0) {
@@ -63,7 +66,7 @@ int main(int argc, char **argv) {
     for (int i = 1; i <= 10; i++) {
         // Define data buffer to send
         char *message = malloc(100);
-        snprintf(message, 100, "Hello server! This is message %d from the client!", i);
+        snprintf(message, 100, "Hello server! This is message %d from the client, sent with SOCK_STREAM!", i);
         int64_t size = strlen(message) + 1;
         char *buffer = malloc(size);
         memcpy(buffer, message, size);
@@ -74,6 +77,9 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
     }
+
+    double total_elapsed_us = mailbox->cycles / (CPU_FREQ_GHZ * 1e3);
+    printf("Total elapsed time for sends: %.3f microseconds\n", total_elapsed_us);
 
     // Close the socket
     rclose(sockfd);
