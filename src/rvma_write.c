@@ -11,7 +11,7 @@
 #include "rvma_write.h"
 
 #define MAX_RECV_SIZE 16*1024
-#define RS_MAX_TRANSFER (4096 - 40) // MTU is 4KB
+#define RS_MAX_TRANSFER (4056) // MTU is 4KB - 40B GRH
 #define CPU_FREQ_GHZ 2.4 // From /proc/cpuinfo
 
 
@@ -331,7 +331,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
 
     // Post a buffer to the RVMA mailbox
     RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, size, (void *)notifBuffPtr, (void *)notifLenPtr,
-                                        vaddr, mailbox, threshold, EPOCH_BYTES);
+                                            vaddr, mailbox, threshold, EPOCH_BYTES);
     if (!entry) {
         print_error("rvmaSend: rvmaPostBuffer failed");
         return RVMA_ERROR;

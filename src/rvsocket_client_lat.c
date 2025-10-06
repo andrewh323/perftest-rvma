@@ -61,18 +61,15 @@ int main(int argc, char **argv) {
     }
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
-    sleep(1); // Wait for client to post receive
     // Send message to the server
+    int size = 1024; // Size limit for stream sockets is currently 16KB
     for (int i = 1; i <= 10; i++) {
         // Define data buffer to send
-        char *message = malloc(100);
-        snprintf(message, 100, "Hello server! This is message %d from the client, sent with SOCK_STREAM!", i);
-        int64_t size = strlen(message) + 1;
-        char *buffer = malloc(size);
-        memcpy(buffer, message, size);
-        
+        char *message = malloc(size + 1);
+        memset(message, 'A', size);
+        message[size] = '\0';
         // Perform rvmaPut on vaddr
-        int res = rvsend(sockfd, (void *)buffer, size);
+        int res = rvsend(sockfd, message, size);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }

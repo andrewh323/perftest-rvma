@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
     listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
 
-	// Now we can bind the socket to the address
+	// Bind address to socket
 	rvbind(listen_fd, (struct sockaddr *)&client_addr, sizeof(client_addr));
 
 	// Listen for incoming connections

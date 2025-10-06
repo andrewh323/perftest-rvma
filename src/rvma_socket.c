@@ -31,14 +31,14 @@
 #include "indexer.h"
 
 #define PORT 7471
-#define RS_MAX_TRANSFER (4096 - 40) /* MTU 4KB - 40B GRH */
+#define RS_MAX_TRANSFER 4056 /* 4KB MTU - 40B GRH */
 #define RS_SNDLOWAT 2048
 #define RS_QP_MIN_SIZE 16
 #define RS_QP_MAX_SIZE 0xFFFE
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_SIZE 16*1024 /* 16 KB */
+#define MAX_RECV_SIZE (16*1024) /* 16 KB */
 #define CPU_FREQ_GHZ 2.4
 #define MAX_RECV_BUFS 16
 
@@ -740,7 +740,7 @@ int rvsend(int socket, void *buf, int64_t len) {
     return 0;
 }
 
-int rvsendto(int socket, void **buf, int64_t len) {
+int rvsendto(int socket, void *buf, int64_t len) {
     uint64_t start, end, elapsed;
     struct rvsocket *rvs;
     uint64_t vaddr;
@@ -763,7 +763,7 @@ int rvsendto(int socket, void **buf, int64_t len) {
 
     int64_t threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER;
 
-    RVMA_Buffer_Entry *entry = rvmaPostBuffer(buf, len, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
+    RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, len, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
                                         rvs->mailboxPtr, threshold, EPOCH_OPS);
     if (!entry) {
         fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
@@ -777,7 +777,7 @@ int rvsendto(int socket, void **buf, int64_t len) {
         }
         dest->vaddr = vaddr;
     }
-    entry->realBuff = *buf;
+    entry->realBuff = buf;
 
     // Build sge, wr
     struct ibv_sge sge = {

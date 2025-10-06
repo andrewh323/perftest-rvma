@@ -31,7 +31,7 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 int rvsend(int socket, void *buf, int64_t len);
 
-int rvsendto(int socket, void **buf, int64_t len);
+int rvsendto(int socket, void *buf, int64_t len);
 
 int rvrecv(int socket, RVMA_Win *window);
 

@@ -51,24 +51,18 @@ int main(int argc, char **argv) {
     // Request connection to server to exchange UD connection info
     rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
 
-    sleep(1);
-    // Define data buffer to send
-    char *message = malloc(100);
-    strcpy(message, "Hello server! This is a message from the client!");
-    int64_t size = strlen(message) + 1;
-
     // Perform rvmasendto on rvma socket
     int res;
+    int size = 4096; // Size limit for datagrams is 4KB right now, need fragmentation for more
     for (int i = 1; i <= 10; i++) {
-        char *message = malloc(100);
-        snprintf(message, 100, "Hello server! This is message %d from the client, send with SOCK_DGRAM!", i);
-        int64_t size = strlen(message) + 1;
-        char *buffer = malloc(size);
-        memcpy(buffer, message, size);
-        res = rvsendto(sockfd, &buffer, size);
+        char *message = malloc(size + 1);
+        memset(message, 'A', size);
+        message[size] = '\0';
+        res = rvsendto(sockfd, message, size);
         if (res < 0) {
             fprintf(stderr, "Failed to send message\n");
         }
+        free(message);
     }
 
     RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
