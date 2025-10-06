@@ -38,7 +38,7 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_SIZE (16*1024) /* 16 KB */
+#define MAX_RECV_SIZE (64*1024) /* 64 KB */
 #define CPU_FREQ_GHZ 2.4
 #define MAX_RECV_BUFS 16
 
@@ -183,7 +183,7 @@ static inline uint64_t rdtsc(){
 uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 	struct rvsocket *rvs;
     int index, ret;
-    uint64_t start, end, cycles;
+    uint64_t start, end, cycles = 0;
     start = rdtsc();
 
     rvs = calloc(1, sizeof(*rvs));
@@ -298,8 +298,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         rvs->mailboxPtr->qp = qp;
 
         printf("QP created, now posting pool of recv buffers...\n");
-        RVMA_Status status = rvmaPostRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, vaddr, EPOCH_OPS);
-        if (status != RVMA_SUCCESS) {
+        if (rvmaPostRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
             perror("rvmaPostRecvPool failed");
             return -1;
         }
@@ -749,10 +748,6 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
     rvs = idm_at(&idm, socket);
 
-    if (rvs->mailboxPtr->cycles == NULL) {
-        rvs->mailboxPtr->cycles = 0;
-    }
-
     vaddr = rvs->vaddr;
     struct rv_dest *dest = rvs->dest;
 
@@ -761,7 +756,21 @@ int rvsendto(int socket, void *buf, int64_t len) {
     int *notifLenPtr = malloc(sizeof(int));
     *notifLenPtr = 0;
 
-    int64_t threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER;
+    // Take ceiling of message length/max_transfer
+    int64_t threshold = (len + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER;
+
+    /*
+    printf("Threshold value: %d\n", threshold);
+    for (int offset = 0; offset < threshold; offset++) {
+        // Define message fragments
+        // i=0-RS_MAX_TRANSFER-1, RS_MAX_TRANSFER-2*RS_MAX_TRANSFER-1, ...
+        Post buffer to mailbox, fill mailbox entry
+        build sge and wr
+        send wr
+        dequeue buffer entry
+        how to manage in order delivery using offset?
+    }
+    */
 
     RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, len, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
                                         rvs->mailboxPtr, threshold, EPOCH_OPS);
@@ -810,24 +819,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
     double elapsed_us = elapsed / (CPU_FREQ_GHZ * 1e3);
     printf("rvsendto time: %.3f microseconds\n", elapsed_us);
     rvs->mailboxPtr->cycles += elapsed;
-
-    // Poll cq
-    struct ibv_wc wc;
-    int res;
-    do {
-        res = ibv_poll_cq(rvs->mailboxPtr->cq, 1, &wc);
-    } while (res == 0);
-    if (res < 0) {
-        perror("rvmasendto: ibv_poll_cq failed");
-        return RVMA_ERROR;
-    }
-    if (wc.status!= IBV_WC_SUCCESS) {
-        perror("rvmasendto: ibv_poll_cq failed");
-        return RVMA_ERROR;
-    }
-    else {
-        printf("rvmasendto success!\n");
-    }
+    // No need to poll cq for datagram sends
     return RVMA_SUCCESS;
 }
 

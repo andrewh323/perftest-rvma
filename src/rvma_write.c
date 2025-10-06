@@ -10,9 +10,9 @@
 #include <stdint.h>
 #include "rvma_write.h"
 
-#define MAX_RECV_SIZE 16*1024
+#define MAX_RECV_SIZE 64*1024
 #define RS_MAX_TRANSFER (4056) // MTU is 4KB - 40B GRH
-#define CPU_FREQ_GHZ 2.4 // From /proc/cpuinfo
+#define CPU_FREQ_GHZ 2.45 // From /proc/cpuinfo
 
 
 // Function to measure clock cycles

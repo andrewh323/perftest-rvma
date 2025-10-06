@@ -17,7 +17,6 @@ int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
     int sockfd;
     struct sockaddr_in server_addr;
-    char buffer[1024];
     memset(&server_addr, 0, sizeof(server_addr));
 
     server_addr.sin_family = AF_INET;
@@ -62,17 +61,24 @@ int main(int argc, char **argv) {
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
     // Send message to the server
-    int size = 1024; // Size limit for stream sockets is currently 16KB
+    int size = 100;
     for (int i = 1; i <= 10; i++) {
         // Define data buffer to send
         char *message = malloc(size + 1);
         memset(message, 'A', size);
         message[size] = '\0';
-        // Perform rvmaPut on vaddr
+        int n = snprintf(message, size + 1, "Msg %d: ", i);
+        for (int j = n; j < size; j++) {
+            message[j] = 'A';
+        }
+        message[size] = '\0';
+
+        // Perform rvma send on the socket
         int res = rvsend(sockfd, message, size);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
+        free(message);
     }
 
     double total_elapsed_us = mailbox->cycles / (CPU_FREQ_GHZ * 1e3);

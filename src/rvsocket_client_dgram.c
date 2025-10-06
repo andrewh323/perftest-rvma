@@ -53,10 +53,15 @@ int main(int argc, char **argv) {
 
     // Perform rvmasendto on rvma socket
     int res;
-    int size = 4096; // Size limit for datagrams is 4KB right now, need fragmentation for more
+    int size = 100; // Size limit for datagrams is 4KB right now, need fragmentation for more
     for (int i = 1; i <= 10; i++) {
         char *message = malloc(size + 1);
         memset(message, 'A', size);
+        message[size] = '\0';
+        int n = snprintf(message, size + 1, "Msg %d: ", i);
+        for (int j = n; j < size; j++) {
+            message[j] = 'A';
+        }
         message[size] = '\0';
         res = rvsendto(sockfd, message, size);
         if (res < 0) {
