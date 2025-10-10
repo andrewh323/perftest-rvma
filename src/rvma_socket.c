@@ -31,7 +31,7 @@
 #include "indexer.h"
 
 #define PORT 7471
-#define RS_MAX_TRANSFER 4056 /* 4KB MTU - 40B GRH */
+#define RS_MAX_TRANSFER 4096 /* 4KB MTU - 40B GRH */
 #define RS_SNDLOWAT 2048
 #define RS_QP_MIN_SIZE 16
 #define RS_QP_MAX_SIZE 0xFFFE
@@ -39,8 +39,8 @@
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
 #define MAX_RECV_SIZE (64*1024) /* 64 KB */
-#define CPU_FREQ_GHZ 2.4
 #define MAX_RECV_BUFS 16
+#define CPU_FREQ_GHZ 2.4
 
 enum {
 	RS_OP_DATA,
@@ -759,59 +759,63 @@ int rvsendto(int socket, void *buf, int64_t len) {
     // Take ceiling of message length/max_transfer
     int64_t threshold = (len + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER;
 
-    /*
-    printf("Threshold value: %d\n", threshold);
-    for (int offset = 0; offset < threshold; offset++) {
-        // Define message fragments
-        // i=0-RS_MAX_TRANSFER-1, RS_MAX_TRANSFER-2*RS_MAX_TRANSFER-1, ...
-        Post buffer to mailbox, fill mailbox entry
-        build sge and wr
-        send wr
-        dequeue buffer entry
-        how to manage in order delivery using offset?
-    }
-    */
-
-    RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, len, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
-                                        rvs->mailboxPtr, threshold, EPOCH_OPS);
-    if (!entry) {
-        fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
+    // Can only fragment into as many buffers as there are recv buffers posted
+    if (threshold > MAX_RECV_BUFS) {
+        fprintf(stderr, "rvsendto: Message too large, max fragmentation is %d\n", MAX_RECV_BUFS);
         return -1;
     }
 
-    if (!dest || dest->vaddr != vaddr) {
-        if (!dest) {
-            perror("rvsendto: dest not initialized");
-            return -1;
+    if (threshold > 1) {
+        // Handle message fragmentation
+        printf("Threshold value: %d\n", threshold);
+
+        for (int offset = 0; offset < threshold; offset++) {
+            // Define message fragment
+            // i=0-RS_MAX_TRANSFER-1, RS_MAX_TRANSFER-2*RS_MAX_TRANSFER-1, ...
+            int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
+            void *frag_ptr = (uint8_t *)buf + offset * RS_MAX_TRANSFER;
+            // Post buffer to mailbox, fill mailbox entry
+            RVMA_Buffer_Entry *entry = rvmaPostBuffer(&frag_ptr, frag_size, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
+                                        rvs->mailboxPtr, threshold, EPOCH_OPS);
+            if (!entry) {
+                fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
+                return -1;
+            }
+            // Build and send wr, dequeue entry
+            if (!dest || dest->vaddr != vaddr) {
+                if (!dest) {
+                    perror("rvsendto: dest not initialized");
+                    return -1;
+                }
+                dest->vaddr = vaddr;
+            }
+            entry->realBuff = frag_ptr;
+
+            // Build sge, wr
+            struct ibv_sge sge = {
+                .addr = (uintptr_t)entry->realBuff,
+                .length = frag_size,
+                .lkey = entry->mr->lkey
+            };
+
+            struct ibv_send_wr wr;
+            memset(&wr, 0, sizeof(wr));
+            wr.wr_id              = 1;
+            wr.sg_list            = &sge;
+            wr.num_sge            = 1;
+            wr.opcode             = IBV_WR_SEND;
+            wr.send_flags         = IBV_SEND_SIGNALED;
+            wr.wr.ud.ah           = dest->ah;
+            wr.wr.ud.remote_qpn   = dest->qpn;
+            wr.wr.ud.remote_qkey  = dest->qkey;
+
+            struct ibv_send_wr *bad_wr = NULL;
+
+            if (ibv_post_send(rvs->mailboxPtr->qp, &wr, &bad_wr)) {
+                perror("rvmasendto: ibv_post_send failed");
+                return RVMA_ERROR;
+            }
         }
-        dest->vaddr = vaddr;
-    }
-    entry->realBuff = buf;
-
-    // Build sge, wr
-    struct ibv_sge sge = {
-        .addr = (uintptr_t)entry->realBuff,
-        .length = len,
-        .lkey = entry->mr->lkey
-    };
-
-    struct ibv_send_wr wr;
-    memset(&wr, 0, sizeof(wr));
-
-    wr.wr_id              = 1;
-    wr.sg_list            = &sge;
-    wr.num_sge            = 1;
-    wr.opcode             = IBV_WR_SEND;
-    wr.send_flags         = IBV_SEND_SIGNALED;
-    wr.wr.ud.ah           = dest->ah;
-    wr.wr.ud.remote_qpn   = dest->qpn;
-    wr.wr.ud.remote_qkey  = dest->qkey;
-
-    struct ibv_send_wr *bad_wr = NULL;
-
-    if (ibv_post_send(rvs->mailboxPtr->qp, &wr, &bad_wr)) {
-        perror("rvmasendto: ibv_post_send failed");
-        return RVMA_ERROR;
     }
 
     end = rdtsc();
