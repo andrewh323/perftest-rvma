@@ -24,6 +24,7 @@ typedef struct {
     struct ibv_context *ctx; // Device context
     int port_num; // Port number for datagrams
     int type; // Socket type (SOCK_STREAM or SOCK_DGRAM)
+    uint64_t lastCycle; // Clock cycles for last operation
     uint64_t cycles; // Clock cycles for tsc timer;
 
     RVMA_Buffer_Queue *bufferQueue;

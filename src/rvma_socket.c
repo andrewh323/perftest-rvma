@@ -25,7 +25,6 @@
 
 #include <rdma/rdma_cma.h>
 #include <rdma/rdma_verbs.h>
-#include <rdma/rsocket.h>
 #include "perftest_resources.h"
 #include "rvma_socket.h"
 #include "indexer.h"
@@ -38,7 +37,6 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_SIZE (64*1024) /* 64 KB */
 #define MAX_RECV_BUFS 16
 #define CPU_FREQ_GHZ 2.4
 

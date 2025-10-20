@@ -1,0 +1,49 @@
+Server Node: nc11107
+Client Node: nc11135
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Server IB HW IP: 10.82.11.7
+Client IB HW IP: 10.82.11.35
+=== Run 1 of 1 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+Running test with message size: 4194304 bytes
+Running test with message size: 16777216 bytes
+Running test with message size: 67108864 bytes
+Running test with message size: 268435456 bytes
+rvmaSend: ibv_poll_cq failed: No such file or directory
+rvmaSend failed
+Failed to send message 3
+rvmaSend: ibv_poll_cq failed: Invalid argument
+rvmaSend failed
+Failed to send message 4
+rvmaSend: ibv_poll_cq failed: Invalid argument
+rvmaSend failed
+Failed to send message 5
+rvmaSend: ibv_poll_cq failed: Invalid argument
+rvmaSend failed
+Failed to send message 6
+rvmaSend: ibv_poll_cq failed: Invalid argument
+rvmaSend failed
+Failed to send message 7
+rvmaSend: ibv_poll_cq failed: Invalid argument
+rvmaSend failed
+Failed to send message 8
+rvmaSend: ibv_poll_cq failed: Invalid argument
+rvmaSend failed
+Failed to send message 9
+rvmaSend: ibv_poll_cq failed: Invalid argument
+rvmaSend failed
+Failed to send message 10
+/localscratch/spool/slurmd/job51219177/slurm_script: line 47: 879940 Killed                  $SERVER_EXEC $CLIENT_IP > "$SERVER_OUT_PATH"
+All tests completed. Results saved in /home/andrewh8/src/perftest-rvma/results/rvsocket_stream_results.csv
+slurmstepd: error: Detected 1 oom_kill event in StepId=51219177.batch. Some of the step tasks have been OOM Killed.

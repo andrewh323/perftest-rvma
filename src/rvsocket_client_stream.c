@@ -10,11 +10,27 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define PORT2 123
-#define CPU_FREQ_GHZ 2.4 // From /proc/cpuinfo
+
+
+double get_cpu_ghz() {
+    FILE *fp = fopen("/proc/cpuinfo", "r");
+    if (!fp) return 2.4; // fallback
+    char line[256];
+    while (fgets(line, sizeof(line), fp)) {
+        double mhz;
+        if (sscanf(line, "cpu MHz\t: %lf", &mhz) == 1) {
+            fclose(fp);
+            return mhz / 1000.0; // MHz → GHz
+        }
+    }
+    fclose(fp);
+    return 2.4; // fallback
+}
+
 
 int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
+    double cpu_ghz = get_cpu_ghz();
     int sockfd;
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -60,8 +76,17 @@ int main(int argc, char **argv) {
     }
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
-    // Send message to the server
-    int size = 100;
+    // Define message size
+    int size = 1024;
+    if (argc > 2) {
+        size = atoi(argv[2]);
+    }
+    printf("Sending messages of size %d bytes\n", size);
+
+    double min_time = 1e9; // large initial value
+    double max_time = 0;
+    double sum_time = 0;
+    // send messages to server
     for (int i = 1; i <= 10; i++) {
         // Define data buffer to send
         char *message = malloc(size + 1);
@@ -78,11 +103,21 @@ int main(int argc, char **argv) {
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
+
+        double elapsed_us = mailbox->lastCycle / (cpu_ghz * 1e3);
+        printf("rvmaSend time: %.3f microseconds\n", elapsed_us);
+        if (elapsed_us < min_time) min_time = elapsed_us;
+        if (elapsed_us > max_time) max_time = elapsed_us;
+        sum_time += elapsed_us;
+
         free(message);
     }
 
-    double total_elapsed_us = mailbox->cycles / (CPU_FREQ_GHZ * 1e3);
-    printf("Total elapsed time for sends: %.3f microseconds\n", total_elapsed_us);
+    double avg_time = sum_time / 10.0;
+    printf("Min send time: %.3f us\n", min_time);
+    printf("Max send time: %.3f us\n", max_time);
+    printf("Avg send time: %.3f us\n", avg_time);
+    printf("Total send time: %.3f us\n", sum_time);
 
     // Close the socket
     rclose(sockfd);

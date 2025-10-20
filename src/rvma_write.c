@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include "rvma_write.h"
 
-#define MAX_RECV_SIZE 64*1024
+#define MAX_RECV_SIZE 1000*1000*1024
 #define RS_MAX_TRANSFER (4056) // MTU is 4KB - 40B GRH
 #define CPU_FREQ_GHZ 2.45 // From /proc/cpuinfo
 
@@ -366,9 +366,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     // End timer and update total elapsed time
     uint64_t end = rdtsc();
     uint64_t elapsed = end - start;
-    double elapsed_us = elapsed / (CPU_FREQ_GHZ * 1e3);
-    printf("rvmaSend time: %.3f microseconds\n", elapsed_us);
-    mailbox->cycles += elapsed;
+    mailbox->lastCycle = elapsed;
 
     // Poll cq
     struct ibv_wc wc;
@@ -412,7 +410,8 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
         char *recv_buf = (char *)entry->realBuff;
         int len = wc.byte_len;
 
-        printf("Server received (%d bytes): %.*s\n", len, len, recv_buf);
+        // printf("Server received (%d bytes): %.*s\n", len, len, recv_buf);
+        printf("Server received %d bytes\n", len);
 
         // Build sge
         struct ibv_sge sge = {
