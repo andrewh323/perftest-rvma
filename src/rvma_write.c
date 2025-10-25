@@ -332,6 +332,8 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     // Post a buffer to the RVMA mailbox
     RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, size, (void *)notifBuffPtr, (void *)notifLenPtr,
                                             vaddr, mailbox, threshold, EPOCH_BYTES);
+
+    uint64_t bufferSetup = rdtsc();
     if (!entry) {
         print_error("rvmaSend: rvmaPostBuffer failed");
         return RVMA_ERROR;
@@ -339,6 +341,10 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     // Retrieve buffer entry info
     void *data = *(entry->realBuffAddr);
     int64_t dataSize = entry->realBuffSize;
+
+    mailbox->bufferSetupCycles = bufferSetup - start;
+    
+    uint64_t wr_start = rdtsc();
 
     struct ibv_send_wr *bad_wr = NULL;
 
@@ -358,6 +364,9 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
         .send_flags = IBV_SEND_SIGNALED // Signaled for completion
     };
 
+    uint64_t wr_end = rdtsc();
+    mailbox->wrSetupCycles = wr_end - wr_start;
+
     // Send function
     if (ibv_post_send(mailbox->qp, &wr, &bad_wr)) {
         perror("rvmaSend: ibv_post_send failed");
@@ -366,7 +375,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     // End timer and update total elapsed time
     uint64_t end = rdtsc();
     uint64_t elapsed = end - start;
-    mailbox->lastCycle = elapsed;
+    mailbox->cycles = elapsed;
 
     // Poll cq
     struct ibv_wc wc;
@@ -382,16 +391,16 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
         perror("rvmaSend: ibv_poll_cq failed");
         return RVMA_ERROR;
     }
-    else {
-        printf("rvmaSend success!\n");
-    }
+
+    uint64_t end_poll_cycles = rdtsc();
+    mailbox->pollCycles = end_poll_cycles - end;
     return RVMA_SUCCESS;
 }
 
 
 // Recv buffer pool should be preposted, so just poll cq for completions
 RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
-    int num_recvs = 10;
+    int num_recvs = 1000;
     int recv_count = 0;
 
     while (recv_count < num_recvs) {

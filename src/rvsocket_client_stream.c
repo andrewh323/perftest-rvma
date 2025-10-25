@@ -83,12 +83,25 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    double min_time = 1e9; // large initial value
+    int num_sends = 1000;
+    int warmup_sends = 10; // number of warmup sends to exclude
+
+    // Set to 1 to exclude warm-up rounds
+    int exclude_warmup = 1;
+
+    int measured_sends = exclude_warmup ? (num_sends - warmup_sends) : num_sends;
+    double *send_times = malloc(measured_sends * sizeof(double));
+
+    double min_time = 1e9;
     double max_time = 0;
     double sum_time = 0;
-    // send messages to server
-    for (int i = 1; i <= 10; i++) {
-        // Define data buffer to send
+    double buffer_setup_time = 0;
+    double wr_setup_time = 0;
+    double poll_time = 0;
+
+    // Send messages to server
+    for (int i = 0; i < num_sends; i++) {
+        // Prepare message buffer
         char *message = malloc(size + 1);
         memset(message, 'A', size);
         message[size] = '\0';
@@ -98,28 +111,69 @@ int main(int argc, char **argv) {
         }
         message[size] = '\0';
 
-        // Perform rvma send on the socket
+        // Perform rvma send
         int res = rvsend(sockfd, message, size);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
-        double elapsed_us = mailbox->lastCycle / (cpu_ghz * 1e3);
-        printf("rvmaSend time: %.3f microseconds\n", elapsed_us);
-        if (elapsed_us < min_time) min_time = elapsed_us;
-        if (elapsed_us > max_time) max_time = elapsed_us;
-        sum_time += elapsed_us;
+        // Convert cycles to microseconds
+        double elapsed_us = mailbox->cycles / (cpu_ghz * 1e3);
+        double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
+        double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
+        double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
 
+        int record = 1; // default to record measurement
+
+        // Exclude warm-ups if configured
+        if (exclude_warmup && i < warmup_sends)
+            record = 0;
+
+        if (record) {
+            int idx = exclude_warmup ? (i - warmup_sends) : i;
+            send_times[idx] = elapsed_us;
+
+            printf("rvmaSend time [%d]: %.3f µs\n", i, elapsed_us);
+
+            if (elapsed_us < min_time) min_time = elapsed_us;
+            if (elapsed_us > max_time) max_time = elapsed_us;
+            sum_time += elapsed_us;
+            buffer_setup_time += bufferSetup_us;
+            wr_setup_time += wrSetup_us;
+            poll_time += poll_us;
+        }
         free(message);
     }
 
-    double avg_time = sum_time / 10.0;
-    printf("Min send time: %.3f us\n", min_time);
-    printf("Max send time: %.3f us\n", max_time);
-    printf("Avg send time: %.3f us\n", avg_time);
-    printf("Total send time: %.3f us\n", sum_time);
+    // Compute averages
+    double avg_time = sum_time / measured_sends;
+    double avg_buffer_setup = buffer_setup_time / measured_sends;
+    double avg_wr_setup = wr_setup_time / measured_sends;
+    double avg_poll_time = poll_time / measured_sends;
 
-    // Close the socket
+    // Compute standard deviation
+    double variance = 0.0;
+    for (int i = 0; i < measured_sends; i++) {
+        double diff = send_times[i] - avg_time;
+        variance += diff * diff;
+    }
+    variance /= (measured_sends - 1);
+    double stddev = sqrt(variance);
+
+    // Print results
+    printf("\n===== RVMA Send Timing Results =====\n");
+    printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
+    printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
+    printf("Average buffer setup:     %.3f µs\n", avg_buffer_setup);
+    printf("Average WR setup:         %.3f µs\n", avg_wr_setup);
+    printf("Average poll:             %.3f µs\n", avg_poll_time);
+    printf("Min send time:            %.3f µs\n", min_time);
+    printf("Max send time:            %.3f µs\n", max_time);
+    printf("Avg send time:            %.3f µs\n", avg_time);
+    printf("Send time stddev:         %.3f µs\n", stddev);
+    printf("====================================\n");
+
+    free(send_times);
     rclose(sockfd);
     return 0;
 }

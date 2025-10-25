@@ -36,13 +36,11 @@ int main() {
 	conn_fd = raccept(listen_fd, NULL, NULL);
 	printf("Client successfully connected!\n");
 
-	// Receive data from client
-	rrecv(conn_fd, buffer, sizeof(buffer), 0);
-	printf("Server received message: %s\n", buffer);
-
-	// Send a response back to the client
-	char *response = "Hello from the server! Message was received!";
-	rsend(conn_fd, response, strlen(response) + 1, 0);
+	for (int i=0; i<1000; i++) {
+		// Receive data from client
+		rrecv(conn_fd, buffer, sizeof(buffer), 0);
+		printf("Server received message: %s\n", buffer);
+	}
 
 	// Close the connection
 	rclose(conn_fd);
