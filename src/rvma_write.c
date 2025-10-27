@@ -101,7 +101,7 @@ RVMA_Win *rvmaInitWindowMailbox(void *virtualAddress) {
     end = rdtsc();
     cycles = end - start;
     double elapsed_us = cycles / (CPU_FREQ_GHZ * 1e3);
-    printf("Window init setup time: %.3f microseconds\n", elapsed_us);
+    printf("Window init setup time: %.3f µs\n", elapsed_us);
 
     return windowPtr;
 }
@@ -204,7 +204,7 @@ RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificati
     // Define memory region for buffer
     struct ibv_mr *mr = ibv_reg_mr(mailbox->pd, *buffer, size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
     if(!mr) {
-        print_error("rvmaPostBuffer: ibv_reg_mr failed");
+        fprintf(stderr, "rvmaPostBuffer: ibv_reg_mr failed (len=%ld): %s\n", (long)size, strerror(errno));
         free(entry);
         return NULL;
     }
@@ -377,6 +377,8 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     uint64_t elapsed = end - start;
     mailbox->cycles = elapsed;
 
+    uint64_t start_poll = rdtsc();
+
     // Poll cq
     struct ibv_wc wc;
     int res;
@@ -393,16 +395,16 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     }
 
     uint64_t end_poll_cycles = rdtsc();
-    mailbox->pollCycles = end_poll_cycles - end;
+    mailbox->pollCycles = end_poll_cycles - start_poll;
     return RVMA_SUCCESS;
 }
 
 
 // Recv buffer pool should be preposted, so just poll cq for completions
 RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
-    int num_recvs = 1000;
-    int recv_count = 0;
 
+    int num_recvs = 1000; // Set for slurm testing, should poll till end is recvd
+    int recv_count = 0;
     while (recv_count < num_recvs) {
         struct ibv_wc wc;
         int num_wc;
@@ -450,10 +452,9 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
 
 // Receive buffer pool should already be preposted, so just poll for completions
 RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox) {
-    int num_recvs = 10; // Receive up to 10 messages
-    int recv_count = 0;
 
-    while (recv_count < num_recvs) {
+    // Just poll indefinitely
+    while (1) {
         struct ibv_wc wc;
         int num_wc;
 
@@ -499,7 +500,6 @@ RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox) {
             perror("rvrecvfrom: ibv_post_recv failed");
             return RVMA_ERROR;
         }
-        recv_count++;
     }
     return RVMA_SUCCESS;
 }

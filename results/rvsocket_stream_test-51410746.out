@@ -1,0 +1,376 @@
+Server Node: nc31303
+Client Node: nc31304
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Server IB HW IP: 10.82.93.3
+Client IB HW IP: 10.82.93.4
+=== Run 1 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 2 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 3 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 4 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 5 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 6 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 7 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 8 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 9 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 10 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 11 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 12 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 13 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 14 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 15 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 16 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 17 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 18 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 19 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 20 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 21 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 22 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 23 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 24 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 25 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 26 of 30 ===
+Running test with message size: 1 bytes
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 27 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 28 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 29 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+=== Run 30 of 30 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Running test with message size: 65536 bytes
+Running test with message size: 262144 bytes
+Running test with message size: 1048576 bytes
+All tests completed. Results saved in /home/andrewh8/src/perftest-rvma/results/rvsocket_stream_with_warmup.csv

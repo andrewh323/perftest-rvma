@@ -179,10 +179,10 @@ static inline uint64_t rdtsc(){
 // Create rvsocket using rdma_create_id (called in rvmaInitWindowMailbox)
 // Return socketfd after inserting into idm
 uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
-	struct rvsocket *rvs;
-    int index, ret;
-    uint64_t start, end, cycles = 0;
+	uint64_t start, end = 0;
     start = rdtsc();
+    struct rvsocket *rvs;
+    int index, ret;
 
     rvs = calloc(1, sizeof(*rvs));
     if (!rvs)
@@ -201,12 +201,17 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     }
     rvs->mailboxPtr->type = type; // Set mailbox type
 
+    uint64_t mailboxSetup = rdtsc();
+    double mailboxTime = (mailboxSetup - start) / (CPU_FREQ_GHZ * 1e3);
+    printf("rvsocket mailbox setup time: %.3f µs\n", mailboxTime);
+
     if (type == SOCK_STREAM) {
         // For stream sockets, pd, cq, and qp are allocated in accept/connect
         // Use the mailbox's CM ID (should already be set when mailbox is created)
         index = rvs->mailboxPtr->cm_id->channel->fd;
         rvs->index = index;
     } else { // datagram
+        // Datagrams do not accept/connect, so we must setup pd, cq, and qp here
         // To allocate pd, we need a valid context
         char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
         struct ibv_device *ib_dev = ctx_find_dev(&devname);
@@ -306,6 +311,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         rvs->index = rvs->udp_sock;
         index = rvs->index;
     }
+    uint64_t beforeInsert = rdtsc();
     // Insert rvsocket into index map
     ret = rs_insert(rvs, index);
     if (ret < 0) {
@@ -314,9 +320,10 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         return ret;
     }
     end = rdtsc();
-    cycles = end - start;
-    double elapsed_us = cycles / (CPU_FREQ_GHZ * 1e3);
-    printf("rvsocket setup time: %.3f microseconds\n", elapsed_us);
+    double insertTime = (end - beforeInsert) / (CPU_FREQ_GHZ * 1e3);
+    printf("rvsocket insert time: %.3f µs\n", insertTime);
+    double elapsed_us = (end - start) / (CPU_FREQ_GHZ * 1e3);
+    printf("rvsocket total setup time: %.3f µs\n", elapsed_us);
     // return rvsocket index
     return rvs->index;
 }
@@ -477,6 +484,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
 }
 
 
+// Accepts datagram connection and exchanges endpoint info
 int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen) {
     struct rvsocket *rvs;
     struct rv_dest local_info, remote_info;
@@ -641,6 +649,7 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
 }
 
 
+// Connects to datagram socket and exchanges endpoint info
 int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     struct rvsocket *rvs;
     struct rv_dest local_info, remote_info;
@@ -719,6 +728,7 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
 }
 
 
+// Send for stream sockets
 int rvsend(int socket, void *buf, int64_t len) {
     struct rvsocket *rvs;
     uint64_t vaddr;
@@ -732,11 +742,12 @@ int rvsend(int socket, void *buf, int64_t len) {
         }
     }
     else {
-        fprintf(stderr, "rvsend: Socket type is not datagram\n");
+        fprintf(stderr, "rvsend: Socket type is not stream\n");
     }
     return 0;
 }
 
+// Send for datagram sockets
 int rvsendto(int socket, void *buf, int64_t len) {
     uint64_t start, end, elapsed;
     struct rvsocket *rvs;
@@ -763,56 +774,54 @@ int rvsendto(int socket, void *buf, int64_t len) {
         return -1;
     }
 
-    if (threshold > 1) {
-        // Handle message fragmentation
-        printf("Threshold value: %d\n", threshold);
+    // Handle message fragmentation
+    printf("Threshold value: %d\n", threshold);
 
-        for (int offset = 0; offset < threshold; offset++) {
-            // Define message fragment
-            // i=0-RS_MAX_TRANSFER-1, RS_MAX_TRANSFER-2*RS_MAX_TRANSFER-1, ...
-            int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
-            void *frag_ptr = (uint8_t *)buf + offset * RS_MAX_TRANSFER;
-            // Post buffer to mailbox, fill mailbox entry
-            RVMA_Buffer_Entry *entry = rvmaPostBuffer(&frag_ptr, frag_size, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
-                                        rvs->mailboxPtr, threshold, EPOCH_OPS);
-            if (!entry) {
-                fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
+    for (int offset = 0; offset < threshold; offset++) {
+        // Define message fragment
+        // i=0-RS_MAX_TRANSFER-1, RS_MAX_TRANSFER-2*RS_MAX_TRANSFER-1, ...
+        int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
+        void *frag_ptr = (uint8_t *)buf + offset * RS_MAX_TRANSFER;
+        // Post buffer to mailbox, fill mailbox entry
+        RVMA_Buffer_Entry *entry = rvmaPostBuffer(&frag_ptr, frag_size, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
+                                    rvs->mailboxPtr, threshold, EPOCH_OPS);
+        if (!entry) {
+            fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
+            return -1;
+        }
+        // Build and send wr, dequeue entry
+        if (!dest || dest->vaddr != vaddr) {
+            if (!dest) {
+                perror("rvsendto: dest not initialized");
                 return -1;
             }
-            // Build and send wr, dequeue entry
-            if (!dest || dest->vaddr != vaddr) {
-                if (!dest) {
-                    perror("rvsendto: dest not initialized");
-                    return -1;
-                }
-                dest->vaddr = vaddr;
-            }
-            entry->realBuff = frag_ptr;
+            dest->vaddr = vaddr;
+        }
+        entry->realBuff = frag_ptr;
 
-            // Build sge, wr
-            struct ibv_sge sge = {
-                .addr = (uintptr_t)entry->realBuff,
-                .length = frag_size,
-                .lkey = entry->mr->lkey
-            };
+        // Build sge, wr
+        struct ibv_sge sge = {
+            .addr = (uintptr_t)entry->realBuff,
+            .length = frag_size,
+            .lkey = entry->mr->lkey
+        };
 
-            struct ibv_send_wr wr;
-            memset(&wr, 0, sizeof(wr));
-            wr.wr_id              = 1;
-            wr.sg_list            = &sge;
-            wr.num_sge            = 1;
-            wr.opcode             = IBV_WR_SEND;
-            wr.send_flags         = IBV_SEND_SIGNALED;
-            wr.wr.ud.ah           = dest->ah;
-            wr.wr.ud.remote_qpn   = dest->qpn;
-            wr.wr.ud.remote_qkey  = dest->qkey;
+        struct ibv_send_wr wr;
+        memset(&wr, 0, sizeof(wr));
+        wr.wr_id              = 1;
+        wr.sg_list            = &sge;
+        wr.num_sge            = 1;
+        wr.opcode             = IBV_WR_SEND;
+        wr.send_flags         = IBV_SEND_SIGNALED;
+        wr.wr.ud.ah           = dest->ah;
+        wr.wr.ud.remote_qpn   = dest->qpn;
+        wr.wr.ud.remote_qkey  = dest->qkey;
 
-            struct ibv_send_wr *bad_wr = NULL;
+        struct ibv_send_wr *bad_wr = NULL;
 
-            if (ibv_post_send(rvs->mailboxPtr->qp, &wr, &bad_wr)) {
-                perror("rvmasendto: ibv_post_send failed");
-                return RVMA_ERROR;
-            }
+        if (ibv_post_send(rvs->mailboxPtr->qp, &wr, &bad_wr)) {
+            perror("rvmasendto: ibv_post_send failed");
+            return -1;
         }
     }
 
@@ -821,8 +830,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
     double elapsed_us = elapsed / (CPU_FREQ_GHZ * 1e3);
     printf("rvsendto time: %.3f microseconds\n", elapsed_us);
     rvs->mailboxPtr->cycles += elapsed;
-    // No need to poll cq for datagram sends
-    return RVMA_SUCCESS;
+    return 0;
 }
 
 

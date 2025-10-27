@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
     // Perform rvmasendto on rvma socket
     int res;
-    int size = 10000;
+    int size = 1000;
     for (int i = 1; i <= 10; i++) {
         char *message = malloc(size + 1);
         if (!message) {
@@ -64,13 +64,10 @@ int main(int argc, char **argv) {
         // Fill with unique pattern per message
         // Use a repeating sequence that encodes message + fragment indices
         for (int j = 0; j < size; j++) {
-            // Use printable pattern: e.g. A, B, C... to visualize offsets
+            // Use printable pattern: A, B, C... to visualize offsets
             message[j] = 'A' + ((i + j) % 26);
         }
         message[size] = '\0';
-
-        // Optional: add a readable prefix (won’t affect total len if you trim manually)
-        snprintf(message, size, "Msg %02d BEGIN ", i);
 
         printf("Sending message %d: %.40s...\n", i, message);
 
@@ -78,10 +75,8 @@ int main(int argc, char **argv) {
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
-
         free(message);
     }
-
 
     RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
     printf("Total elapsed time for sends: %.3f microseconds\n", mailbox->cycles / (CPU_FREQ_GHZ * 1e3));

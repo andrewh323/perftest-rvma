@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     int warmup_sends = 10; // number of warmup sends to exclude
 
     // Set to 1 to exclude warm-up rounds
-    int exclude_warmup = 1;
+    int exclude_warmup = 0;
 
     int measured_sends = exclude_warmup ? (num_sends - warmup_sends) : num_sends;
     double *send_times = malloc(measured_sends * sizeof(double));
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
         double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
 
-        int record = 1; // default to record measurement
+        int record = 1;
 
         // Exclude warm-ups if configured
         if (exclude_warmup && i < warmup_sends)

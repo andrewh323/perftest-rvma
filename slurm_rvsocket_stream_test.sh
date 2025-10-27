@@ -10,14 +10,14 @@
 
 REPEATS=30
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/rvsocket_stream_results.csv"
+CSV_FILE="$PATH_TO_BIN/results/rvsocket_stream_test.csv"
 
 # Create results directory if needed
 mkdir -p "$PATH_TO_BIN/results/temp"
 
 # Write CSV header once
 if [ ! -f "$CSV_FILE" ]; then
-    echo "timestamp,repetition,size_bytes,total_us,avg_us,min_us,max_us" > "$CSV_FILE"
+    echo "timestamp,repetition,size_bytes,min_us,max_us,avg_us,std_dev,avg_buffer_setup,avg_wr_setup,avg_poll,window_init,rvsocket_setup" > "$CSV_FILE"
 fi
 
 # Get nodes
@@ -39,7 +39,7 @@ CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/client-stream-$SLURM_JOB_ID.out"
 SERVER_EXEC="$PATH_TO_BIN/rvsocket_server_stream"
 CLIENT_EXEC="$PATH_TO_BIN/rvsocket_client_stream"
 
-declare -a SIZES=(1 4 16 64 256 1024 4096 16384 65536 262144 1048576 4194304 16777216 67108864) # 1B to 64MB
+declare -a SIZES=(1 4 16 64 256 1024 4096 16384 65536 262144 1048576) # 1B to 1MB
 
 # Repeat the tests
 for REP in $(seq 1 $REPEATS); do
@@ -52,20 +52,25 @@ for REP in $(seq 1 $REPEATS); do
         # Run server
         $SERVER_EXEC $CLIENT_IP > "$SERVER_OUT_PATH" &
         SERVER_PID=$!
-        sleep 1
+        sleep 0.2
 
         # Run client
         $CLIENT_EXEC $SERVER_IP $SIZE > "$CLIENT_OUT_PATH"
         wait $SERVER_PID 2>/dev/null
 
         # Extract times from client output
-        TOTAL_US=$(grep "^Total send time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         AVG_US=$(grep "^Avg send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         MIN_US=$(grep "^Min send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         MAX_US=$(grep "^Max send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-
+        STD_DEV=$(grep "Send time stddev:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        BUFF_TIME=$(grep "Average buffer setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        WR_TIME=$(grep "Average WR setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        POLL_TIME=$(grep "Average poll:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        WINDOW_INIT=$(grep "Window init setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        RVSOCKET_SETUP=$(grep "rvsocket total setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        
         # Append to CSV with repetition
-        echo "$(date +"%Y-%m-%d %H:%M:%S"),$REP,$SIZE,$TOTAL_US,$AVG_US,$MIN_US,$MAX_US" >> "$CSV_FILE"
+        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$MIN_US,$MAX_US,$AVG_US,$STD_DEV,$BUFF_TIME,$WR_TIME,$POLL_TIME,$WINDOW_INIT,$RVSOCKET_SETUP" >> "$CSV_FILE"
     done
     # Add empty line between repetitions
     echo "" >> "$CSV_FILE"
