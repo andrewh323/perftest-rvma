@@ -1,9 +1,9 @@
-Server Node: nc31303
-Client Node: nc31304
+Server Node: nc31211
+Client Node: nc31212
 Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
 Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
-Server IB HW IP: 10.82.93.3
-Client IB HW IP: 10.82.93.4
+Server IB HW IP: 10.82.92.11
+Client IB HW IP: 10.82.92.12
 === Run 1 of 30 ===
 Running test with message size: 1 bytes
 Running test with message size: 4 bytes
@@ -306,15 +306,6 @@ Running test with message size: 262144 bytes
 Running test with message size: 1048576 bytes
 === Run 26 of 30 ===
 Running test with message size: 1 bytes
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
-grep: /home/andrewh8/src/perftest-rvma/results/temp/client-stream-51410746.out: No such file or directory
 Running test with message size: 4 bytes
 Running test with message size: 16 bytes
 Running test with message size: 64 bytes
@@ -373,4 +364,4 @@ Running test with message size: 16384 bytes
 Running test with message size: 65536 bytes
 Running test with message size: 262144 bytes
 Running test with message size: 1048576 bytes
-All tests completed. Results saved in /home/andrewh8/src/perftest-rvma/results/rvsocket_stream_with_warmup.csv
+All tests completed. Results saved in /home/andrewh8/src/perftest-rvma/results/rvsocket_stream_exclude_warmup.csv

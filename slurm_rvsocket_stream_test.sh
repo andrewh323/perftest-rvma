@@ -10,14 +10,14 @@
 
 REPEATS=30
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/rvsocket_stream_test.csv"
+CSV_FILE="$PATH_TO_BIN/results/rvsocket_stream_exclude_warmup.csv"
 
 # Create results directory if needed
 mkdir -p "$PATH_TO_BIN/results/temp"
 
 # Write CSV header once
 if [ ! -f "$CSV_FILE" ]; then
-    echo "timestamp,repetition,size_bytes,min_us,max_us,avg_us,std_dev,avg_buffer_setup,avg_wr_setup,avg_poll,window_init,rvsocket_setup" > "$CSV_FILE"
+    echo "timestamp,repetition,size_bytes,min_send,max_send,avg_send,std_dev,avg_buffer_setup,avg_wr_setup,avg_poll,window_init,rvsocket_setup,rvconnect,avg_recv,rvbind,rvaccept" > "$CSV_FILE"
 fi
 
 # Get nodes
@@ -59,18 +59,23 @@ for REP in $(seq 1 $REPEATS); do
         wait $SERVER_PID 2>/dev/null
 
         # Extract times from client output
-        AVG_US=$(grep "^Avg send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        MIN_US=$(grep "^Min send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        MAX_US=$(grep "^Max send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        MIN_SEND=$(grep "^Min send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        MAX_SEND=$(grep "^Max send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        AVG_SEND=$(grep "^Avg send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         STD_DEV=$(grep "Send time stddev:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         BUFF_TIME=$(grep "Average buffer setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         WR_TIME=$(grep "Average WR setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         POLL_TIME=$(grep "Average poll:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         WINDOW_INIT=$(grep "Window init setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         RVSOCKET_SETUP=$(grep "rvsocket total setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        RVCONNECT=$(grep "rvconnect total time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+
+        AVG_RECV=$(grep "Avg recv time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
+        RVBIND=$(grep "rvbind total time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
+        RVACCEPT=$(grep "rvaccept total time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         
         # Append to CSV with repetition
-        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$MIN_US,$MAX_US,$AVG_US,$STD_DEV,$BUFF_TIME,$WR_TIME,$POLL_TIME,$WINDOW_INIT,$RVSOCKET_SETUP" >> "$CSV_FILE"
+        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$MIN_SEND,$MAX_SEND,$AVG_SEND,$STD_DEV,$BUFF_TIME,$WR_TIME,$POLL_TIME,$WINDOW_INIT,$RVSOCKET_SETUP,$RVCONNECT,$AVG_RECV,$RVBIND,$RVACCEPT" >> "$CSV_FILE"
     done
     # Add empty line between repetitions
     echo "" >> "$CSV_FILE"

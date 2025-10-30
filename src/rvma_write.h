@@ -16,6 +16,8 @@ typedef struct {
     __key_t key;
 } RVMA_Win;
 
+double get_cpu_ghz();
+
 RVMA_Win* rvmaInitWindowMailboxKey(void *virtualAddress, __key_t key);
 
 RVMA_Win* rvmaInitWindowMailbox(void *virtualAddress);
@@ -32,7 +34,7 @@ int64_t rvmaWinGetEpoch(RVMA_Win*);
 
 RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, void *virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType);
 
-RVMA_Status rvmaPostRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch_type epochType);
+RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch_type epochType);
 
 int rvmaPutHybrid(struct ibv_qp* qp, int index, struct ibv_send_wr *wr, struct ibv_send_wr **bad_wr);
 

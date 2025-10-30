@@ -11,23 +11,6 @@
 
 #define PORT 7471
 
-
-double get_cpu_ghz() {
-    FILE *fp = fopen("/proc/cpuinfo", "r");
-    if (!fp) return 2.4; // fallback
-    char line[256];
-    while (fgets(line, sizeof(line), fp)) {
-        double mhz;
-        if (sscanf(line, "cpu MHz\t: %lf", &mhz) == 1) {
-            fclose(fp);
-            return mhz / 1000.0; // MHz → GHz
-        }
-    }
-    fclose(fp);
-    return 2.4; // fallback
-}
-
-
 int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
     double cpu_ghz = get_cpu_ghz();
@@ -84,10 +67,10 @@ int main(int argc, char **argv) {
     printf("Sending messages of size %d bytes\n", size);
 
     int num_sends = 1000;
-    int warmup_sends = 10; // number of warmup sends to exclude
+    int warmup_sends = 10; // number of warmup sends
 
-    // Set to 1 to exclude warm-up rounds
-    int exclude_warmup = 0;
+    // Set to 1 to exclude warm-ups
+    int exclude_warmup = 1;
 
     int measured_sends = exclude_warmup ? (num_sends - warmup_sends) : num_sends;
     double *send_times = malloc(measured_sends * sizeof(double));
