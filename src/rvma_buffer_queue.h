@@ -44,6 +44,8 @@ RVMA_Status enqueueRetiredBuffer(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* en
 
 RVMA_Buffer_Entry* dequeue(RVMA_Buffer_Queue* queue);
 
+RVMA_Status removeEntry(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry);
+
 RVMA_Status freeBufferEntry(RVMA_Buffer_Entry *entry);
 
 RVMA_Status freeBufferQueue(RVMA_Buffer_Queue* queue);

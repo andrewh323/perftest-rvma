@@ -104,8 +104,10 @@ RVMA_Status enqueue(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry){
         return RVMA_FAILURE;
     }
 
-    if(isFull(queue) == RVMA_TRUE) return RVMA_QUEUE_FULL;
-
+    if(isFull(queue) == RVMA_TRUE) {
+        printf("enqueue: queue is full, capacity=%d, size=%d\n", queue->capacity, queue->size);
+        return RVMA_QUEUE_FULL;
+    }
     queue->end = (queue->end + 1) % queue->capacity;
     queue->pBufferEntry[queue->end] = entry;
     entry = NULL;
@@ -159,13 +161,13 @@ RVMA_Buffer_Entry* dequeue(RVMA_Buffer_Queue* queue){
     return entry;
 }
 
-/* RVMA_Status dequeue(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry){
+RVMA_Status removeEntry(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry){
     if(queue == NULL){
-        print_error("dequeue: queue is null");
+        print_error("removeEntry: queue is null");
         return RVMA_FAILURE;
     }
     if(entry == NULL){
-        print_error("dequeue: entry is null");
+        print_error("removeEntry: entry is null");
         return RVMA_FAILURE;
     }
 
@@ -186,10 +188,9 @@ RVMA_Buffer_Entry* dequeue(RVMA_Buffer_Queue* queue){
         return RVMA_FAILURE;
     }
 
-    queue->size = queue->size - 1;
-
+    queue->size--;
     return RVMA_SUCCESS;
-} */
+}
 
 RVMA_Status freeBufferEntry(RVMA_Buffer_Entry *entry)
 {
@@ -199,16 +200,10 @@ RVMA_Status freeBufferEntry(RVMA_Buffer_Entry *entry)
         return RVMA_ERROR;
     }
 
-
-    if (entry->realBuffAddr){
-        if(munlock(entry->realBuffAddr, entry->realBuffSize * sizeof(entry->realBuffAddr)) == -1)
-            print_error("rvmaPostBuffer: buffer memory couldn't be unpinned");
-        free(entry->realBuffAddr);
-        entry->realBuffAddr = NULL;
+    if (ibv_dereg_mr(entry->mr)) {
+        print_error("freeBufferEntry: ibv_dereg_mr failed");
     }
-
     free(entry);
-    entry = NULL;
 
     return RVMA_SUCCESS;
 }

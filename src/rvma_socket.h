@@ -13,6 +13,11 @@
 #include "rvma_write.h"
 
 
+struct dgram_frag_header {
+    uint32_t frag_num;
+    uint32_t total_frags;
+};
+
 uint64_t constructVaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port);
 
 uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window);

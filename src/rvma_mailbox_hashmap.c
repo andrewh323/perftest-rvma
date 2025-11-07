@@ -175,10 +175,7 @@ RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, void* key){
 
 RVMA_Status retireBuffer(RVMA_Mailbox* RVMA_Mailbox, RVMA_Buffer_Entry* entry){
 
-    entry = dequeue(RVMA_Mailbox->bufferQueue);
-    if (entry == NULL) {
-        return RVMA_ERROR;
-    }
+    dequeue(RVMA_Mailbox->bufferQueue);
 
     return enqueueRetiredBuffer(RVMA_Mailbox->retiredBufferQueue, entry);
 }

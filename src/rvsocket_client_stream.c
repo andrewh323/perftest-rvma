@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 1000;
+    int num_sends = 1024;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
@@ -81,6 +81,7 @@ int main(int argc, char **argv) {
     double buffer_setup_time = 0;
     double wr_setup_time = 0;
     double poll_time = 0;
+    double regmr_time = 0;
 
     // Send messages to server
     for (int i = 0; i < num_sends; i++) {
@@ -105,6 +106,7 @@ int main(int argc, char **argv) {
         double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
         double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
+        double regmr_us = mailbox->regmrCycles / (cpu_ghz * 1e3);
 
         int record = 1;
 
@@ -124,6 +126,7 @@ int main(int argc, char **argv) {
             buffer_setup_time += bufferSetup_us;
             wr_setup_time += wrSetup_us;
             poll_time += poll_us;
+            regmr_time += regmr_us;
         }
         free(message);
     }
@@ -133,6 +136,7 @@ int main(int argc, char **argv) {
     double avg_buffer_setup = buffer_setup_time / measured_sends;
     double avg_wr_setup = wr_setup_time / measured_sends;
     double avg_poll_time = poll_time / measured_sends;
+    double avg_regmr_time = regmr_time / measured_sends;
 
     // Compute standard deviation
     double variance = 0.0;
@@ -148,6 +152,7 @@ int main(int argc, char **argv) {
     printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
     printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
     printf("Average buffer setup:     %.3f µs\n", avg_buffer_setup);
+    printf("Average regmr time:       %.3f µs\n", avg_regmr_time);
     printf("Average WR setup:         %.3f µs\n", avg_wr_setup);
     printf("Average poll:             %.3f µs\n", avg_poll_time);
     printf("Min send time:            %.3f µs\n", min_time);

@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 
 #define HASHMAP_CAPACITY 50
+#define RVMA_MAX_BATCH 16
 
 typedef struct {
     int key;
@@ -27,6 +28,9 @@ typedef struct {
     uint64_t bufferSetupCycles;
     uint64_t wrSetupCycles;
     uint64_t pollCycles;
+    uint64_t regmrCycles;
+    int postCount;
+    
     uint64_t cycles; // Clock cycles for tsc timer;
 
     RVMA_Buffer_Queue *bufferQueue;

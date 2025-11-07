@@ -1,9 +1,9 @@
-Server Node: nc31211
-Client Node: nc31212
+Server Node: nc31216
+Client Node: nc31220
 Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
 Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
-Server IB HW IP: 10.82.92.11
-Client IB HW IP: 10.82.92.12
+Server IB HW IP: 10.82.92.16
+Client IB HW IP: 10.82.92.20
 === Run 1 of 30 ===
 Running test with message size: 1 bytes
 Running test with message size: 4 bytes
@@ -364,4 +364,4 @@ Running test with message size: 16384 bytes
 Running test with message size: 65536 bytes
 Running test with message size: 262144 bytes
 Running test with message size: 1048576 bytes
-All tests completed. Results saved in /home/andrewh8/src/perftest-rvma/results/rvsocket_stream_exclude_warmup.csv
+All tests completed. Results saved in /home/andrewh8/src/perftest-rvma/results/rvsocket_stream_exclude_warmup3.csv

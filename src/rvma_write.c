@@ -8,21 +8,12 @@
  *
  ***/
 #include <stdint.h>
+#include <math.h>
 #include "rvma_write.h"
+#include "rvma_socket.c"
 
 #define MAX_RECV_SIZE 1024*1024 // 1MB
-#define RS_MAX_TRANSFER (4056) // MTU is 4KB - 40B GRH
 #define CPU_FREQ_GHZ 2.45 // From /proc/cpuinfo
-
-
-// Function to measure clock cycles
-static inline uint64_t rdtsc(){
-    unsigned int lo, hi;
-    // Serialize to prevent out-of-order execution affecting timing
-    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
-    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)hi << 32) | lo;
-}
 
 // Helper function to get CPU frequency
 double get_cpu_ghz() {
@@ -217,6 +208,7 @@ RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificati
         return NULL;
     }
 
+    uint64_t start = rdtsc();
     // Define memory region for buffer
     struct ibv_mr *mr = ibv_reg_mr(mailbox->pd, *buffer, size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
     if(!mr) {
@@ -225,16 +217,17 @@ RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificati
         return NULL;
     }
     entry->mr = mr;
+    uint64_t end = rdtsc();
+
+    mailbox->regmrCycles = (end - start);
 
     RVMA_Status res = enqueue(mailbox->bufferQueue, entry);
     if (res != RVMA_SUCCESS) {
         if (munlock(*buffer, size))
             print_error("rvmaPostBuffer: buffer memory couldn't be unpinned");
-        free(entry);
         print_error("rvmaPostBuffer: buffer entry failed to be added to mailbox queue");
         return NULL;
     }
-
     return entry;
 }
 
@@ -337,10 +330,6 @@ RVMA PUT STEPS
         - If buffer is complete, write address of buffer to completion pointer address
 */
 RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox) {
-    // Start timer before buffer setup
-    if (mailbox->cycles == NULL) {
-        mailbox->cycles = 0;
-    }
     uint64_t start = rdtsc();
 
     int64_t threshold = size; // Set threshold to size of buffer (bytes)
@@ -354,16 +343,15 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     // Post a buffer to the RVMA mailbox
     RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, size, (void *)notifBuffPtr, (void *)notifLenPtr,
                                             vaddr, mailbox, threshold, EPOCH_BYTES);
-
-    uint64_t bufferSetup = rdtsc();
     if (!entry) {
         print_error("rvmaSend: rvmaPostBuffer failed");
         return RVMA_ERROR;
     }
+    
     // Retrieve buffer entry info
     void *data = *(entry->realBuffAddr);
     int64_t dataSize = entry->realBuffSize;
-
+    uint64_t bufferSetup = rdtsc();
     mailbox->bufferSetupCycles = bufferSetup - start;
     
     uint64_t wr_start = rdtsc();
@@ -394,6 +382,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
         perror("rvmaSend: ibv_post_send failed");
         return RVMA_ERROR;
     }
+
     // End timer and update total elapsed time
     uint64_t end = rdtsc();
     uint64_t elapsed = end - start;
@@ -416,11 +405,17 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
         return RVMA_ERROR;
     }
 
+    if (removeEntry(mailbox->bufferQueue, entry) != RVMA_SUCCESS) {
+        print_error("rvmaSend: removeEntry failed");
+        return RVMA_ERROR;
+    }
+
+    if (freeBufferEntry(entry) != RVMA_SUCCESS) {
+        print_error("rvmaSend: freeBufferEntry failed");
+        return RVMA_ERROR;
+    }
     free(notifBuffPtr);
     free(notifLenPtr);
-    free(entry);
-    // free entry->mr
-    ibv_dereg_mr(entry->mr);
 
     uint64_t end_poll_cycles = rdtsc();
     mailbox->pollCycles = end_poll_cycles - start_poll;
@@ -431,16 +426,20 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
 // Recv buffer pool should be preposted, so just poll cq for completions
 RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
     int exclude_warmup = 1; // Set to 1 to exclude warm-ups
-    int warmup_rounds = 1;
+    int warmup_rounds = 10;
+    uint64_t start, end;
     double total_us = 0;
     double repost_total_us = 0;
-    uint64_t start, end;
     double avg_us;
     double avg_repost_us;
+    double min_us = 1e9;
+    double max_us = 0;
     double cpu_ghz = get_cpu_ghz();
-    int num_recvs = 1000; // Set for slurm testing, should poll till end is recvd
+    int num_recvs = 1024; // Set for slurm testing, should poll till end is recvd
     int recv_count = 0;
     int measured_recvs = 0;
+    double total_sq_us = 0.0;
+    double stddev_us = 0.0;
 
     while (recv_count < num_recvs) {
         start = rdtsc();
@@ -462,18 +461,20 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
 
         end = rdtsc();
         double rvmaRecvTime = (end - start) / (cpu_ghz * 1e3);
-
         recv_count++;
-
-        if (recv_count == 1) {
-            printf("Time for first recv (poll delay): %.3f µs\n", rvmaRecvTime);
-        }
 
         if (!exclude_warmup || recv_count > warmup_rounds) {
             // Include in timing stats
             total_us += rvmaRecvTime;
+            total_sq_us += rvmaRecvTime * rvmaRecvTime;
             measured_recvs++;
             printf("rvmaRecv time [%d] (%d bytes): %.3f µs\n", recv_count, len, rvmaRecvTime);
+            if (rvmaRecvTime < min_us) {
+                min_us = rvmaRecvTime;
+            }
+            if (rvmaRecvTime > max_us) {
+                max_us = rvmaRecvTime;
+            }
         }
 
         uint64_t beforeRepost = rdtsc();
@@ -506,22 +507,29 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
 
     if (measured_recvs > 0) {
         avg_us = total_us / measured_recvs;
+        double variance = (total_sq_us / measured_recvs) - (avg_us * avg_us);
+        stddev_us = sqrt(variance);
     }
     else {
         avg_us = 0;
     }
+
     avg_repost_us = repost_total_us / recv_count;
     printf("Avg recv time: %.3f µs\n", avg_us);
     printf("Avg recv repost time: %.3f µs\n", avg_repost_us);
+    printf("Min recv time: %.3f µs\n", min_us);
+    printf("Max recv time: %.3f µs\n", max_us);
+    printf("Recv time stddev: %.3f µs\n", stddev_us);
     
     return RVMA_SUCCESS;
 }
 
 // Receive buffer pool should already be preposted, so just poll for completions
 RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox) {
+    int num_recvs = 1000; // Expecting this many messages, but may increase with multi-fragment messages
+    int recv_count = 0;
 
-    // Just poll indefinitely
-    while (1) {
+    while (recv_count < num_recvs) {
         struct ibv_wc wc;
         int num_wc;
 
@@ -546,7 +554,20 @@ RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox) {
         char *data = recv_buf + 40; // GRH offset
         int data_len = len - 40;
 
-        printf("Server received (%d bytes): %.*s\n", data_len, data_len, data);
+        struct dgram_frag_header header;
+        memcpy(&header, data, sizeof(header));
+
+        char *payload = data + sizeof(header);
+        int payload_len = data_len - sizeof(header);
+
+        if (header.frag_num == 1 && header.total_frags > 1) {
+            num_recvs += (header.total_frags - 1); // Account for extra recvs from fragments of the same message
+            printf("Multi-fragment message detected (Message #%d): total fragments = %d\n", recv_count + 1, header.total_frags);
+        }
+
+        printf("Received message #%d, fragment %d/%d (%d byte payload)\n",
+            recv_count + 1, header.frag_num, header.total_frags, payload_len);
+        printf("Payload: %.40s...\n", payload);
 
         // Recycle recv buffer by reposting
         struct ibv_sge sge = {
@@ -567,6 +588,7 @@ RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox) {
             perror("rvrecvfrom: ibv_post_recv failed");
             return RVMA_ERROR;
         }
+        recv_count++;
     }
     return RVMA_SUCCESS;
 }

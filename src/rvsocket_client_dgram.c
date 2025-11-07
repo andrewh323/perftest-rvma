@@ -53,8 +53,10 @@ int main(int argc, char **argv) {
 
     // Perform rvmasendto on rvma socket
     int res;
-    int size = 1000;
-    for (int i = 1; i <= 10; i++) {
+    int num_sends = 1000;
+    int size = 1024*1024; // 1MB messages
+
+    for (int i = 1; i <= num_sends; i++) {
         char *message = malloc(size + 1);
         if (!message) {
             perror("malloc failed");
@@ -69,7 +71,7 @@ int main(int argc, char **argv) {
         }
         message[size] = '\0';
 
-        printf("Sending message %d: %.40s...\n", i, message);
+        // printf("Sending message %d: %.40s...\n", i, message);
 
         res = rvsendto(sockfd, message, size);
         if (res < 0) {

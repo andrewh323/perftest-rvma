@@ -30,7 +30,7 @@
 #include "indexer.h"
 
 #define PORT 7471
-#define RS_MAX_TRANSFER 4096 /* 4KB MTU - 40B GRH */
+#define RS_MAX_TRANSFER 4050 /* 4KB MTU - 40B GRH */ /* set to 4050 so message fragments can be observed*/
 #define RS_SNDLOWAT 2048
 #define RS_QP_MIN_SIZE 16
 #define RS_QP_MAX_SIZE 0xFFFE
@@ -103,6 +103,8 @@ struct rvsocket {
         };
         struct { // datagram
             int udp_sock; // UDP socket for exchanging connection data
+            int sq_size; // Current size of send queue
+            int sq_limit; // Max size of send queue
         };
     };
     int qp_port; // QP port num
@@ -302,6 +304,8 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             perror("postRecvPool failed");
             return -1;
         }
+        rvs->sq_size = 0;
+        rvs->sq_limit = 128; // Match max_send_wr
 
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -444,8 +448,8 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
         .recv_cq = cq,
         .qp_type = IBV_QPT_RC,
         .cap = {
-            .max_send_wr = 16,
-            .max_recv_wr = 16,
+            .max_send_wr = 128,
+            .max_recv_wr = 128,
             .max_send_sge = 1,
             .max_recv_sge = 1
         }
@@ -648,8 +652,8 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         .recv_cq = cq,
         .qp_type = IBV_QPT_RC,
         .cap = {
-            .max_send_wr = 16,
-            .max_recv_wr = 16,
+            .max_send_wr = 128,
+            .max_recv_wr = 128,
             .max_send_sge = 1,
             .max_recv_sge = 1
         }
@@ -812,22 +816,67 @@ int rvsendto(int socket, void *buf, int64_t len) {
     // Take ceiling of message length/max_transfer
     int64_t threshold = (len + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER;
 
-    // Can only fragment into as many buffers as there are recv buffers posted
-    if (threshold > MAX_RECV_BUFS) {
-        fprintf(stderr, "rvsendto: Message too large, max fragmentation is %d\n", MAX_RECV_BUFS);
-        return -1;
-    }
-
-    // Handle message fragmentation
-    printf("Threshold value: %d\n", threshold);
-
     for (int offset = 0; offset < threshold; offset++) {
+        while (rvs->sq_size >= rvs->sq_limit) {
+            // Poll send CQ to free up space
+            struct ibv_wc wc[128];
+            int num_wc = ibv_poll_cq(rvs->mailboxPtr->cq, 128, wc);
+
+            if (num_wc < 0) {
+                perror("rvsendto: ibv_poll_cq failed");
+                return -1;
+            }
+            for (int i = 0; i < num_wc; i++) {
+                if (wc[i].status == IBV_WC_SUCCESS) {
+                    RVMA_Buffer_Entry *completed = (RVMA_Buffer_Entry *)wc[i].wr_id;
+                    if (removeEntry(rvs->mailboxPtr->bufferQueue, completed) != RVMA_SUCCESS) {
+                        print_error("rvmaSend: removeEntry failed");
+                        return RVMA_ERROR;
+                    }
+                    if (freeBufferEntry(completed) != RVMA_SUCCESS) {
+                        print_error("rvsendto: freeBufferEntry failed");
+                        return RVMA_ERROR;
+                    }
+                }
+                else {
+                    fprintf(stderr, "rvsendto: WC error %d on wr_id %" PRIu64 "\n",
+                        wc[i].status, wc[i].wr_id);
+                }
+                rvs->sq_size--;
+            }
+        }
+
         // Define message fragment
         // i=0-RS_MAX_TRANSFER-1, RS_MAX_TRANSFER-2*RS_MAX_TRANSFER-1, ...
         int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
         void *frag_ptr = (uint8_t *)buf + offset * RS_MAX_TRANSFER;
+
+        // Construct fragment header
+        struct dgram_frag_header header = {
+            .frag_num = offset + 1,
+            .total_frags = threshold
+        };
+        size_t total_size = sizeof(header) + frag_size;
+        // Allocate buffer for fragment + header
+        void *full_buf = malloc(total_size);
+        if (!full_buf) {
+            fprintf(stderr, "rvsendto: malloc full_buf failed\n");
+            return -1;
+        }
+
+        // Copy header and fragment into full buffer
+        memcpy(full_buf, &header, sizeof(header));
+        memcpy((uint8_t *)full_buf + sizeof(header), frag_ptr, frag_size);
+
+        struct dgram_frag_header *hdr = (struct dgram_frag_header *)full_buf;
+        char *payload = (char *)full_buf + sizeof(*hdr);
+
+        printf("Sending fragment %d/%d (%zu byte payload) | Payload: %.40s...\n",
+            hdr->frag_num, hdr->total_frags,
+            frag_size, payload);
+
         // Post buffer to mailbox, fill mailbox entry
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer(&frag_ptr, frag_size, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
+        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)&full_buf, total_size, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
                                     rvs->mailboxPtr, threshold, EPOCH_OPS);
         if (!entry) {
             fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
@@ -841,22 +890,22 @@ int rvsendto(int socket, void *buf, int64_t len) {
             }
             dest->vaddr = vaddr;
         }
-        entry->realBuff = frag_ptr;
+        entry->realBuff = full_buf;
 
         // Build sge, wr
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
-            .length = frag_size,
+            .length = total_size,
             .lkey = entry->mr->lkey
         };
 
         struct ibv_send_wr wr;
         memset(&wr, 0, sizeof(wr));
-        wr.wr_id              = 1;
+        wr.wr_id              = (uintptr_t)entry;
         wr.sg_list            = &sge;
         wr.num_sge            = 1;
         wr.opcode             = IBV_WR_SEND;
-        wr.send_flags         = IBV_SEND_SIGNALED;
+        wr.send_flags         = IBV_SEND_SIGNALED; // Unsignalled for datagrams
         wr.wr.ud.ah           = dest->ah;
         wr.wr.ud.remote_qpn   = dest->qpn;
         wr.wr.ud.remote_qkey  = dest->qkey;
@@ -867,6 +916,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
             perror("rvmasendto: ibv_post_send failed");
             return -1;
         }
+        rvs->sq_size++;
     }
 
     end = rdtsc();
