@@ -26,12 +26,11 @@ typedef struct {
     int port_num; // Port number for datagrams
     int type; // Socket type (SOCK_STREAM or SOCK_DGRAM)
     uint64_t bufferSetupCycles;
+    uint64_t fragSetupCycles;
     uint64_t wrSetupCycles;
     uint64_t pollCycles;
     uint64_t regmrCycles;
-    int postCount;
-    
-    uint64_t cycles; // Clock cycles for tsc timer;
+    uint64_t cycles;
 
     RVMA_Buffer_Queue *bufferQueue;
     RVMA_Buffer_Queue *retiredBufferQueue;

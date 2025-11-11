@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <time.h>
+#include <stdint.h>
 #include <rdma/rsocket.h>
 #include <arpa/inet.h>
 
@@ -10,11 +10,11 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define CPU_FREQ_GHZ 2.4 // From /proc/cpuinfo
 
 int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
     int sockfd;
+    double cpu_ghz = get_cpu_ghz();
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
 
@@ -32,7 +32,8 @@ int main(int argc, char **argv) {
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
-
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
+    
     sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
@@ -51,12 +52,32 @@ int main(int argc, char **argv) {
     // Request connection to server to exchange UD connection info
     rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
 
-    // Perform rvmasendto on rvma socket
     int res;
-    int num_sends = 1000;
-    int size = 1024*1024; // 1MB messages
 
-    for (int i = 1; i <= num_sends; i++) {
+    int size = 1024;
+    if (argc > 2) {
+        size = atoi(argv[2]);
+    }
+    printf("Sending messages of size %d bytes\n", size);
+
+    int num_sends = 1000;
+    int warmup_sends = 10; // number of warmup sends
+
+    // Set to 1 to exclude warm-ups
+    int exclude_warmup = 1;
+
+    int measured_sends = exclude_warmup ? (num_sends - warmup_sends) : num_sends;
+    double *send_times = malloc(measured_sends * sizeof(double));
+
+    double min_time = 1e9;
+    double max_time = 0;
+    double sum_time = 0;
+    double frag_setup_time = 0;
+    double buffer_setup_time = 0;
+    double wr_setup_time = 0;
+    double poll_time = 0;
+
+    for (int i = 0; i < num_sends; i++) {
         char *message = malloc(size + 1);
         if (!message) {
             perror("malloc failed");
@@ -77,11 +98,64 @@ int main(int argc, char **argv) {
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
+
+        // Convert cycles to microseconds
+        double elapsed_us = mailbox->cycles / (cpu_ghz * 1e3);
+        double fragSetup_us = mailbox->fragSetupCycles / (cpu_ghz * 1e3);
+        double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
+        double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
+        double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
+
+        int record = 1;
+
+        // Exclude warm-ups if configured
+        if (exclude_warmup && i < warmup_sends)
+            record = 0;
+
+        if (record) {
+            int idx = exclude_warmup ? (i - warmup_sends) : i;
+            send_times[idx] = elapsed_us;
+
+            if (elapsed_us < min_time) min_time = elapsed_us;
+            if (elapsed_us > max_time) max_time = elapsed_us;
+            sum_time += elapsed_us;
+            frag_setup_time += fragSetup_us;
+            buffer_setup_time += bufferSetup_us;
+            wr_setup_time += wrSetup_us;
+            poll_time += poll_us;
+        }
         free(message);
     }
 
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
-    printf("Total elapsed time for sends: %.3f microseconds\n", mailbox->cycles / (CPU_FREQ_GHZ * 1e3));
+    // Compute averages
+    double avg_time = sum_time / measured_sends;
+    double avg_frag_setup = frag_setup_time / measured_sends;
+    double avg_buffer_setup = buffer_setup_time / measured_sends;
+    double avg_wr_setup = wr_setup_time / measured_sends;
+    double avg_poll_time = poll_time / measured_sends;
+
+    // Compute standard deviation
+    double variance = 0.0;
+    for (int i = 0; i < measured_sends; i++) {
+        double diff = send_times[i] - avg_time;
+        variance += diff * diff;
+    }
+    variance /= (measured_sends - 1);
+    double stddev = sqrt(variance);
+
+    // Print results
+    printf("\n===== RVMA Send Timing Results =====\n");
+    printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
+    printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
+    printf("Average buffer setup:     %.3f µs\n", avg_buffer_setup);
+    printf("Average frag setup:       %.3f µs\n", avg_frag_setup);
+    printf("Average WR setup:         %.3f µs\n", avg_wr_setup);
+    printf("Average poll:             %.3f µs\n", avg_poll_time);
+    printf("Min send time:            %.3f µs\n", min_time);
+    printf("Max send time:            %.3f µs\n", max_time);
+    printf("Avg send time:            %.3f µs\n", avg_time);
+    printf("Send time stddev:         %.3f µs\n", stddev);
+    printf("====================================\n");
 
     rclose(sockfd);
     return 0;

@@ -468,7 +468,7 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
             total_us += rvmaRecvTime;
             total_sq_us += rvmaRecvTime * rvmaRecvTime;
             measured_recvs++;
-            printf("rvmaRecv time [%d] (%d bytes): %.3f µs\n", recv_count, len, rvmaRecvTime);
+            printf("rvmaRecv time [%d] (%d bytes): %.3f µs\n", recv_count - 1, len, rvmaRecvTime);
             if (rvmaRecvTime < min_us) {
                 min_us = rvmaRecvTime;
             }

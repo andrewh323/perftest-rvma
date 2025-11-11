@@ -175,7 +175,7 @@ RVMA_Status removeEntry(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry){
 
     int found = 0;
     for(int i = 0; i < queue->capacity; i++){
-        int idx = queue->start + i % queue->capacity;
+        int idx = (queue->start + i) % queue->capacity;
 
         if(entry == queue->pBufferEntry[idx]){
             queue->pBufferEntry[idx] = NULL;

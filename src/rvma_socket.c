@@ -37,7 +37,8 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_BUFS 16
+#define MAX_RECV_BUFS 64
+#define SIGNAL_INTERVAL 64
 
 enum {
 	RS_OP_DATA,
@@ -796,12 +797,11 @@ int rvsend(int socket, void *buf, int64_t len) {
 
 // Send for datagram sockets
 int rvsendto(int socket, void *buf, int64_t len) {
-    double cpu_ghz = get_cpu_ghz();
-    uint64_t start, end, elapsed;
+    uint64_t frag_setup = 0, buffer_setup = 0, wr_setup = 0, total_poll = 0;
+    uint64_t start = rdtsc();
+
     struct rvsocket *rvs;
     uint64_t vaddr;
-
-    start = rdtsc();
 
     rvs = idm_at(&idm, socket);
 
@@ -813,49 +813,28 @@ int rvsendto(int socket, void *buf, int64_t len) {
     int *notifLenPtr = malloc(sizeof(int));
     *notifLenPtr = 0;
 
-    // Take ceiling of message length/max_transfer
+    // Store array of completed buffers to free after signaling
+    RVMA_Buffer_Entry *pendingBuffers[SIGNAL_INTERVAL];
+    int pendingCount = 0;
+    for (int i = 0; i < SIGNAL_INTERVAL; ++i) pendingBuffers[i] = NULL;
+    int retired_idx = 0;
+
+    // Determine number of fragments (bufferLen/MTU)
     int64_t threshold = (len + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER;
 
     for (int offset = 0; offset < threshold; offset++) {
-        while (rvs->sq_size >= rvs->sq_limit) {
-            // Poll send CQ to free up space
-            struct ibv_wc wc[128];
-            int num_wc = ibv_poll_cq(rvs->mailboxPtr->cq, 128, wc);
-
-            if (num_wc < 0) {
-                perror("rvsendto: ibv_poll_cq failed");
-                return -1;
-            }
-            for (int i = 0; i < num_wc; i++) {
-                if (wc[i].status == IBV_WC_SUCCESS) {
-                    RVMA_Buffer_Entry *completed = (RVMA_Buffer_Entry *)wc[i].wr_id;
-                    if (removeEntry(rvs->mailboxPtr->bufferQueue, completed) != RVMA_SUCCESS) {
-                        print_error("rvmaSend: removeEntry failed");
-                        return RVMA_ERROR;
-                    }
-                    if (freeBufferEntry(completed) != RVMA_SUCCESS) {
-                        print_error("rvsendto: freeBufferEntry failed");
-                        return RVMA_ERROR;
-                    }
-                }
-                else {
-                    fprintf(stderr, "rvsendto: WC error %d on wr_id %" PRIu64 "\n",
-                        wc[i].status, wc[i].wr_id);
-                }
-                rvs->sq_size--;
-            }
-        }
-
+        uint64_t frag_setup_start = rdtsc();
         // Define message fragment
-        // i=0-RS_MAX_TRANSFER-1, RS_MAX_TRANSFER-2*RS_MAX_TRANSFER-1, ...
+        // i=0->RS_MAX_TRANSFER-1, RS_MAX_TRANSFER->2*RS_MAX_TRANSFER-1, ...
         int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
         void *frag_ptr = (uint8_t *)buf + offset * RS_MAX_TRANSFER;
 
-        // Construct fragment header
+        // Construct fragment header (for ordering at receiver)
         struct dgram_frag_header header = {
             .frag_num = offset + 1,
             .total_frags = threshold
         };
+
         size_t total_size = sizeof(header) + frag_size;
         // Allocate buffer for fragment + header
         void *full_buf = malloc(total_size);
@@ -871,9 +850,13 @@ int rvsendto(int socket, void *buf, int64_t len) {
         struct dgram_frag_header *hdr = (struct dgram_frag_header *)full_buf;
         char *payload = (char *)full_buf + sizeof(*hdr);
 
+        uint64_t frag_setup_end = rdtsc();
+        frag_setup += frag_setup_end - frag_setup_start;
+
         printf("Sending fragment %d/%d (%zu byte payload) | Payload: %.40s...\n",
-            hdr->frag_num, hdr->total_frags,
-            frag_size, payload);
+            hdr->frag_num, hdr->total_frags, frag_size, payload);
+
+        uint64_t buffer_setup_start = rdtsc();
 
         // Post buffer to mailbox, fill mailbox entry
         RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)&full_buf, total_size, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
@@ -882,15 +865,10 @@ int rvsendto(int socket, void *buf, int64_t len) {
             fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
             return -1;
         }
-        // Build and send wr, dequeue entry
-        if (!dest || dest->vaddr != vaddr) {
-            if (!dest) {
-                perror("rvsendto: dest not initialized");
-                return -1;
-            }
-            dest->vaddr = vaddr;
-        }
         entry->realBuff = full_buf;
+
+        uint64_t buffer_setup_end = rdtsc();
+        buffer_setup += buffer_setup_end - buffer_setup_start;
 
         // Build sge, wr
         struct ibv_sge sge = {
@@ -899,13 +877,19 @@ int rvsendto(int socket, void *buf, int64_t len) {
             .lkey = entry->mr->lkey
         };
 
+        int send_flag;
+        if ((rvs->sq_size % SIGNAL_INTERVAL == 0 && rvs->sq_size != 0))
+            send_flag = IBV_SEND_SIGNALED;
+        else
+            send_flag = 0;
+
         struct ibv_send_wr wr;
         memset(&wr, 0, sizeof(wr));
         wr.wr_id              = (uintptr_t)entry;
         wr.sg_list            = &sge;
         wr.num_sge            = 1;
         wr.opcode             = IBV_WR_SEND;
-        wr.send_flags         = IBV_SEND_SIGNALED; // Unsignalled for datagrams
+        wr.send_flags         = send_flag;
         wr.wr.ud.ah           = dest->ah;
         wr.wr.ud.remote_qpn   = dest->qpn;
         wr.wr.ud.remote_qkey  = dest->qkey;
@@ -916,14 +900,61 @@ int rvsendto(int socket, void *buf, int64_t len) {
             perror("rvmasendto: ibv_post_send failed");
             return -1;
         }
+        uint64_t wr_setup_end = rdtsc();
+        wr_setup += wr_setup_end - buffer_setup_end;
+
+        uint64_t poll_start = rdtsc();
+
+        // Store buffer to retire
+        pendingBuffers[pendingCount++] = entry;
+
         rvs->sq_size++;
+
+        printf("sq_size: %d\n", rvs->sq_size);
+        printf("Size of buffer queue: %d\n", rvs->mailboxPtr->bufferQueue->size);
+
+        // Completion generated every SIGNAL_INTERVAL sends, which indicates all prior sends are complete
+        if (send_flag == IBV_SEND_SIGNALED) {
+            struct ibv_wc wc;
+            int num_wc = 0;
+            do {
+                num_wc = ibv_poll_cq(rvs->mailboxPtr->cq, 1, &wc);
+            } while (num_wc == 0);
+
+            if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
+                fprintf(stderr, "rvsendto: ibv_poll_cq failed\n");
+                return -1;
+            }
+            // Free all completed buffers
+            for (int i = 0; i < pendingCount; i++) {
+                if (pendingBuffers[i]) {
+                    printf("Freeing Buffers!\n");
+                    removeEntry(rvs->mailboxPtr->bufferQueue, pendingBuffers[i]);
+                    freeBufferEntry(pendingBuffers[i]);
+                    pendingBuffers[i] = NULL;
+                }
+            }
+            rvs->sq_size -= pendingCount;
+            pendingCount = 0;
+        }
+        uint64_t poll_end = rdtsc();
+        total_poll += poll_end - poll_start;
     }
 
-    end = rdtsc();
-    elapsed = end - start;
-    double elapsed_us = elapsed / (cpu_ghz * 1e3);
-    printf("rvsendto time: %.3f microseconds\n", elapsed_us);
-    rvs->mailboxPtr->cycles += elapsed;
+    free(notifBuffPtr);
+    free(notifLenPtr);
+    uint64_t end = rdtsc();
+    double elapsed = end - start;
+    double avg_frag_setup = frag_setup / (double)threshold;
+    double avg_buffer_setup = buffer_setup / (double)threshold;
+    double avg_wr_setup = wr_setup / (double)threshold;
+    double avg_poll = total_poll / (double)threshold;
+
+    rvs->mailboxPtr->cycles = elapsed;
+    rvs->mailboxPtr->fragSetupCycles = avg_frag_setup;
+    rvs->mailboxPtr->bufferSetupCycles = avg_buffer_setup;
+    rvs->mailboxPtr->wrSetupCycles = avg_wr_setup;
+    rvs->mailboxPtr->pollCycles = avg_poll;
     return 0;
 }
 
