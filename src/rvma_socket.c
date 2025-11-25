@@ -30,14 +30,14 @@
 #include "indexer.h"
 
 #define PORT 7471
-#define RS_MAX_TRANSFER 4050 /* 4KB MTU - 40B GRH */ /* set to 4050 so message fragments can be observed*/
 #define RS_SNDLOWAT 2048
 #define RS_QP_MIN_SIZE 16
 #define RS_QP_MAX_SIZE 0xFFFE
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_BUFS 64
+#define MAX_RECV_BUFS 16
+#define MAX_RECV_SIZE 1024*1024 // 1MB
 #define SIGNAL_INTERVAL 64
 
 enum {
@@ -104,8 +104,6 @@ struct rvsocket {
         };
         struct { // datagram
             int udp_sock; // UDP socket for exchanging connection data
-            int sq_size; // Current size of send queue
-            int sq_limit; // Max size of send queue
         };
     };
     int qp_port; // QP port num
@@ -182,7 +180,8 @@ static inline uint64_t rdtsc(){
 // Return socketfd after inserting into idm
 uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     double cpu_ghz = get_cpu_ghz();
-	uint64_t start, end = 0;
+    double postRecvTime = 0;
+	uint64_t start, end;
     start = rdtsc();
     struct rvsocket *rvs;
     int index, ret;
@@ -215,6 +214,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     } else { // datagram
         // Datagrams do not accept/connect, so we must setup pd, cq, and qp here
         // To allocate pd, we need a valid context
+        uint64_t devSearchStart = rdtsc();
         char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
         struct ibv_device *ib_dev = ctx_find_dev(&devname);
         if (!ib_dev) {
@@ -240,6 +240,11 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         }
         rvs->qp_port = 1;
 
+        uint64_t devSearchEnd = rdtsc();
+        double devSearchTime = (devSearchEnd - devSearchStart) / (cpu_ghz * 1e3);
+        printf("Time to setup IB device: %.3f µs\n", devSearchTime);
+
+        uint64_t setupQPstart = rdtsc();
         // Allocate pd, cq, and qp here
         struct ibv_pd *pd = ibv_alloc_pd(ctx);
         if (!pd) {
@@ -299,20 +304,30 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             perror("RTS transition failed");
             return -1;
         }
+
+        uint64_t setupQPend = rdtsc();
+        double setupQPtime = (setupQPend - setupQPstart) / (cpu_ghz * 1e3);
+        printf("Time to setup QP in rvsocket: %.3f µs\n", setupQPtime);
+
         // Save qp to rvs
         rvs->mailboxPtr->qp = qp;
+
+        // Post receive pool to prepare for incoming sends
+        // Do not include postRecvPool time in rvsocket timing; separate measurement
+        uint64_t postRecvStart = rdtsc();
         if (postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
             perror("postRecvPool failed");
             return -1;
         }
-        rvs->sq_size = 0;
-        rvs->sq_limit = 128; // Match max_send_wr
+        uint64_t postRecvEnd = rdtsc();
+        postRecvTime = (postRecvEnd - postRecvStart) / (cpu_ghz * 1e3);
 
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
         rvs->index = rvs->udp_sock;
         index = rvs->index;
     }
+
     uint64_t beforeInsert = rdtsc();
     
     // Insert rvsocket into index map
@@ -326,7 +341,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     printf("rvsocket mailbox setup time: %.3f µs\n", mailboxTime);
     double insertTime = (end - beforeInsert) / (cpu_ghz * 1e3);
     printf("rvsocket insert time: %.3f µs\n", insertTime);
-    double elapsed_us = (end - start) / (cpu_ghz * 1e3);
+    double elapsed_us = (end - start) / (cpu_ghz * 1e3) - postRecvTime;
     printf("rvsocket total setup time: %.3f µs\n", elapsed_us);
     // return rvsocket index
     return rvs->index;
@@ -797,8 +812,7 @@ int rvsend(int socket, void *buf, int64_t len) {
 
 // Send for datagram sockets
 int rvsendto(int socket, void *buf, int64_t len) {
-    uint64_t frag_setup = 0, buffer_setup = 0, wr_setup = 0, total_poll = 0;
-    uint64_t start = rdtsc();
+    uint64_t elapsed = 0, frag_setup = 0, buffer_setup = 0, wr_setup = 0, total_poll = 0;
 
     struct rvsocket *rvs;
     uint64_t vaddr;
@@ -806,23 +820,19 @@ int rvsendto(int socket, void *buf, int64_t len) {
     rvs = idm_at(&idm, socket);
 
     vaddr = rvs->vaddr;
-    struct rv_dest *dest = rvs->dest;
+    struct rv_dest *dest = rvs->dest;\
 
-    int *notifBuffPtr = malloc(sizeof(int));
-    *notifBuffPtr = 0;
-    int *notifLenPtr = malloc(sizeof(int));
-    *notifLenPtr = 0;
-
-    // Store array of completed buffers to free after signaling
-    RVMA_Buffer_Entry *pendingBuffers[SIGNAL_INTERVAL];
-    int pendingCount = 0;
-    for (int i = 0; i < SIGNAL_INTERVAL; ++i) pendingBuffers[i] = NULL;
-    int retired_idx = 0;
+    int hardware_counter = 0; // Counter to compare with threshold (Should only exist in hardware)
 
     // Determine number of fragments (bufferLen/MTU)
     int64_t threshold = (len + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER;
 
+    // Initialize notification pointers
+    void **notifBuffPtr = malloc(sizeof(void *));
+    int *notifLenPtr = malloc(sizeof(int));
+
     for (int offset = 0; offset < threshold; offset++) {
+        uint64_t start = rdtsc();
         uint64_t frag_setup_start = rdtsc();
         // Define message fragment
         // i=0->RS_MAX_TRANSFER-1, RS_MAX_TRANSFER->2*RS_MAX_TRANSFER-1, ...
@@ -853,13 +863,13 @@ int rvsendto(int socket, void *buf, int64_t len) {
         uint64_t frag_setup_end = rdtsc();
         frag_setup += frag_setup_end - frag_setup_start;
 
-        printf("Sending fragment %d/%d (%zu byte payload) | Payload: %.40s...\n",
+        printf("Sending fragment %d/%d (%zu bytes) | Payload: %.40s...\n",
             hdr->frag_num, hdr->total_frags, frag_size, payload);
 
         uint64_t buffer_setup_start = rdtsc();
 
         // Post buffer to mailbox, fill mailbox entry
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)&full_buf, total_size, (void *)notifBuffPtr, (void *)notifLenPtr, vaddr,
+        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)&full_buf, total_size, notifBuffPtr, (void *)notifLenPtr, vaddr,
                                     rvs->mailboxPtr, threshold, EPOCH_OPS);
         if (!entry) {
             fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
@@ -877,11 +887,10 @@ int rvsendto(int socket, void *buf, int64_t len) {
             .lkey = entry->mr->lkey
         };
 
-        int send_flag;
-        if ((rvs->sq_size % SIGNAL_INTERVAL == 0 && rvs->sq_size != 0))
+        int send_flag = 0;
+        if ((rvs->mailboxPtr->bufferQueue->size % SIGNAL_INTERVAL == 0)){
             send_flag = IBV_SEND_SIGNALED;
-        else
-            send_flag = 0;
+        }
 
         struct ibv_send_wr wr;
         memset(&wr, 0, sizeof(wr));
@@ -902,16 +911,18 @@ int rvsendto(int socket, void *buf, int64_t len) {
         }
         uint64_t wr_setup_end = rdtsc();
         wr_setup += wr_setup_end - buffer_setup_end;
+        uint64_t end = rdtsc();
+        elapsed += end - start;
+
+        hardware_counter++; // Hardware counter is incremented after every operation (By # ops)
+        if (hardware_counter == threshold) {
+            // IWrite address of head of buffer to notification pointer
+            *notifBuffPtr = full_buf;
+            // Write length of buffer to notifLenPtr in case buffer is reused
+            *notifLenPtr = total_size;
+        }
 
         uint64_t poll_start = rdtsc();
-
-        // Store buffer to retire
-        pendingBuffers[pendingCount++] = entry;
-
-        rvs->sq_size++;
-
-        printf("sq_size: %d\n", rvs->sq_size);
-        printf("Size of buffer queue: %d\n", rvs->mailboxPtr->bufferQueue->size);
 
         // Completion generated every SIGNAL_INTERVAL sends, which indicates all prior sends are complete
         if (send_flag == IBV_SEND_SIGNALED) {
@@ -925,17 +936,13 @@ int rvsendto(int socket, void *buf, int64_t len) {
                 fprintf(stderr, "rvsendto: ibv_poll_cq failed\n");
                 return -1;
             }
-            // Free all completed buffers
-            for (int i = 0; i < pendingCount; i++) {
-                if (pendingBuffers[i]) {
-                    printf("Freeing Buffers!\n");
-                    removeEntry(rvs->mailboxPtr->bufferQueue, pendingBuffers[i]);
-                    freeBufferEntry(pendingBuffers[i]);
-                    pendingBuffers[i] = NULL;
+            // Free all completed (previous) buffers
+            while (rvs->mailboxPtr->bufferQueue->size > MAX_RECV_BUFS) {
+                RVMA_Buffer_Entry *completedEntry = dequeue(rvs->mailboxPtr->bufferQueue);
+                if (completedEntry) {
+                    freeBufferEntry(completedEntry);
                 }
             }
-            rvs->sq_size -= pendingCount;
-            pendingCount = 0;
         }
         uint64_t poll_end = rdtsc();
         total_poll += poll_end - poll_start;
@@ -943,18 +950,136 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
     free(notifBuffPtr);
     free(notifLenPtr);
-    uint64_t end = rdtsc();
-    double elapsed = end - start;
-    double avg_frag_setup = frag_setup / (double)threshold;
-    double avg_buffer_setup = buffer_setup / (double)threshold;
-    double avg_wr_setup = wr_setup / (double)threshold;
-    double avg_poll = total_poll / (double)threshold;
 
     rvs->mailboxPtr->cycles = elapsed;
-    rvs->mailboxPtr->fragSetupCycles = avg_frag_setup;
-    rvs->mailboxPtr->bufferSetupCycles = avg_buffer_setup;
-    rvs->mailboxPtr->wrSetupCycles = avg_wr_setup;
-    rvs->mailboxPtr->pollCycles = avg_poll;
+    rvs->mailboxPtr->fragSetupCycles = frag_setup;
+    rvs->mailboxPtr->bufferSetupCycles = buffer_setup;
+    rvs->mailboxPtr->wrSetupCycles = wr_setup;
+    rvs->mailboxPtr->pollCycles = total_poll;
+
+    return 0;
+}
+
+// Receive buffer pool should already be preposted, manage fragments and poll completion
+int rvrecvfrom(RVMA_Mailbox *mailbox) {
+    int num_recvs = 100; // Expecting this many messages, but may increase with multi-fragment messages
+    int recv_count = 0;
+    // Timing measurement variables
+    int exclude_warmup = 1; // Set to 1 to exclude warm-ups
+    int warmup_rounds = 10;
+    uint64_t start, end = 0;
+    double total_us = 0;
+    double repost_total_us = 0;
+    double avg_us = 0;
+    double avg_repost_us = 0;
+    double min_us = 1e9;
+    double max_us = 0;
+    double cpu_ghz = 2.45; // Using get_cpu_ghz() here is too expensive so receives aren't posted in time if used
+    int measured_recvs = 0;
+    double total_sq_us = 0.0;
+    double stddev_us = 0.0;
+
+    while (recv_count < num_recvs) {
+        struct ibv_wc wc;
+        int num_wc;
+        start = rdtsc();
+
+        do {
+            num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
+        } while (num_wc == 0);
+
+        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
+            return -1;
+        }
+
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
+        if (!entry) {
+            perror("rvrecvfrom: entry is NULL");
+            return -1;
+        }
+
+        char *recv_buf = (char *)entry->realBuff;
+        int len = wc.byte_len;
+
+        char *data = recv_buf + 40; // GRH offset
+        int data_len = len - 40;
+
+        struct dgram_frag_header header;
+        memcpy(&header, data, sizeof(header));
+
+        char *payload = data + sizeof(header);
+        int payload_len = data_len - sizeof(header);
+
+        if (header.frag_num == 1 && header.total_frags > 1) {
+            num_recvs += (header.total_frags - 1); // Account for extra recvs from fragments of the same message
+            // printf("Multi-fragment message detected (Message #%d): total fragments = %d\n", recv_count + 1, header.total_frags);
+        }
+
+        end = rdtsc();
+        double recvtime = (end - start) / (cpu_ghz * 1e3);
+        
+        printf("Received message #%d, fragment %d/%d (%d bytes) | Payload: %.40s...\n",
+            recv_count + 1, header.frag_num, header.total_frags, payload_len, payload);
+
+        if (!exclude_warmup || recv_count > warmup_rounds) {
+            // Include in timing stats
+            total_us += recvtime;
+            // printf("Time for this receive: %.3f\n", recvtime);
+            total_sq_us += recvtime * recvtime;
+            measured_recvs++;
+            // Update min/max
+            if (recvtime < min_us) {
+                min_us = recvtime;
+            }
+            if (recvtime > max_us) {
+                max_us = recvtime;
+            }
+        }
+
+        uint64_t beforeRepost = rdtsc();
+        // Recycle recv buffer by reposting
+        struct ibv_sge sge = {
+            .addr = (uintptr_t)recv_buf,
+            .length = MAX_RECV_SIZE,
+            .lkey = entry->mr->lkey
+        };
+
+        struct ibv_recv_wr recv_wr = {
+            .wr_id = (uintptr_t)entry,
+            .sg_list = &sge,
+            .num_sge = 1,
+            .next = NULL
+        };
+
+        struct ibv_recv_wr *bad_wr = NULL;
+        if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
+            perror("rvrecvfrom: ibv_post_recv failed");
+            return -1;
+        }
+        recv_count++;
+
+        uint64_t afterRepost = rdtsc();
+        double repostTime = (afterRepost - beforeRepost) / (cpu_ghz * 1e3);
+        repost_total_us += repostTime;
+    }
+
+    if (measured_recvs > 0) {
+        avg_us = total_us / measured_recvs;
+        double variance = (total_sq_us / measured_recvs) - (avg_us * avg_us);
+        stddev_us = sqrt(variance);
+    }
+    else {
+        avg_us = 0;
+    }
+
+    avg_repost_us = repost_total_us / recv_count;
+    printf("Avg recv time: %.3f µs\n", avg_us);
+    printf("Avg recv repost time: %.3f µs\n", avg_repost_us);
+    printf("Min recv time: %.3f µs\n", min_us);
+    printf("Max recv time: %.3f µs\n", max_us);
+    printf("Recv time stddev: %.3f µs\n", stddev_us);
+
     return 0;
 }
 

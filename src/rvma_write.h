@@ -42,8 +42,6 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
 
 RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox);
 
-RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox);
-
 RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void* virtualAddress);
 
 RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type, int msgSize);

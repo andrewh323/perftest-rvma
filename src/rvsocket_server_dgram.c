@@ -61,8 +61,18 @@ int main(int argc) {
 	printf("Host IP address bound to socket\n");
 
     int tcp_listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    bind(tcp_listenfd, (struct sockaddr *)&addr, sizeof(addr));
-    listen(tcp_listenfd, 1);
+    int opt = 1;
+    // Setup SO_REUSEADDR to allow rebinding
+    setsockopt(tcp_listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (bind(tcp_listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        perror("bind tcp_listenfd");
+        exit(1);
+    }
+
+    if (listen(tcp_listenfd, 1) < 0) {
+        perror("listen");
+        exit(1);
+    }
     socklen_t addrlen = sizeof(addr);
     // Accept connection to exchange UD connection info
     rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
@@ -74,5 +84,8 @@ int main(int argc) {
     }
 
     close(dgram_fd);
+    close(tcp_listenfd);
+    // Wait for test to finish
+    usleep(50 * 1000);
 	return 0;
 }

@@ -12,6 +12,7 @@
 #include "perftest_resources.h"
 #include "rvma_write.h"
 
+#define RS_MAX_TRANSFER 4050 /* 4KB MTU - 40B GRH */ /* set to 4050 so message fragments can be observed*/
 
 struct dgram_frag_header {
     uint32_t frag_num;
@@ -37,6 +38,8 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int rvsend(int socket, void *buf, int64_t len);
 
 int rvsendto(int socket, void *buf, int64_t len);
+
+int rvrecvfrom(RVMA_Mailbox *mailbox);
 
 int rvrecv(int socket, RVMA_Win *window);
 

@@ -49,9 +49,20 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    // Request connection to server to exchange UD connection info
-    rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    int ret;
+    // In case server is not yet ready for connection request, reattempt
+    for (int i = 0; i < 50; i++) {
+        ret = rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+        if (ret == 0) {
+            break;  // successfully connected
+        }
+        usleep(1000 * 1000); // wait for 1000 ms before reattempting
+    }
 
+    if (ret != 0) {
+        fprintf(stderr, "Failed to connect after multiple retries\n");
+        exit(1);
+    }
     int res;
 
     int size = 1024;
@@ -60,7 +71,7 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 1000;
+    int num_sends = 100;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
@@ -91,6 +102,8 @@ int main(int argc, char **argv) {
             message[j] = 'A' + ((i + j) % 26);
         }
         message[size] = '\0';
+
+        usleep(20); // Wait in case server needs to catch up
 
         // printf("Sending message %d: %.40s...\n", i, message);
 
@@ -147,10 +160,12 @@ int main(int argc, char **argv) {
     printf("\n===== RVMA Send Timing Results =====\n");
     printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
     printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
+    printf("Size of each message:     %d bytes\n", size);
+    printf("Fragments per message:    %d\n", (size + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER);
     printf("Average buffer setup:     %.3f µs\n", avg_buffer_setup);
     printf("Average frag setup:       %.3f µs\n", avg_frag_setup);
     printf("Average WR setup:         %.3f µs\n", avg_wr_setup);
-    printf("Average poll:             %.3f µs\n", avg_poll_time);
+    printf("Average poll time:        %.3f µs\n", avg_poll_time);
     printf("Min send time:            %.3f µs\n", min_time);
     printf("Max send time:            %.3f µs\n", max_time);
     printf("Avg send time:            %.3f µs\n", avg_time);

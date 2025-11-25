@@ -13,7 +13,6 @@
 #include "rvma_socket.c"
 
 #define MAX_RECV_SIZE 1024*1024 // 1MB
-#define CPU_FREQ_GHZ 2.45 // From /proc/cpuinfo
 
 // Helper function to get CPU frequency
 double get_cpu_ghz() {
@@ -72,6 +71,7 @@ RVMA_Win *rvmaInitWindowMailboxKey(void *virtualAddress, key_t key) {
 }
 
 RVMA_Win *rvmaInitWindowMailbox(void *virtualAddress) {
+    double cpu_ghz = get_cpu_ghz();
     uint64_t start, end, cycles;
     start = rdtsc();
     if (virtualAddress == NULL){
@@ -101,13 +101,12 @@ RVMA_Win *rvmaInitWindowMailbox(void *virtualAddress) {
         print_error("rvmaInitWindowMailbox: Failure creating mailbox in the hashmap...");
         return NULL;
     }
-
+    
     windowPtr->hashMapPtr = hashMapPtr;
     windowPtr->key = -1;
 
     end = rdtsc();
-    cycles = end - start;
-    double elapsed_us = cycles / (CPU_FREQ_GHZ * 1e3);
+    double elapsed_us = (end - start) / (cpu_ghz * 1e3);
     printf("Window init setup time: %.3f µs\n", elapsed_us);
 
     return windowPtr;
@@ -237,6 +236,7 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch
     double cpu_ghz = get_cpu_ghz();
     start = rdtsc();
     for (int i = 0; i < num_bufs; i++) {
+        uint64_t singleRecvStart = rdtsc();
         char *recv_buf = malloc(MAX_RECV_SIZE);
         if (!recv_buf) {
             print_error("postRecvPool: malloc failed");
@@ -245,14 +245,12 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch
         void *recv_ptr = recv_buf;
 
         // Setup notification pointers (per-buffer notification)
-        uintptr_t *notifBuffPtr = malloc(sizeof(uintptr_t));
-        *notifBuffPtr = 0;
+        void **notifBuffPtr = malloc(sizeof(void *));
         int *notifLenPtr = malloc(sizeof(int));
-        *notifLenPtr = 0;
 
-        int64_t threshold = 1;
+        int64_t threshold;
         if (epochType == EPOCH_OPS) {
-            threshold = MAX_RECV_SIZE/RS_MAX_TRANSFER;
+            threshold = MAX_RECV_SIZE / RS_MAX_TRANSFER;
         }
         else if (epochType == EPOCH_BYTES) {
             threshold = MAX_RECV_SIZE;
@@ -262,8 +260,8 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch
             return RVMA_ERROR;
         }
 
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer(&recv_ptr, MAX_RECV_SIZE, (void *)notifBuffPtr,
-                                            (void *)notifLenPtr, vaddr, mailbox, threshold, epochType);
+        RVMA_Buffer_Entry *entry = rvmaPostBuffer(&recv_ptr, MAX_RECV_SIZE, notifBuffPtr, (void *)notifLenPtr,
+                                    vaddr, mailbox, threshold, epochType);
         if (!entry) {
             print_error("postRecvPool: rvmaPostBuffer failed");
             return RVMA_ERROR;
@@ -288,10 +286,12 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch
             perror("postRecvPool: ibv_post_recv failed");
             return RVMA_ERROR;
         }
+        uint64_t singleRecvEnd = rdtsc();
     }
     end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
     printf("postRecvPool time for %d buffers: %.3f µs\n", num_bufs, elapsed_us);
+    printf("Average receive buffer posting time: %.3f µs\n", elapsed_us / num_bufs);
     return RVMA_SUCCESS;
 }
 
@@ -332,16 +332,15 @@ RVMA PUT STEPS
 RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox) {
     uint64_t start = rdtsc();
 
+    int hardware_counter = 0; // Counter to compare with threshold (should only exist in hardware)
+
     int64_t threshold = size; // Set threshold to size of buffer (bytes)
 
-    int *notifBuffPtr = malloc(sizeof(int));
-    *notifBuffPtr = 0;
-
+    void **notifBuffPtr = malloc(sizeof(void *));
     int *notifLenPtr = malloc(sizeof(int));
-    *notifLenPtr = 0;
 
     // Post a buffer to the RVMA mailbox
-    RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, size, (void *)notifBuffPtr, (void *)notifLenPtr,
+    RVMA_Buffer_Entry *entry = rvmaPostBuffer(&buf, size, notifBuffPtr, (void *)notifLenPtr,
                                             vaddr, mailbox, threshold, EPOCH_BYTES);
     if (!entry) {
         print_error("rvmaSend: rvmaPostBuffer failed");
@@ -387,6 +386,15 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
     uint64_t end = rdtsc();
     uint64_t elapsed = end - start;
     mailbox->cycles = elapsed;
+
+    // Increment hardware counter after posting (by bytes)
+    hardware_counter += dataSize;
+    if (hardware_counter == threshold) {
+        // Write address of head of buffer to notification pointer
+        *notifBuffPtr = data;
+        // Write length of buffer to notifLenPtr in case buffer is reused
+        *notifLenPtr = dataSize;
+    }
 
     uint64_t start_poll = rdtsc();
 
@@ -435,7 +443,7 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
     double min_us = 1e9;
     double max_us = 0;
     double cpu_ghz = get_cpu_ghz();
-    int num_recvs = 1024; // Set for slurm testing, should poll till end is recvd
+    int num_recvs = 1000; // Set for slurm testing, should poll till end is recvd
     int recv_count = 0;
     int measured_recvs = 0;
     double total_sq_us = 0.0;
@@ -521,75 +529,6 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
     printf("Max recv time: %.3f µs\n", max_us);
     printf("Recv time stddev: %.3f µs\n", stddev_us);
     
-    return RVMA_SUCCESS;
-}
-
-// Receive buffer pool should already be preposted, so just poll for completions
-RVMA_Status rvrecvfrom(RVMA_Mailbox *mailbox) {
-    int num_recvs = 1000; // Expecting this many messages, but may increase with multi-fragment messages
-    int recv_count = 0;
-
-    while (recv_count < num_recvs) {
-        struct ibv_wc wc;
-        int num_wc;
-
-        do {
-            num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
-        } while (num_wc == 0);
-
-        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
-            fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
-            return RVMA_ERROR;
-        }
-
-        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
-        if (!entry) {
-            perror("rvrecvfrom: entry is NULL");
-            return RVMA_ERROR;
-        }
-
-        char *recv_buf = (char *)entry->realBuff;
-        int len = wc.byte_len;
-
-        char *data = recv_buf + 40; // GRH offset
-        int data_len = len - 40;
-
-        struct dgram_frag_header header;
-        memcpy(&header, data, sizeof(header));
-
-        char *payload = data + sizeof(header);
-        int payload_len = data_len - sizeof(header);
-
-        if (header.frag_num == 1 && header.total_frags > 1) {
-            num_recvs += (header.total_frags - 1); // Account for extra recvs from fragments of the same message
-            printf("Multi-fragment message detected (Message #%d): total fragments = %d\n", recv_count + 1, header.total_frags);
-        }
-
-        printf("Received message #%d, fragment %d/%d (%d byte payload)\n",
-            recv_count + 1, header.frag_num, header.total_frags, payload_len);
-        printf("Payload: %.40s...\n", payload);
-
-        // Recycle recv buffer by reposting
-        struct ibv_sge sge = {
-            .addr = (uintptr_t)recv_buf,
-            .length = MAX_RECV_SIZE,
-            .lkey = entry->mr->lkey
-        };
-
-        struct ibv_recv_wr recv_wr = {
-            .wr_id = (uintptr_t)entry,
-            .sg_list = &sge,
-            .num_sge = 1,
-            .next = NULL
-        };
-
-        struct ibv_recv_wr *bad_wr = NULL;
-        if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
-            perror("rvrecvfrom: ibv_post_recv failed");
-            return RVMA_ERROR;
-        }
-        recv_count++;
-    }
     return RVMA_SUCCESS;
 }
 
