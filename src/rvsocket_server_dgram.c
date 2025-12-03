@@ -56,13 +56,13 @@ int main(int argc) {
 
     dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
 
-	// Bind host address for datagram socket (also posts recvs)
+	// Bind host address for datagram socket
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));
 	printf("Host IP address bound to socket\n");
 
     int tcp_listenfd = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
-    // Setup SO_REUSEADDR to allow rebinding
+
     setsockopt(tcp_listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     if (bind(tcp_listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         perror("bind tcp_listenfd");
@@ -78,7 +78,7 @@ int main(int argc) {
     rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
     printf("Posting recv...\n");
-    int ret = rvrecv(dgram_fd, windowPtr);
+    int ret = rvrecv(dgram_fd);
     if (ret < 0) {
         perror("Error receiving message");
     }

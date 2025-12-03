@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
         if (ret == 0) {
             break;  // successfully connected
         }
-        usleep(1000 * 1000); // wait for 1000 ms before reattempting
+        usleep(1000 * 100); // wait for 100 ms before reattempting
     }
 
     if (ret != 0) {
@@ -102,8 +102,6 @@ int main(int argc, char **argv) {
             message[j] = 'A' + ((i + j) % 26);
         }
         message[size] = '\0';
-
-        usleep(20); // Wait in case server needs to catch up
 
         // printf("Sending message %d: %.40s...\n", i, message);
 

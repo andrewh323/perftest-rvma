@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 	printf("Client successfully connected!\n");
 
 	// Receive data from client
-	int ret = rvrecv(conn_fd, windowPtr);
+	int ret = rvrecv(conn_fd);
 	if (ret < 0) {
 		perror("Error receiving message");
 	}

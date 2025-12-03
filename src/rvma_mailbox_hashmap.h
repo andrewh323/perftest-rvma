@@ -15,16 +15,13 @@
 typedef struct {
     int key;
     void *virtualAddress;
-
-    struct ibv_mr *mr; // Memory region
     struct ibv_pd *pd; // Protection domain
     struct ibv_cq *cq; // Completion queue
     struct ibv_qp *qp; // Queue pair
     struct rdma_cm_id *cm_id; // RDMA connection manager
     struct rdma_event_channel *ec; // Event channel
     struct ibv_context *ctx; // Device context
-    int port_num; // Port number for datagrams
-    int type; // Socket type (SOCK_STREAM or SOCK_DGRAM)
+    int type;
     uint64_t bufferSetupCycles;
     uint64_t fragSetupCycles;
     uint64_t wrSetupCycles;
