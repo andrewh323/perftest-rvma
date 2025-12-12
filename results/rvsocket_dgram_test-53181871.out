@@ -1,0 +1,16 @@
+Server Node: nc20546
+Client Node: nc20548
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Server IB HW IP: 10.82.45.46
+Client IB HW IP: 10.82.45.48
+=== Run 1 of 10 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4050 bytes
+Running test with message size: 16384 bytes
+slurmstepd: error: *** JOB 53181871 ON nc20546 CANCELLED AT 2025-12-07T21:32:44 ***

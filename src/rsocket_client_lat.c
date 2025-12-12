@@ -36,7 +36,6 @@ double get_cpu_ghz() {
     return 2.4; // fallback
 }
 
-
 // Function to measure clock cycles
 static inline uint64_t rdtsc(){
     unsigned int lo, hi;
@@ -54,13 +53,18 @@ double us; // Microseconds
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server_addr;
-    char buffer[1024];
+    uint64_t start, end;
+    double elapsed_us;
 
+    start = rdtsc();
     sockfd = rsocket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
     }
+    end = rdtsc();
+    elapsed_us = (end - start) / (get_cpu_ghz() * 1e3);
+    printf("rsocket setup time: %.3f µs\n", elapsed_us);
 
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET; // IPv4
@@ -72,31 +76,30 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    start = rdtsc();
     if (rconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("rconnect");
         exit(EXIT_FAILURE);
     }
-    printf("Connected to server %s:%d\n", argv[1], PORT);
+    end = rdtsc();
+    elapsed_us = (end - start) / (get_cpu_ghz() * 1e3);
+    printf("rconnect time: %.3f µs\n", elapsed_us);
 
     const char *message = "Hello from rsocket client!";
 
-    uint64_t start = rdtsc();
-
-    for (int i=0; i<1000; i++) {
+    int num_sends = 100;
+    start = rdtsc();
+    for (int i=0; i<num_sends; i++) {
         if (rsend(sockfd, message, strlen(message) + 1, 0) < 0) {
             perror("rsend");
             exit(EXIT_FAILURE);
         }
     }
-
-    uint64_t end = rdtsc();
-
-    uint64_t elapsed = end - start;
+    end = rdtsc();
 
     double cpu_ghz = get_cpu_ghz();
-    double elapsed_us = elapsed / (cpu_ghz * 1e3);
-    printf("Sent 1000 messages to server\n");
-    printf("Average time per send: %.3f microseconds\n", elapsed_us / 1000.0); 
+    elapsed_us = (end - start) / (cpu_ghz * 1e3);
+    printf("Average time per send: %.3f microseconds\n", elapsed_us / num_sends); 
 
     // Close the socket
     rclose(sockfd);

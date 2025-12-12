@@ -17,7 +17,7 @@ mkdir -p "$PATH_TO_BIN/results/temp"
 
 # Write CSV header once
 if [ ! -f "$CSV_FILE" ]; then
-    echo "timestamp,repetition,size_bytes,min_send,max_send,avg_send,std_dev_send,avg_buffer_setup,avg_frag_setup,avg_wr_setup,avg_poll,window_init,rvsocket_setup,postRecvPool,min_recv,max_recv,avg_recv,std_dev_recv,rvbind" > "$CSV_FILE"
+    echo "timestamp,repetition,size_bytes,min_send,max_send,avg_send,std_dev_send,avg_buffer_setup,avg_frag_setup,avg_wr_setup,avg_send_poll,min_recv,max_recv,avg_recv,avg_recv_poll,std_dev_recv,mailbox_init,rvsocket,rvbind,rvconnect_dgram,rvaccept_dgram,postRecvPool,qp_setup" > "$CSV_FILE"
 fi
 
 # Get nodes
@@ -67,20 +67,22 @@ for REP in $(seq 1 $REPEATS); do
         BUFF_TIME=$(grep "Average buffer setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         FRAGMENT_SETUP=$(grep "Average frag setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         WR_TIME=$(grep "Average WR setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        POLL_TIME=$(grep "Average poll time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        AVG_SEND_POLL=$(grep "Average poll time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         WINDOW_INIT=$(grep "Window init setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         RVSOCKET_SETUP=$(grep "rvsocket total setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        RVCONNECT=$(grep "rvconnect_dgram total time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         # Extract times from server output
         MIN_RECV=$(grep "^Min recv time:"   "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         MAX_RECV=$(grep "^Max recv time:"   "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         AVG_RECV=$(grep "Avg recv time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
+        AVG_RECV_POLL=$(grep "Avg recv poll time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         STD_DEV_RECV=$(grep "Recv time stddev:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         RVBIND=$(grep "rvbind total time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         POSTRECVPOOL=$(grep "postRecvPool time" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        
-        
+        RVACCEPT=$(grep "rvaccept_dgram total time" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
+        QPSETUP=$(grep "Time to setup QP in rvsocket" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         # Append to CSV with repetition
-        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$MIN_SEND,$MAX_SEND,$AVG_SEND,$STD_DEV_SEND,$BUFF_TIME,$FRAGMENT_SETUP,$WR_TIME,$POLL_TIME,$WINDOW_INIT,$RVSOCKET_SETUP,$POSTRECVPOOL,$MIN_RECV,$MAX_RECV,$AVG_RECV,$STD_DEV_RECV,$RVBIND" >> "$CSV_FILE"
+        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$MIN_SEND,$MAX_SEND,$AVG_SEND,$STD_DEV_SEND,$BUFF_TIME,$FRAGMENT_SETUP,$WR_TIME,$AVG_SEND_POLL,$MIN_RECV,$MAX_RECV,$AVG_RECV,$AVG_RECV_POLL,$STD_DEV_RECV,$WINDOW_INIT,$RVSOCKET_SETUP,$RVBIND,$RVCONNECT,$RVACCEPT,$POSTRECVPOOL,$QPSETUP" >> "$CSV_FILE"
     done
     # Add empty line between repetitions
     echo "" >> "$CSV_FILE"

@@ -105,6 +105,7 @@ int main(int argc, char **argv) {
 
         // printf("Sending message %d: %.40s...\n", i, message);
 
+        //usleep(20);
         res = rvsendto(sockfd, message, size);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);

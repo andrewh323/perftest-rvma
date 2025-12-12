@@ -438,10 +438,8 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
     uint64_t start, end;
     double total_us = 0;
     double total_poll_us = 0;
-    double total_repost_us = 0;
     double avg_us = 0;
     double avg_poll_us = 0;
-    double avg_repost_us = 0;
     double min_us = 1e9;
     double max_us = 0;
     double cpu_ghz = get_cpu_ghz();
@@ -475,22 +473,7 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
         double rvmaRecvTime = (end - poll_end) / (cpu_ghz * 1e3);
         double polltime = (poll_end - start) / (cpu_ghz * 1e3);
         recv_count++;
-
-        if (!exclude_warmup || recv_count > warmup_rounds) {
-            // Include in timing stats
-            total_us += rvmaRecvTime;
-            total_poll_us += polltime;
-            total_sq_us += rvmaRecvTime * rvmaRecvTime;
-            measured_recvs++;
-            printf("rvmaRecv time [%d] (%d bytes): %.3f µs\n", recv_count - 1, len, rvmaRecvTime);
-            if (rvmaRecvTime < min_us) {
-                min_us = rvmaRecvTime;
-            }
-            if (rvmaRecvTime > max_us) {
-                max_us = rvmaRecvTime;
-            }
-        }
-
+        
         uint64_t beforeRepost = rdtsc();
 
         // Reset and track notification buffers here...
@@ -519,7 +502,21 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
 
         uint64_t afterRepost = rdtsc();
         double repostTime = (afterRepost - beforeRepost) / (cpu_ghz * 1e3);
-        total_repost_us += repostTime;
+        if (!exclude_warmup || recv_count > warmup_rounds) {
+            // Include in timing stats
+            rvmaRecvTime += repostTime;
+            total_us += rvmaRecvTime;
+            total_poll_us += polltime;
+            measured_recvs++;
+            // printf("rvmaRecv time [%d] (%d bytes): %.3f µs\n", recv_count - 1, len, rvmaRecvTime);
+            if (rvmaRecvTime < min_us) {
+                min_us = rvmaRecvTime;
+            }
+            if (rvmaRecvTime > max_us) {
+                max_us = rvmaRecvTime;
+            }
+            total_sq_us += rvmaRecvTime * rvmaRecvTime;
+        }
     }
 
     if (measured_recvs > 0) {
@@ -532,10 +529,8 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
         avg_us = 0;
     }
 
-    avg_repost_us = total_repost_us / recv_count;
     printf("Avg recv time: %.3f µs\n", avg_us);
-    printf("Avg poll time: %.3f µs\n", avg_poll_us);
-    printf("Avg recv repost time: %.3f µs\n", avg_repost_us);
+    printf("Avg recv poll time: %.3f µs\n", avg_poll_us);
     printf("Min recv time: %.3f µs\n", min_us);
     printf("Max recv time: %.3f µs\n", max_us);
     printf("Recv time stddev: %.3f µs\n", stddev_us);
