@@ -11,9 +11,20 @@
 
 #define PORT 7471
 
+
+static inline uint64_t rdtsc(){
+    unsigned int lo, hi;
+    // Serialize to prevent out-of-order execution affecting timing
+    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
+    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi << 32) | lo;
+}
+
+
 int main(int argc, char **argv) {
-    uint16_t reserved = 0x0001;
+    double elapsed_us;
     double cpu_ghz = get_cpu_ghz();
+    uint16_t reserved = 0x0001;
     int sockfd;
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -66,7 +77,7 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 1000;
+    int num_sends = 100;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
@@ -83,30 +94,37 @@ int main(int argc, char **argv) {
     double poll_time = 0;
     double regmr_time = 0;
 
+    char *messages[num_sends];
+    for (int i = 0; i < num_sends; i++) {
+        messages[i] = malloc(size);
+        memset(messages[i], 'A', size);
+        snprintf(messages[i], size, "Msg %d", i);
+    }
+
     // Send messages to server
     for (int i = 0; i < num_sends; i++) {
-        // Prepare message buffer
-        char *message = malloc(size + 1);
-        memset(message, 'A', size);
-        message[size] = '\0';
-        int n = snprintf(message, size + 1, "Msg %d: ", i);
-        for (int j = n; j < size; j++) {
-            message[j] = 'A';
-        }
-        message[size] = '\0';
 
         // Perform rvma send
-        int res = rvsend(sockfd, message, size);
+        uint64_t t2;
+        uint64_t t1 = rdtsc();
+        int res = rvsend(sockfd, messages[i], size);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
+        res = rvrecv(sockfd, &t2);
+        if (res < 0) {
+            fprintf(stderr, "Failed to receive message %d\n", i);
+        }
+
         // Convert cycles to microseconds
-        double elapsed_us = mailbox->cycles / (cpu_ghz * 1e3);
         double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
         double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
         double regmr_us = mailbox->regmrCycles / (cpu_ghz * 1e3);
+        elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
+        elapsed_us -= regmr_us; // Don't include mr registration time
+        printf("One-way arrival latency: %.3f µs\n", elapsed_us);
 
         int record = 1;
 
@@ -118,7 +136,7 @@ int main(int argc, char **argv) {
             int idx = exclude_warmup ? (i - warmup_sends) : i;
             send_times[idx] = elapsed_us;
 
-            printf("rvmaSend time [%d]: %.3f µs\n", i, elapsed_us);
+            // printf("rvmaSend time [%d]: %.3f µs\n", i, elapsed_us);
 
             if (elapsed_us < min_time) min_time = elapsed_us;
             if (elapsed_us > max_time) max_time = elapsed_us;
@@ -128,7 +146,7 @@ int main(int argc, char **argv) {
             poll_time += poll_us;
             regmr_time += regmr_us;
         }
-        free(message);
+        free(messages[i]);
     }
 
     // Compute averages

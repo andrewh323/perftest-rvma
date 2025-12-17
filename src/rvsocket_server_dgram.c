@@ -77,8 +77,9 @@ int main(int argc) {
     // Accept connection to exchange UD connection info
     rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
+    uint64_t t2;
     printf("Posting recv...\n");
-    int ret = rvrecv(dgram_fd);
+    int ret = rvrecv(dgram_fd, &t2);
     if (ret < 0) {
         perror("Error receiving message");
     }

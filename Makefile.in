@@ -133,7 +133,8 @@ bin_PROGRAMS = ib_write_lat$(EXEEXT) ib_write_bw$(EXEEXT) \
 	rvma_mailbox_server$(EXEEXT) rvma_mailbox_client$(EXEEXT) \
 	rvsocket_client_stream$(EXEEXT) \
 	rvsocket_server_stream$(EXEEXT) rvsocket_server_dgram$(EXEEXT) \
-	rvsocket_client_dgram$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2)
+	rvsocket_client_dgram$(EXEEXT) rsocket_server_dgram$(EXEEXT) \
+	rsocket_client_dgram$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2)
 @HAVE_RAW_ETH_TRUE@am__append_5 = src/raw_ethernet_resources.c
 @HAVE_RAW_ETH_TRUE@am__append_6 = src/raw_ethernet_resources.h
 @HAVE_RAW_ETH_TRUE@am__append_7 = raw_ethernet_bw raw_ethernet_lat raw_ethernet_burst_lat raw_ethernet_fs_rate
@@ -250,6 +251,11 @@ rsocket_client_bw_OBJECTS = $(am_rsocket_client_bw_OBJECTS)
 rsocket_client_bw_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
+am_rsocket_client_dgram_OBJECTS = src/rsocket_client_dgram.$(OBJEXT)
+rsocket_client_dgram_OBJECTS = $(am_rsocket_client_dgram_OBJECTS)
+rsocket_client_dgram_DEPENDENCIES = libperftest.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_rsocket_client_lat_OBJECTS = src/rsocket_client_lat.$(OBJEXT)
 rsocket_client_lat_OBJECTS = $(am_rsocket_client_lat_OBJECTS)
 rsocket_client_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
@@ -260,6 +266,11 @@ rsocket_server_bw_OBJECTS = $(am_rsocket_server_bw_OBJECTS)
 rsocket_server_bw_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
+am_rsocket_server_dgram_OBJECTS = src/rsocket_server_dgram.$(OBJEXT)
+rsocket_server_dgram_OBJECTS = $(am_rsocket_server_dgram_OBJECTS)
+rsocket_server_dgram_DEPENDENCIES = libperftest.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_rsocket_server_lat_OBJECTS = src/rsocket_server_lat.$(OBJEXT)
 rsocket_server_lat_OBJECTS = $(am_rsocket_server_lat_OBJECTS)
 rsocket_server_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
@@ -357,8 +368,10 @@ am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/raw_ethernet_send_lat.Po \
 	src/$(DEPDIR)/rocm_memory.Po \
 	src/$(DEPDIR)/rsocket_client_bw.Po \
+	src/$(DEPDIR)/rsocket_client_dgram.Po \
 	src/$(DEPDIR)/rsocket_client_lat.Po \
 	src/$(DEPDIR)/rsocket_server_bw.Po \
+	src/$(DEPDIR)/rsocket_server_dgram.Po \
 	src/$(DEPDIR)/rsocket_server_lat.Po \
 	src/$(DEPDIR)/rvma_buffer_queue.Po \
 	src/$(DEPDIR)/rvma_common.Po \
@@ -412,7 +425,8 @@ SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
 	$(ib_write_lat_SOURCES) $(raw_ethernet_burst_lat_SOURCES) \
 	$(raw_ethernet_bw_SOURCES) $(raw_ethernet_fs_rate_SOURCES) \
 	$(raw_ethernet_lat_SOURCES) $(rsocket_client_bw_SOURCES) \
-	$(rsocket_client_lat_SOURCES) $(rsocket_server_bw_SOURCES) \
+	$(rsocket_client_dgram_SOURCES) $(rsocket_client_lat_SOURCES) \
+	$(rsocket_server_bw_SOURCES) $(rsocket_server_dgram_SOURCES) \
 	$(rsocket_server_lat_SOURCES) $(rvma_mailbox_client_SOURCES) \
 	$(rvma_mailbox_server_SOURCES) \
 	$(rvsocket_client_dgram_SOURCES) \
@@ -425,8 +439,9 @@ DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(am__raw_ethernet_bw_SOURCES_DIST) \
 	$(am__raw_ethernet_fs_rate_SOURCES_DIST) \
 	$(am__raw_ethernet_lat_SOURCES_DIST) \
-	$(rsocket_client_bw_SOURCES) $(rsocket_client_lat_SOURCES) \
-	$(rsocket_server_bw_SOURCES) $(rsocket_server_lat_SOURCES) \
+	$(rsocket_client_bw_SOURCES) $(rsocket_client_dgram_SOURCES) \
+	$(rsocket_client_lat_SOURCES) $(rsocket_server_bw_SOURCES) \
+	$(rsocket_server_dgram_SOURCES) $(rsocket_server_lat_SOURCES) \
 	$(rvma_mailbox_client_SOURCES) $(rvma_mailbox_server_SOURCES) \
 	$(rvsocket_client_dgram_SOURCES) \
 	$(rvsocket_client_stream_SOURCES) \
@@ -663,8 +678,12 @@ rvma_mailbox_client_SOURCES = src/rvma_mailbox_client.c
 rvma_mailbox_client_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_client_lat_SOURCES = src/rsocket_client_lat.c
 rsocket_client_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_client_dgram_SOURCES = src/rsocket_client_dgram.c
+rsocket_client_dgram_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_server_lat_SOURCES = src/rsocket_server_lat.c
 rsocket_server_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rsocket_server_dgram_SOURCES = src/rsocket_server_dgram.c
+rsocket_server_dgram_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_client_bw_SOURCES = src/rsocket_client_bw.C
 rsocket_client_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_server_bw_SOURCES = src/rsocket_server_bw.C
@@ -879,6 +898,12 @@ src/rsocket_client_bw.$(OBJEXT): src/$(am__dirstamp) \
 rsocket_client_bw$(EXEEXT): $(rsocket_client_bw_OBJECTS) $(rsocket_client_bw_DEPENDENCIES) $(EXTRA_rsocket_client_bw_DEPENDENCIES) 
 	@rm -f rsocket_client_bw$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(rsocket_client_bw_OBJECTS) $(rsocket_client_bw_LDADD) $(LIBS)
+src/rsocket_client_dgram.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rsocket_client_dgram$(EXEEXT): $(rsocket_client_dgram_OBJECTS) $(rsocket_client_dgram_DEPENDENCIES) $(EXTRA_rsocket_client_dgram_DEPENDENCIES) 
+	@rm -f rsocket_client_dgram$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rsocket_client_dgram_OBJECTS) $(rsocket_client_dgram_LDADD) $(LIBS)
 src/rsocket_client_lat.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
@@ -891,6 +916,12 @@ src/rsocket_server_bw.$(OBJEXT): src/$(am__dirstamp) \
 rsocket_server_bw$(EXEEXT): $(rsocket_server_bw_OBJECTS) $(rsocket_server_bw_DEPENDENCIES) $(EXTRA_rsocket_server_bw_DEPENDENCIES) 
 	@rm -f rsocket_server_bw$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(rsocket_server_bw_OBJECTS) $(rsocket_server_bw_LDADD) $(LIBS)
+src/rsocket_server_dgram.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rsocket_server_dgram$(EXEEXT): $(rsocket_server_dgram_OBJECTS) $(rsocket_server_dgram_DEPENDENCIES) $(EXTRA_rsocket_server_dgram_DEPENDENCIES) 
+	@rm -f rsocket_server_dgram$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rsocket_server_dgram_OBJECTS) $(rsocket_server_dgram_LDADD) $(LIBS)
 src/rsocket_server_lat.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
@@ -994,8 +1025,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/raw_ethernet_send_lat.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rocm_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_client_bw.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_client_dgram.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_client_lat.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_server_bw.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_server_dgram.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rsocket_server_lat.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_buffer_queue.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_common.Po@am__quote@ # am--include-marker
@@ -1369,8 +1402,10 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/raw_ethernet_send_lat.Po
 	-rm -f src/$(DEPDIR)/rocm_memory.Po
 	-rm -f src/$(DEPDIR)/rsocket_client_bw.Po
+	-rm -f src/$(DEPDIR)/rsocket_client_dgram.Po
 	-rm -f src/$(DEPDIR)/rsocket_client_lat.Po
 	-rm -f src/$(DEPDIR)/rsocket_server_bw.Po
+	-rm -f src/$(DEPDIR)/rsocket_server_dgram.Po
 	-rm -f src/$(DEPDIR)/rsocket_server_lat.Po
 	-rm -f src/$(DEPDIR)/rvma_buffer_queue.Po
 	-rm -f src/$(DEPDIR)/rvma_common.Po
@@ -1450,8 +1485,10 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/raw_ethernet_send_lat.Po
 	-rm -f src/$(DEPDIR)/rocm_memory.Po
 	-rm -f src/$(DEPDIR)/rsocket_client_bw.Po
+	-rm -f src/$(DEPDIR)/rsocket_client_dgram.Po
 	-rm -f src/$(DEPDIR)/rsocket_client_lat.Po
 	-rm -f src/$(DEPDIR)/rsocket_server_bw.Po
+	-rm -f src/$(DEPDIR)/rsocket_server_dgram.Po
 	-rm -f src/$(DEPDIR)/rsocket_server_lat.Po
 	-rm -f src/$(DEPDIR)/rvma_buffer_queue.Po
 	-rm -f src/$(DEPDIR)/rvma_common.Po

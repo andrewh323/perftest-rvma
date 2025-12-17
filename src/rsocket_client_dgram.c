@@ -46,24 +46,21 @@ static inline uint64_t rdtsc(){
 }
 
 
-struct timespec start_time, end_time;
-long ns; // Nanoseconds
-double us; // Microseconds
-
 int main(int argc, char **argv) {
+    double cpu_ghz = get_cpu_ghz();
     int sockfd;
     struct sockaddr_in server_addr;
     uint64_t start, end;
     double elapsed_us;
 
     start = rdtsc();
-    sockfd = rsocket(AF_INET, SOCK_STREAM, 0);
+    sockfd = rsocket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
     }
     end = rdtsc();
-    elapsed_us = (end - start) / (get_cpu_ghz() * 1e3);
+    elapsed_us = (end - start) / (cpu_ghz * 1e3);
     printf("rsocket setup time: %.3f µs\n", elapsed_us);
 
     memset(&server_addr, 0, sizeof(server_addr));
@@ -76,32 +73,31 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    start = rdtsc();
-    if (rconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("rconnect");
-        exit(EXIT_FAILURE);
-    }
-    end = rdtsc();
-    elapsed_us = (end - start) / (get_cpu_ghz() * 1e3);
-    printf("rconnect time: %.3f µs\n", elapsed_us);
-
+    int num_sends = 1000;
     size_t msg_size = atoi(argv[2]);
     char *message = malloc(msg_size);
-    memset(message, 0xAB, msg_size);
+    memset(message, 0xAB, msg_size); // Fill message with dummy data
 
-    int num_sends = 1000;
-    start = rdtsc();
-    for (int i = 0; i < num_sends; i++) {
-        if (rsend(sockfd, message, strlen(message) + 1, 0) < 0) {
-            perror("rsend");
+    for (int i=0; i<num_sends; i++) {
+        start = rdtsc();
+        if (rsendto(sockfd, message, strlen(message) + 1, 0, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+            perror("rsendto");
             exit(EXIT_FAILURE);
         }
+        if (i == 0) {
+            end = rdtsc();
+            double setup_us = (end - start) / (cpu_ghz * 1e3);
+            printf("rsendto first send time: %.3f µs\n", setup_us);
+        }else
+        if (i < 10) {
+            // Don't record warm up rounds
+        }
+        else {
+            end = rdtsc();
+            elapsed_us += (end - start) / (2.4 * 1e3);
+        }
     }
-    end = rdtsc();
-
-    double cpu_ghz = get_cpu_ghz();
-    elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("Average time per send: %.3f microseconds\n", elapsed_us / num_sends); 
+    printf("Average send time: %.3f microseconds\n", elapsed_us / (num_sends - 10)); 
 
     // Close the socket
     rclose(sockfd);

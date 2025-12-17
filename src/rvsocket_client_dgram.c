@@ -112,11 +112,11 @@ int main(int argc, char **argv) {
         }
 
         // Convert cycles to microseconds
-        double elapsed_us = mailbox->cycles / (cpu_ghz * 1e3);
         double fragSetup_us = mailbox->fragSetupCycles / (cpu_ghz * 1e3);
         double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
         double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
+        double elapsed_us = mailbox->cycles / (cpu_ghz * 1e3) - bufferSetup_us;
 
         int record = 1;
 

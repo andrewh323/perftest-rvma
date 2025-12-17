@@ -485,6 +485,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
 
     // Fill in new rvsocket fields
     new_rvs->vaddr = rvs->vaddr;
+    new_rvs->type = SOCK_STREAM;
     new_rvs->mailboxPtr = rvs->mailboxPtr;
     new_rvs->mailboxPtr->cm_id = client_cm_id;
     new_rvs->mailboxPtr->pd = pd;
@@ -1102,7 +1103,7 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
 }
 
 
-int rvrecv(int socket) {
+int rvrecv(int socket, uint64_t *recv_timestamp) {
     // Read from mailbox buffer with rvmaRecv
     struct rvsocket *rvs;
     uint64_t vaddr;
@@ -1118,7 +1119,7 @@ int rvrecv(int socket) {
             return -1;
         }
     } else {
-        if (rvmaRecv(&vaddr, mailbox) != RVMA_SUCCESS) {
+        if (rvmaRecv(&vaddr, mailbox, recv_timestamp) != RVMA_SUCCESS) {
             fprintf(stderr, "rvmaRecv failed\n");
             return -1;
         }

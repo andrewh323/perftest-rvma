@@ -40,7 +40,7 @@ int rvmaPutHybrid(struct ibv_qp* qp, int index, struct ibv_send_wr *wr, struct i
 
 RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox);
 
-RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox);
+RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_timestamp);
 
 RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void* virtualAddress);
 

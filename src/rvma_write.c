@@ -432,108 +432,50 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
 
 
 // Recv buffer pool should be preposted, so just poll cq for completions
-RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox) {
-    int exclude_warmup = 1; // Set to 1 to exclude warm-ups
-    int warmup_rounds = 10;
-    uint64_t start, end;
-    double total_us = 0;
-    double total_poll_us = 0;
-    double avg_us = 0;
-    double avg_poll_us = 0;
-    double min_us = 1e9;
-    double max_us = 0;
-    double cpu_ghz = get_cpu_ghz();
-    int num_recvs = 1000; // Set for slurm testing, should poll till end is recvd
-    int recv_count = 0;
-    int measured_recvs = 0;
-    double total_sq_us = 0.0;
-    double stddev_us = 0.0;
+RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_timestamp) {
+    struct ibv_wc wc;
+    int num_wc;
+    do {
+        num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
+    } while (num_wc == 0);
 
-    while (recv_count < num_recvs) {
-        start = rdtsc();
-
-        struct ibv_wc wc;
-        int num_wc;
-        do {
-            num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
-        } while (num_wc == 0);
-
-        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
-            fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
-            return RVMA_ERROR;
-        }
-
-        uint64_t poll_end = rdtsc();
-
-        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
-        char *recv_buf = (char *)entry->realBuff;
-        int len = wc.byte_len;
-
-        end = rdtsc();
-        double rvmaRecvTime = (end - poll_end) / (cpu_ghz * 1e3);
-        double polltime = (poll_end - start) / (cpu_ghz * 1e3);
-        recv_count++;
-        
-        uint64_t beforeRepost = rdtsc();
-
-        // Reset and track notification buffers here...
-
-        // Build sge
-        struct ibv_sge sge = {
-            .addr = (uintptr_t)recv_buf,
-            .length = entry->realBuffSize,
-            .lkey = entry->mr->lkey
-        };
-
-        // Build recv_wr
-        struct ibv_recv_wr recv_wr = {
-            .wr_id = (uintptr_t)entry,
-            .sg_list = &sge,
-            .num_sge = 1,
-            .next = NULL
-        };
-        struct ibv_recv_wr *bad_wr = NULL;
-
-        // Post recv
-        if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
-            perror("ibv_post_recv failed");
-            return RVMA_ERROR;
-        }
-
-        uint64_t afterRepost = rdtsc();
-        double repostTime = (afterRepost - beforeRepost) / (cpu_ghz * 1e3);
-        if (!exclude_warmup || recv_count > warmup_rounds) {
-            // Include in timing stats
-            rvmaRecvTime += repostTime;
-            total_us += rvmaRecvTime;
-            total_poll_us += polltime;
-            measured_recvs++;
-            // printf("rvmaRecv time [%d] (%d bytes): %.3f µs\n", recv_count - 1, len, rvmaRecvTime);
-            if (rvmaRecvTime < min_us) {
-                min_us = rvmaRecvTime;
-            }
-            if (rvmaRecvTime > max_us) {
-                max_us = rvmaRecvTime;
-            }
-            total_sq_us += rvmaRecvTime * rvmaRecvTime;
-        }
+    if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
+        fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
+        return RVMA_ERROR;
     }
 
-    if (measured_recvs > 0) {
-        avg_us = total_us / measured_recvs;
-        avg_poll_us = total_poll_us / measured_recvs;
-        double variance = (total_sq_us / measured_recvs) - (avg_us * avg_us);
-        stddev_us = sqrt(variance);
-    }
-    else {
-        avg_us = 0;
+    uint64_t t2 = rdtsc();
+    if (recv_timestamp) {
+        *recv_timestamp = t2;
     }
 
-    printf("Avg recv time: %.3f µs\n", avg_us);
-    printf("Avg recv poll time: %.3f µs\n", avg_poll_us);
-    printf("Min recv time: %.3f µs\n", min_us);
-    printf("Max recv time: %.3f µs\n", max_us);
-    printf("Recv time stddev: %.3f µs\n", stddev_us);
+    RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
+    char *recv_buf = (char *)entry->realBuff;
+    int len = wc.byte_len;
+
+    // Build sge
+    struct ibv_sge sge = {
+        .addr = (uintptr_t)recv_buf,
+        .length = entry->realBuffSize,
+        .lkey = entry->mr->lkey
+    };
+
+    // Build recv_wr
+    struct ibv_recv_wr recv_wr = {
+        .wr_id = (uintptr_t)entry,
+        .sg_list = &sge,
+        .num_sge = 1,
+        .next = NULL
+    };
+    struct ibv_recv_wr *bad_wr = NULL;
+
+    // Post recv
+    if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
+        perror("ibv_post_recv failed");
+        return RVMA_ERROR;
+    }
+    
+    // printf("Received Message: %.*s\n", len, recv_buf);
     
     return RVMA_SUCCESS;
 }

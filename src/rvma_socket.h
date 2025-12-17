@@ -41,6 +41,6 @@ int rvsendto(int socket, void *buf, int64_t len);
 
 int rvrecvfrom(RVMA_Mailbox *mailbox);
 
-int rvrecv(int socket);
+int rvrecv(int socket, uint64_t *recv_timestamp);
 
 #endif // RVMA_SOCKET_H

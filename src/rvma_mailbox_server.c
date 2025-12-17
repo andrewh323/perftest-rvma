@@ -132,8 +132,9 @@ int main(int argc, char **argv) {
     printf("Server accepted connection and created qp\n");
 
     // Recv indefinitely for testing
+    uint64_t t2;
     while (1) {
-        RVMA_Status status = rvmaRecv(&vaddr, mailboxPtr);
+        RVMA_Status status = rvmaRecv(&vaddr, mailboxPtr, &t2);
         if (status != RVMA_SUCCESS) {
             perror("Error receiving message");
             break;

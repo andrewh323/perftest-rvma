@@ -11,6 +11,21 @@
 
 #define PORT 7471
 
+double get_cpu_ghz() {
+    FILE *fp = fopen("/proc/cpuinfo", "r");
+    if (!fp) return 2.4; // fallback
+    char line[256];
+    while (fgets(line, sizeof(line), fp)) {
+        double mhz;
+        if (sscanf(line, "cpu MHz\t: %lf", &mhz) == 1) {
+            fclose(fp);
+            return mhz / 1000.0; // MHz → GHz
+        }
+    }
+    fclose(fp);
+    return 2.4; // fallback
+}
+
 // Function to measure clock cycles
 static inline uint64_t rdtsc(){
     unsigned int lo, hi;
@@ -20,14 +35,17 @@ static inline uint64_t rdtsc(){
     return ((uint64_t)hi << 32) | lo;
 }
 
+
 int main() {
-	int listen_fd, conn_fd;
-	struct sockaddr_in addr;
+    double cpu_ghz = get_cpu_ghz();
+	int sockfd;
+	struct sockaddr_in addr, client_addr;
+    socklen_t client_len = sizeof(client_addr);
 	char buffer[1024*1024];
 	uint64_t start, end;
 
 	start = rdtsc();
-	listen_fd = rsocket(AF_INET, SOCK_STREAM, 0);
+	sockfd = rsocket(AF_INET, SOCK_DGRAM, 0);
 	end = rdtsc();
 	printf("rsocket setup time: %.3f µs\n", (end - start) / (2.45 * 1e3));
 
@@ -40,31 +58,28 @@ int main() {
 	addr.sin_addr.s_addr = INADDR_ANY; // Bind to any address
 	// Now we can bind the socket to the address
 	start = rdtsc();
-	rbind(listen_fd, (struct sockaddr *)&addr, sizeof(addr));
+	rbind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 	end = rdtsc();
 	printf("rbind time: %.3f µs\n", (end - start) / (2.45 * 1e3));
 
-	// Listen for incoming connections
-	start = rdtsc();
-	rlisten(listen_fd, 5);
-	end = rdtsc();
-	printf("rlisten time: %.3f µs\n", (end - start) / (2.45 * 1e3));
-	printf("Server listening on port %d...\n", PORT);
-
-	// Accept a connection from client
-	conn_fd = raccept(listen_fd, NULL, NULL); // print in rsocket.c since raccept is blocking
-
-	int num_recv = 1000;
-	start = rdtsc();
-	for (int i = 0; i < num_recv; i++) {
+	int num_recv = 100;
+    double elapsed_us = 0;
+	
+	for (int i=0; i<num_recv; i++) {
+        start = rdtsc();
 		// Receive data from client
-		rrecv(conn_fd, buffer, sizeof(buffer), 0);
+		rrecvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&client_addr, &client_len);
 		// printf("Server received message: %s\n", buffer);
+        if (i < 10) {} // Do not record warmup rounds
+        else {
+            end = rdtsc();
+            elapsed_us += ((end - start) / (2.4 * 1e3));
+        }
 	}
-	end = rdtsc();
-	printf("rrecv time for %d messages: %.3f µs\n", num_recv, (end - start) / (2.45 * 1e3));
+
+    printf("Average rrecvfrom time: %.3f microseconds\n", elapsed_us / (num_recv - 1));
+
 	// Close the connection
-	rclose(conn_fd);
-	rclose(listen_fd);
+	rclose(sockfd);
 	return 0;
 }
