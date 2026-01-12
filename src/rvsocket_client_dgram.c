@@ -11,6 +11,15 @@
 
 #define PORT 7471
 
+static inline uint64_t rdtsc(){
+    unsigned int lo, hi;
+    // Serialize to prevent out-of-order execution affecting timing
+    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
+    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi << 32) | lo;
+}
+
+
 int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
     int sockfd;
@@ -80,6 +89,7 @@ int main(int argc, char **argv) {
     int measured_sends = exclude_warmup ? (num_sends - warmup_sends) : num_sends;
     double *send_times = malloc(measured_sends * sizeof(double));
 
+    double elapsed_us;
     double min_time = 1e9;
     double max_time = 0;
     double sum_time = 0;
@@ -94,7 +104,6 @@ int main(int argc, char **argv) {
             perror("malloc failed");
             exit(1);
         }
-
         // Fill with unique pattern per message
         // Use a repeating sequence that encodes message + fragment indices
         for (int j = 0; j < size; j++) {
@@ -103,21 +112,32 @@ int main(int argc, char **argv) {
         }
         message[size] = '\0';
 
-        // printf("Sending message %d: %.40s...\n", i, message);
+        printf("Sending message %d: %.40s...\n", i, message);
 
-        //usleep(20);
+        uint64_t t1 = rdtsc();
         res = rvsendto(sockfd, message, size);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
+
+        res = rvrecv(sockfd, NULL);
+        if (res < 0) {
+            perror("rvrecv failed");
+        }
+        uint64_t t2 = rdtsc();
+        elapsed_us = (t2 - t1) / (cpu_ghz *1e3);
 
         // Convert cycles to microseconds
         double fragSetup_us = mailbox->fragSetupCycles / (cpu_ghz * 1e3);
         double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
         double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
-        double elapsed_us = mailbox->cycles / (cpu_ghz * 1e3) - bufferSetup_us;
 
+        elapsed_us -= (bufferSetup_us);
+        elapsed_us /= 2; // One-way time
+
+        /* printf("Message %d send time: %.3f µs (Frag setup: %.3f µs, Buffer setup: %.3f µs, WR setup: %.3f µs, Poll: %.3f µs)\n",
+            i, elapsed_us, fragSetup_us, bufferSetup_us, wrSetup_us, poll_us); */
         int record = 1;
 
         // Exclude warm-ups if configured

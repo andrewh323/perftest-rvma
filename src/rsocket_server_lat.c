@@ -23,8 +23,8 @@ static inline uint64_t rdtsc(){
 int main() {
 	int listen_fd, conn_fd;
 	struct sockaddr_in addr;
-	char buffer[1024*1024];
-	uint64_t start, end;
+	char buffer[1024*100];
+	uint64_t start, end, t2, t3;
 
 	start = rdtsc();
 	listen_fd = rsocket(AF_INET, SOCK_STREAM, 0);
@@ -54,15 +54,22 @@ int main() {
 	// Accept a connection from client
 	conn_fd = raccept(listen_fd, NULL, NULL); // print in rsocket.c since raccept is blocking
 
-	int num_recv = 1000;
-	start = rdtsc();
+	int num_recv = 100;
+	double cpu_ghz = get_cpu_ghz();
+	double *recv_times = malloc(num_recv * sizeof(double));
+
 	for (int i = 0; i < num_recv; i++) {
 		// Receive data from client
-		rrecv(conn_fd, buffer, sizeof(buffer), 0);
-		// printf("Server received message: %s\n", buffer);
+		t2 = rdtsc();
+		ssize_t n = rrecv(conn_fd, buffer, sizeof(buffer), 0);
+		if (n <= 0) break;
+		uint64_t t3 = rdtsc();
+		recv_times[i] = t2 / (cpu_ghz * 1e3);
+		//printf("Server received message %d, first byte: 0x%02X\n", i, buffer[0]);
+		rsend(conn_fd, "ACK", 4, 0);
+		usleep(10);
 	}
-	end = rdtsc();
-	printf("rrecv time for %d messages: %.3f µs\n", num_recv, (end - start) / (2.45 * 1e3));
+
 	// Close the connection
 	rclose(conn_fd);
 	rclose(listen_fd);

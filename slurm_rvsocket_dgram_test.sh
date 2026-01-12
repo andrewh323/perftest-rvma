@@ -10,7 +10,7 @@
 
 REPEATS=10
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/rvsocket_dgram_exclude_warmup.csv"
+CSV_FILE="$PATH_TO_BIN/results/rvsocket_dgram_exclude_warmup2.csv"
 
 # Create results directory if needed
 mkdir -p "$PATH_TO_BIN/results/temp"

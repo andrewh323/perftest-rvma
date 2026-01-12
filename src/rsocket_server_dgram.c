@@ -10,6 +10,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
+#define PAYLOAD_SIZE 64*1024 // 64KB
 
 double get_cpu_ghz() {
     FILE *fp = fopen("/proc/cpuinfo", "r");
@@ -38,48 +39,53 @@ static inline uint64_t rdtsc(){
 
 int main() {
     double cpu_ghz = get_cpu_ghz();
-	int sockfd;
-	struct sockaddr_in addr, client_addr;
+    int sockfd;
+    struct sockaddr_in addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
-	char buffer[1024*1024];
-	uint64_t start, end;
 
-	start = rdtsc();
-	sockfd = rsocket(AF_INET, SOCK_DGRAM, 0);
-	end = rdtsc();
-	printf("rsocket setup time: %.3f µs\n", (end - start) / (2.45 * 1e3));
+    uint64_t start, end;
 
-	memset(&addr, 0, sizeof(addr));
+    /* header definition must match client */
+    struct msg_hdr {
+        uint32_t seq;
+    };
 
-	addr.sin_family = AF_INET; // IPv4
-	// htons converts port number from host byte order to network byte order
-	addr.sin_port = htons(PORT);
-	// INADDR_ANY is a constant that represents any address (0.0.0.0)
-	addr.sin_addr.s_addr = INADDR_ANY; // Bind to any address
-	// Now we can bind the socket to the address
-	start = rdtsc();
-	rbind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
-	end = rdtsc();
-	printf("rbind time: %.3f µs\n", (end - start) / (2.45 * 1e3));
+    /* large enough for max payload you will test */
+    size_t max_msg_size = 1024 * 1024;
+    char *buf = aligned_alloc(64, max_msg_size);
 
-	int num_recv = 100;
-    double elapsed_us = 0;
-	
-	for (int i=0; i<num_recv; i++) {
-        start = rdtsc();
-		// Receive data from client
-		rrecvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&client_addr, &client_len);
-		// printf("Server received message: %s\n", buffer);
-        if (i < 10) {} // Do not record warmup rounds
-        else {
-            end = rdtsc();
-            elapsed_us += ((end - start) / (2.4 * 1e3));
-        }
-	}
+    start = rdtsc();
+    sockfd = rsocket(AF_INET, SOCK_DGRAM, 0);
+    end = rdtsc();
+    printf("rsocket setup time: %.3f µs\n",
+           (end - start) / (cpu_ghz * 1e3));
 
-    printf("Average rrecvfrom time: %.3f microseconds\n", elapsed_us / (num_recv - 1));
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
+    addr.sin_addr.s_addr = INADDR_ANY;
 
-	// Close the connection
-	rclose(sockfd);
-	return 0;
+    start = rdtsc();
+    rbind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+    end = rdtsc();
+    printf("rbind time: %.3f µs\n",
+           (end - start) / (cpu_ghz * 1e3));
+
+    while (1) {
+        ssize_t n = rrecvfrom(sockfd, buf, max_msg_size, 0,
+                              (struct sockaddr *)&client_addr, &client_len);
+
+		printf("received!\n");
+        if (n < (ssize_t)sizeof(struct msg_hdr))
+            continue;
+
+        /* echo back exactly what was received */
+        rsendto(sockfd, buf, n, 0,
+                (struct sockaddr *)&client_addr, client_len);
+		printf("sent!\n");
+    }
+
+    rclose(sockfd);
+    free(buf);
+    return 0;
 }

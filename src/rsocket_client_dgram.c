@@ -51,7 +51,23 @@ int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server_addr;
     uint64_t start, end;
-    double elapsed_us;
+    double elapsed_us = 0.0;
+    double rtt = 0.0;
+
+    struct msg_hdr {
+		uint32_t seq;
+	};
+
+    size_t payload_size = atoi(argv[2]);   // runtime size
+    size_t msg_size = sizeof(struct msg_hdr) + payload_size;
+
+    size_t alloc_size = (msg_size + 63) & ~63UL;
+
+    char *send_buf = aligned_alloc(64, alloc_size);
+    char *recv_buf = aligned_alloc(64, alloc_size);
+
+    struct msg_hdr *hdr = (struct msg_hdr *)send_buf;
+    struct msg_hdr *rhdr = (struct msg_hdr *)recv_buf;
 
     start = rdtsc();
     sockfd = rsocket(AF_INET, SOCK_DGRAM, 0);
@@ -73,32 +89,69 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    int num_sends = 1000;
-    size_t msg_size = atoi(argv[2]);
-    char *message = malloc(msg_size);
-    memset(message, 0xAB, msg_size); // Fill message with dummy data
+    // Unnecessary but helps with flow control
+    if (rconnect(sockfd, (struct sockaddr *)&server_addr,
+             sizeof(server_addr)) < 0) {
+        perror("rconnect");
+        exit(1);
+	}
 
-    for (int i=0; i<num_sends; i++) {
+    int num_sends = 12;
+
+    memset(send_buf, 0, msg_size);
+    memset(send_buf + sizeof(struct msg_hdr), 0xAB, payload_size);
+
+    struct timeval tv = {
+        .tv_sec = 1,
+        .tv_usec = 0
+    };
+    rsetsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+    for (uint32_t i = 0; i < num_sends; i++) {
+        hdr->seq = htonl(i);
+
         start = rdtsc();
-        if (rsendto(sockfd, message, strlen(message) + 1, 0, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-            perror("rsendto");
-            exit(EXIT_FAILURE);
+        rsendto(sockfd, send_buf, msg_size, 0,
+                (struct sockaddr *)&server_addr, sizeof(server_addr));
+
+        while (1) {
+            ssize_t n = rrecvfrom(sockfd, recv_buf, msg_size, 0, NULL, NULL);
+
+            if (n < 0) {
+                if (errno == EWOULDBLOCK) {
+                    // retransmit
+                    rsendto(sockfd, send_buf, msg_size, 0,
+                            (struct sockaddr *)&server_addr, sizeof(server_addr));
+                    printf("Sent message!\n");
+                    continue;
+                }
+                perror("rrecvfrom");
+                continue;
+            }
+            printf("Received message!\n");
+
+            if (n < sizeof(struct msg_hdr))
+                continue;
+
+            if (ntohl(rhdr->seq) == i)
+                break;   // correct reply
         }
+
+        end = rdtsc();
+
+        if (i >= 10) rtt += (end - start) / (cpu_ghz * 1e3);
+
         if (i == 0) {
-            end = rdtsc();
-            double setup_us = (end - start) / (cpu_ghz * 1e3);
-            printf("rsendto first send time: %.3f µs\n", setup_us);
-        }else
-        if (i < 10) {
-            // Don't record warm up rounds
-        }
-        else {
-            end = rdtsc();
-            elapsed_us += (end - start) / (2.4 * 1e3);
+            printf("First message RTT: %.3f µs\n",
+                   (end - start) / (cpu_ghz * 1e3));
         }
     }
-    printf("Average send time: %.3f microseconds\n", elapsed_us / (num_sends - 10)); 
 
+    double one_way = rtt / (2 * (num_sends - 10));
+    printf("Average one-way latency: %.3f µs\n", one_way);
+
+    free(send_buf);
+    free(recv_buf);
     // Close the socket
     rclose(sockfd);
     return 0;

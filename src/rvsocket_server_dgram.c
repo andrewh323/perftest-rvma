@@ -78,10 +78,21 @@ int main(int argc) {
     rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
     uint64_t t2;
-    printf("Posting recv...\n");
-    int ret = rvrecv(dgram_fd, &t2);
-    if (ret < 0) {
-        perror("Error receiving message");
+    
+    int num_sends = 100;
+    int warmup_sends = 10;
+    int ret;
+
+    for (int i = 0; i < num_sends; i++){
+        ret = rvrecv(dgram_fd, &t2);
+        if (ret < 0) {
+            perror("Error receiving message");
+        }
+
+        ret = rvsendto(dgram_fd, "ACK", 4);
+        if (ret < 0) {
+            perror("Error sending ACK");
+        }
     }
 
     close(dgram_fd);

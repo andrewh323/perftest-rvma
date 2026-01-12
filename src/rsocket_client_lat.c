@@ -46,15 +46,13 @@ static inline uint64_t rdtsc(){
 }
 
 
-struct timespec start_time, end_time;
-long ns; // Nanoseconds
-double us; // Microseconds
-
 int main(int argc, char **argv) {
+    double cpu_ghz = get_cpu_ghz();
+    uint64_t start, end;
     int sockfd;
     struct sockaddr_in server_addr;
-    uint64_t start, end;
     double elapsed_us;
+    double rtt = 0.0;
 
     start = rdtsc();
     sockfd = rsocket(AF_INET, SOCK_STREAM, 0);
@@ -63,7 +61,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     end = rdtsc();
-    elapsed_us = (end - start) / (get_cpu_ghz() * 1e3);
+    elapsed_us = (end - start) / (cpu_ghz * 1e3);
     printf("rsocket setup time: %.3f µs\n", elapsed_us);
 
     memset(&server_addr, 0, sizeof(server_addr));
@@ -82,26 +80,42 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     end = rdtsc();
-    elapsed_us = (end - start) / (get_cpu_ghz() * 1e3);
+    elapsed_us = (end - start) / (cpu_ghz * 1e3);
     printf("rconnect time: %.3f µs\n", elapsed_us);
 
     size_t msg_size = atoi(argv[2]);
     char *message = malloc(msg_size);
-    memset(message, 0xAB, msg_size);
 
-    int num_sends = 1000;
-    start = rdtsc();
+    memset(message, 'A', msg_size - 1);
+    message[msg_size - 1] = '\0';
+
+    int num_sends = 2;
+    double *latencies = malloc(num_sends * sizeof(double));
+    char ack[8];
+
     for (int i = 0; i < num_sends; i++) {
-        if (rsend(sockfd, message, strlen(message) + 1, 0) < 0) {
+        uint64_t t1 = rdtsc();
+        if (rsend(sockfd, message, msg_size, 0) < 0) {
             perror("rsend");
             exit(EXIT_FAILURE);
         }
-    }
-    end = rdtsc();
 
-    double cpu_ghz = get_cpu_ghz();
-    elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("Average time per send: %.3f microseconds\n", elapsed_us / num_sends); 
+        if (rrecv(sockfd, ack, sizeof(ack), 0) < 0) {
+            perror("rrecv");
+            exit(EXIT_FAILURE);
+        }
+        uint64_t t4 = rdtsc();
+        if (i == 0) {
+            latencies[i] = 0;
+        }
+        else {
+            rtt += ((t4 - t1) / (cpu_ghz * 1e3));
+        }
+        usleep(10);
+    }
+
+    double one_way = rtt / (2 * (num_sends));
+    printf("One-way time per send: %.3f microseconds\n", one_way);
 
     // Close the socket
     rclose(sockfd);

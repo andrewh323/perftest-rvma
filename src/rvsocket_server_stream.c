@@ -54,7 +54,14 @@ int main(int argc, char **argv) {
 	printf("Server listening on port %d...\n", PORT);
 
 	int size = 10;
-	int num_sends = 100;
+	int num_sends = 1000;
+
+	char *messages[num_sends];
+    for (int i = 0; i < num_sends; i++) {
+        messages[i] = malloc(size);
+        memset(messages[i], 'A', size);
+        snprintf(messages[i], size, "Msg %d", i);
+    }
 
 	// Accept a connection from client
 	conn_fd = rvaccept(listen_fd, NULL, NULL);
@@ -63,16 +70,8 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	printf("Client successfully connected!\n");
-	for (int i = 0; i < num_sends; i++) {
-		char *message = malloc(size + 1);
-		memset(message, 'A', size);
-		message[size] = '\0';
-		int n = snprintf(message, size + 1, "Msg %d: ", i);
-		for (int j = n; j < size; j++) {
-			message[j] = 'A';
-		}
-		message[size] = '\0';
 
+	for (int i = 0; i < num_sends; i++) {
 		// Receive data from client
 		uint64_t t2;
 		int ret = rvrecv(conn_fd, &t2);
@@ -80,11 +79,12 @@ int main(int argc, char **argv) {
 			perror("Error receiving message");
 		}
 
-		ret = rvsend(conn_fd, message, size);
+		ret = rvsend(conn_fd, messages[i], size);
 		if (ret < 0) {
 			perror("Error sending message");
 		}
 	}
+	
 	// Close the connection
 	rclose(conn_fd);
 	rclose(listen_fd);

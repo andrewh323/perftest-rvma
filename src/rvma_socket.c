@@ -38,7 +38,7 @@
 #define RS_SGL_SIZE 2
 #define MAX_RECV_BUFS 16
 #define MAX_RECV_SIZE 1024*1024 // 1MB
-#define SIGNAL_INTERVAL 64
+#define SIGNAL_INTERVAL 32
 
 enum {
 	RS_OP_DATA,
@@ -880,7 +880,9 @@ int rvsendto(int socket, void *buf, int64_t len) {
             fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
             return -1;
         }
-        entry->realBuff = full_buf;
+        
+        memcpy(entry->realBuff, &header, sizeof(header));
+        memcpy((uint8_t*)entry->realBuff + sizeof(header), frag_ptr, frag_size);
 
         uint64_t buffer_setup_end = rdtsc();
         buffer_setup += buffer_setup_end - buffer_setup_start;
@@ -892,19 +894,13 @@ int rvsendto(int socket, void *buf, int64_t len) {
             .lkey = entry->mr->lkey
         };
 
-        int send_flag = 0; // No signal by default
-        // Signal every SIGNAL_INTERVAL sends
-        if ((rvs->mailboxPtr->bufferQueue->size % SIGNAL_INTERVAL == 0)){
-            send_flag = IBV_SEND_SIGNALED;
-        }
-
         struct ibv_send_wr wr;
         memset(&wr, 0, sizeof(wr));
         wr.wr_id              = (uintptr_t)entry;
         wr.sg_list            = &sge;
         wr.num_sge            = 1;
         wr.opcode             = IBV_WR_SEND;
-        wr.send_flags         = send_flag;
+        wr.send_flags         = IBV_SEND_SIGNALED;
         wr.wr.ud.ah           = dest->ah;
         wr.wr.ud.remote_qpn   = dest->qpn;
         wr.wr.ud.remote_qkey  = dest->qkey;
@@ -930,25 +926,23 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
         uint64_t poll_start = rdtsc();
 
-        // Completion generated every SIGNAL_INTERVAL sends, which indicates all prior sends are complete
-        if (send_flag == IBV_SEND_SIGNALED) {
-            struct ibv_wc wc;
-            int num_wc = 0;
-            do {
-                num_wc = ibv_poll_cq(rvs->mailboxPtr->cq, 1, &wc);
-            } while (num_wc == 0);
+        struct ibv_wc wc;
+        int num_wc = 0;
+        while (1) {
+            do { num_wc = ibv_poll_cq(rvs->mailboxPtr->cq, 1, &wc); } while (num_wc == 0);
+            if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) return -1;
 
-            if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
-                fprintf(stderr, "rvsendto: ibv_poll_cq failed\n");
-                return -1;
+            if (wc.opcode == IBV_WC_SEND) {
+                RVMA_Buffer_Entry *e = (RVMA_Buffer_Entry*)wc.wr_id;
+                RVMA_Buffer_Entry *q = dequeue(rvs->mailboxPtr->bufferQueue);
+                freeBufferEntry(e);
+                break;
             }
-            // Free all completed (previous) buffers
-            while (rvs->mailboxPtr->bufferQueue->size > MAX_RECV_BUFS) {
-                RVMA_Buffer_Entry *completedEntry = dequeue(rvs->mailboxPtr->bufferQueue);
-                if (completedEntry) {
-                    freeBufferEntry(completedEntry);
-                }
-            }
+        }
+
+        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "rvsendto: ibv_poll_cq failed\n");
+            return -1;
         }
         uint64_t poll_end = rdtsc();
         total_poll += poll_end - poll_start;
@@ -968,42 +962,21 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
 // Receive buffer pool should already be preposted, manage fragments and poll completion
 int rvrecvfrom(RVMA_Mailbox *mailbox) {
-    int num_recvs = 100; // Expecting this many messages, but may increase with multi-fragment messages
+    char *msg_buf = NULL;
+    int total_frags = 0;
+    int total_len = 0;
+    int num_recvs = 1;
     int recv_count = 0;
-    // Timing measurement variables
-    int exclude_warmup = 1; // Set to 1 to exclude warm-ups
-    int warmup_rounds = 10;
-    uint64_t start = 0, end = 0;
-    int remaining_frags = 0;
-    double current_msg_us = 0.0;
-    double total_us = 0;
-    double total_poll_us = 0;
-    double total_repost_us = 0;
-    double avg_us = 0;
-    double avg_poll_us = 0;
-    double avg_repost_us = 0;
-    double min_us = 1e9;
-    double max_us = 0;
-    double cpu_ghz = 2.45; // Using get_cpu_ghz() here is too expensive so receives aren't posted in time if used
-    int measured_recvs = 0;
-    double total_sq_us = 0.0;
-    double stddev_us = 0.0;
+    struct ibv_wc wc;
+    int num_wc;
 
-    while (recv_count < num_recvs) {
-        struct ibv_wc wc;
-        int num_wc;
-        start = rdtsc();
-
-        do {
-            num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
-        } while (num_wc == 0);
-
-        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
-            fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
-            return -1;
+    for (int i = 0; i < num_recvs; i++) {
+        // Poll for a completed receive
+        while (1) {
+            do { num_wc = ibv_poll_cq(mailbox->cq, 1, &wc); } while (num_wc == 0);
+            if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) return -1;
+            if (wc.opcode == IBV_WC_RECV) break;
         }
-
-        uint64_t poll_end = rdtsc();
 
         RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
         if (!entry) {
@@ -1014,8 +987,14 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         char *recv_buf = (char *)entry->realBuff;
         int len = wc.byte_len;
 
-        char *data = recv_buf + 40; // GRH offset
-        int data_len = len - 40;
+        int grh = (wc.wc_flags & IBV_WC_GRH) ? 40 : 0;
+        char *data = recv_buf + grh;
+        int data_len = len - grh;
+
+        if (data_len < (int)sizeof(struct dgram_frag_header)) {
+            fprintf(stderr, "rvrecvfrom: runt packet\n");
+            return -1;
+        }
 
         struct dgram_frag_header header;
         memcpy(&header, data, sizeof(header));
@@ -1023,22 +1002,25 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         char *payload = data + sizeof(header);
         int payload_len = data_len - sizeof(header);
 
+        /* printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
+            header.frag_num, header.total_frags, payload_len, payload); */
+
         if (header.frag_num == 1) {
-            num_recvs += (header.total_frags - 1); // Account for extra recvs from fragments of the same message
-            remaining_frags = header.total_frags; // Start timing on a per-message basis
-            current_msg_us = 0.0;
-            // printf("Multi-fragment message detected (Message #%d): total fragments = %d\n", recv_count + 1, header.total_frags);
+            total_frags = header.total_frags;
+            num_recvs = total_frags;
+
+            msg_buf = malloc(total_frags * RS_MAX_TRANSFER);
+            if (!msg_buf) {
+                perror("rvrecvfrom: malloc msg_buf failed");
+                return -1;
+            }
         }
 
-        end = rdtsc();
-        double recvtime = (end - poll_end) / (cpu_ghz * 1e3);
-        double polltime = (poll_end - start) / (cpu_ghz * 1e3);
-        
-        /* printf("Received message #%d, fragment %d/%d (%d bytes) | Payload: %.40s...\n",
-            recv_count + 1, header.frag_num, header.total_frags, payload_len, payload); */
+        int offset = (header.frag_num - 1) * RS_MAX_TRANSFER;
+        memcpy(msg_buf + offset, payload, payload_len);
+        total_len += payload_len;
 
-        uint64_t beforeRepost = rdtsc();
-        // Recycle recv buffer by reposting
+        // Repost the same recv buffer for future receives
         struct ibv_sge sge = {
             .addr = (uintptr_t)recv_buf,
             .length = MAX_RECV_SIZE,
@@ -1055,52 +1037,16 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         struct ibv_recv_wr *bad_wr = NULL;
         if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
             perror("rvrecvfrom: ibv_post_recv failed");
+            free(msg_buf);
             return -1;
         }
+
         recv_count++;
-
-        uint64_t afterRepost = rdtsc();
-        double repostTime = (afterRepost - beforeRepost) / (cpu_ghz * 1e3);
-        total_repost_us += repostTime;
-
-        current_msg_us += (recvtime + repostTime); // Calculate total time per message instead of per fragment
-        remaining_frags--;
-
-        if (!exclude_warmup || recv_count > warmup_rounds) {
-            if (remaining_frags == 0) {
-                // Only include in timing stats after all fragments of a message have been received
-                // printf("Time for this message: %.3f\n", current_msg_us);
-                total_us += current_msg_us;
-                total_sq_us += current_msg_us * current_msg_us;
-                measured_recvs++;
-                if (current_msg_us < min_us) min_us = current_msg_us;
-                if (current_msg_us > max_us) max_us = current_msg_us;
-            }
-        }
-        total_poll_us += polltime;
     }
-
-    if (measured_recvs > 0) {
-        avg_us = total_us / measured_recvs;
-        avg_poll_us = total_poll_us / recv_count;
-        double variance = (total_sq_us / measured_recvs) - (avg_us * avg_us);
-        stddev_us = sqrt(variance);
-    }
-    else {
-        avg_us = 0;
-    }
-
-    avg_repost_us = total_repost_us / recv_count;
-    printf("Number of received messages: %d\n", measured_recvs);
-    printf("Avg recv time: %.3f µs\n", avg_us);
-    printf("Avg recv poll time: %.3f µs\n", avg_poll_us);
-    printf("Avg recv repost time: %.3f µs\n", avg_repost_us);
-    printf("Min recv time: %.3f µs\n", min_us);
-    printf("Max recv time: %.3f µs\n", max_us);
-    printf("Recv time stddev: %.3f µs\n", stddev_us);
-
+    free(msg_buf);
     return 0;
 }
+
 
 
 int rvrecv(int socket, uint64_t *recv_timestamp) {

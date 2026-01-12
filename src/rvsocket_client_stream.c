@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 100;
+    int num_sends = 1000;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
@@ -103,7 +103,6 @@ int main(int argc, char **argv) {
 
     // Send messages to server
     for (int i = 0; i < num_sends; i++) {
-
         // Perform rvma send
         uint64_t t2;
         uint64_t t1 = rdtsc();
@@ -116,15 +115,17 @@ int main(int argc, char **argv) {
         if (res < 0) {
             fprintf(stderr, "Failed to receive message %d\n", i);
         }
+        uint64_t t3 = rdtsc();
 
         // Convert cycles to microseconds
         double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
         double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
         double regmr_us = mailbox->regmrCycles / (cpu_ghz * 1e3);
-        elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
-        elapsed_us -= regmr_us; // Don't include mr registration time
-        printf("One-way arrival latency: %.3f µs\n", elapsed_us);
+        elapsed_us = (t3 - t1) / (cpu_ghz * 1e3);
+        elapsed_us -= (regmr_us); // Remove memory registration from send time
+        elapsed_us /= 2; // One-way time
+        printf("One-way time for message %d: %.3f µs\n", i, elapsed_us);
 
         int record = 1;
 
