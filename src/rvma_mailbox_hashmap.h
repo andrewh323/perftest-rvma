@@ -14,7 +14,7 @@
 
 typedef struct {
     int key;
-    void *virtualAddress;
+    uint64_t vaddr;
     struct ibv_pd *pd; // Protection domain
     struct ibv_cq *cq; // Completion queue
     struct ibv_qp *qp; // Queue pair
@@ -38,7 +38,7 @@ typedef struct  {
     RVMA_Mailbox** hashmap;
 } Mailbox_HashMap;
 
-RVMA_Mailbox* setupMailbox(void *virtualAddress, int hashmapCapacity);
+RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity);
 
 RVMA_Status freeMailbox(RVMA_Mailbox** mailboxPtr);
 
@@ -48,13 +48,13 @@ Mailbox_HashMap* initMailboxHashmap();
 
 RVMA_Status freeHashmap(Mailbox_HashMap** hashmapPtr);
 
-int hashFunction(void *virtualAddress, int capacity);
+int hashFunction(uint64_t vaddr, int capacity);
 
-RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, void *virtualAddress);
+RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr);
 
 RVMA_Status retireBuffer(RVMA_Mailbox* RVMA_Mailbox, RVMA_Buffer_Entry* entry);
 
-RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, void* key);
+RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, uint64_t key);
 
 int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *remote_addr);
 

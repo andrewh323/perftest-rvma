@@ -30,7 +30,7 @@ double get_cpu_ghz() {
     return 2.4;
 }
 
-RVMA_Win *rvmaInitWindowMailboxKey(void *virtualAddress, key_t key) {
+RVMA_Win *rvmaInitWindowMailboxKey(uint64_t virtualAddress, key_t key) {
 
     if (virtualAddress == NULL){
         print_error("rvmaInitWindowMailboxKey: Virtual address is null");
@@ -70,7 +70,7 @@ RVMA_Win *rvmaInitWindowMailboxKey(void *virtualAddress, key_t key) {
     return windowPtr;
 }
 
-RVMA_Win *rvmaInitWindowMailbox(void *virtualAddress) {
+RVMA_Win *rvmaInitWindowMailbox(uint64_t virtualAddress) {
     double cpu_ghz = get_cpu_ghz();
     uint64_t start, end, cycles;
     start = rdtsc();
@@ -150,7 +150,7 @@ RVMA_Status rvmaSetKey(RVMA_Win *win, key_t key) {
 }
 
 
-RVMA_Status rvmaAddMailboxtoWindow(RVMA_Win *window, void *virtualAddress, key_t key) {
+RVMA_Status rvmaAddMailboxtoWindow(RVMA_Win *window, uint64_t virtualAddress, key_t key) {
     if (window == NULL){
         print_error("rvmaAddMailboxtoWindow: window is null");
         return RVMA_ERROR;
@@ -193,7 +193,7 @@ RVMA_Status rvmaCloseWin(RVMA_Win *window) {
 }
 
 
-RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, void *virtualAddress,
+RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, uint64_t virtualAddress,
                RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType) {
 
     RVMA_Buffer_Entry *entry = createBufferEntry(buffer, size, notificationPtr, notificationLenPtr, epochThreshold, epochType);
@@ -231,7 +231,7 @@ RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificati
 }
 
 
-RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch_type epochType) {
+RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
     uint64_t start, end;
     double cpu_ghz = get_cpu_ghz();
     start = rdtsc();
@@ -295,31 +295,6 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch
     return RVMA_SUCCESS;
 }
 
-
-int rvmaPutHybrid(struct ibv_qp *qp, int index, struct ibv_send_wr *wr, struct ibv_send_wr **bad_wr) {
-    if (!qp) {
-        print_error("rvmaPutHybrid: qp was NULL");
-        return 1;
-    }
-
-    if (!wr) {
-        print_error("rvmaPutHybrid: wr was NULL");
-        return 1;
-    }
-
-    if (!bad_wr) {
-        print_error("rvmaPutHybrid: bad_wr was NULL");
-        return 1;
-    }
-
-    if (index < 0) {
-        print_error("rvmaPutHybrid: index was negative");
-        return 1;
-    }
-
-    return ibv_post_send(qp, &wr[index], bad_wr);
-}
-
 /*
 RVMA PUT STEPS
     1. Post receive buffer to target mailbox
@@ -329,7 +304,7 @@ RVMA PUT STEPS
         - Increment counter and check it against threshold (Counter is hardware only)
         - If buffer is complete, write address of buffer to completion pointer address
 */
-RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox) {
+RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mailbox) {
     uint64_t start = rdtsc();
 
     int hardware_counter = 0; // Counter to compare with threshold (should only exist in hardware)
@@ -432,7 +407,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, void *vaddr, RVMA_Mailbox *mailbox
 
 
 // Recv buffer pool should be preposted, so just poll cq for completions
-RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_timestamp) {
+RVMA_Status rvmaRecv(uint64_t vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_timestamp) {
     struct ibv_wc wc;
     int num_wc;
     do {
@@ -481,7 +456,7 @@ RVMA_Status rvmaRecv(void *vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_timestam
 }
 
 
-RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, void *virtualAddress) {
+RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, uint64_t virtualAddress) {
     static int bufferStatus = 0; // default to active/being used
 
     if (bufferStatus == 1) { // if the buffer has been retired

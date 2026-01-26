@@ -12,7 +12,7 @@
 #include <rdma/rdma_cma.h>
 
 
-RVMA_Mailbox* setupMailbox(void *virtualAddress, int hashmapCapacity){
+RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     RVMA_Mailbox *mailboxPtr;
     mailboxPtr = (RVMA_Mailbox*) malloc(sizeof(RVMA_Mailbox));
 
@@ -37,8 +37,8 @@ RVMA_Mailbox* setupMailbox(void *virtualAddress, int hashmapCapacity){
 
     mailboxPtr->bufferQueue = bufferQueue;
     mailboxPtr->retiredBufferQueue = retiredBufferQueue;
-    mailboxPtr->virtualAddress = virtualAddress;
-    mailboxPtr->key = hashFunction(mailboxPtr->virtualAddress, hashmapCapacity);
+    mailboxPtr->vaddr = vaddr;
+    mailboxPtr->key = hashFunction(mailboxPtr->vaddr, hashmapCapacity);
     mailboxPtr->ec = rdma_create_event_channel();
     int res = rdma_create_id(mailboxPtr->ec, &mailboxPtr->cm_id, NULL, mailboxPtr->type == SOCK_DGRAM ? RDMA_PS_UDP : RDMA_PS_TCP);
     if (res) {
@@ -120,17 +120,16 @@ RVMA_Status freeHashmap(Mailbox_HashMap** hashmapPtr){
     return RVMA_SUCCESS;
 }
 
-int hashFunction(void *virtualAddress, int capacity) {
-    uint64_t addr = *(uint64_t*) virtualAddress;
+int hashFunction(uint64_t vaddr, int capacity) {
     uint64_t largePrime = 11400714819323198485ULL;
-    uint64_t hash = addr * largePrime;
+    uint64_t hash = vaddr * largePrime;
     return (int) (hash % capacity);
 }
 
-RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, void *virtualAddress){
-    int hashNum = hashFunction(virtualAddress, hashMap->capacity);
+RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr){
+    int hashNum = hashFunction(vaddr, hashMap->capacity);
     RVMA_Mailbox* mailboxPtr;
-    mailboxPtr = setupMailbox(virtualAddress, hashMap->capacity);
+    mailboxPtr = setupMailbox(vaddr, hashMap->capacity);
 
     if (hashMap->hashmap[hashNum] != NULL) {
         freeMailbox(&mailboxPtr);
@@ -144,7 +143,7 @@ RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, void *virtualAddress
     }
 }
 
-RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, void* key){
+RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, uint64_t key){
 
     if(hashMap == NULL) {
         print_error("searchHashmap: hashmap is null");
@@ -155,15 +154,12 @@ RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, void* key){
         return NULL;
     }
 
-    // Get the actual key value from the pointer
-    uint64_t key_val = *(uint64_t*)key;
-
     // Getting the bucket index for the given key
     int hashNum = hashFunction(key, hashMap->capacity);
 
     // Head of the linked list present at bucket index
     RVMA_Mailbox* mailboxPtr = hashMap->hashmap[hashNum];
-    if (mailboxPtr && *(uint64_t*)mailboxPtr->virtualAddress == key_val) {
+    if (mailboxPtr && mailboxPtr->vaddr == key) {
         return mailboxPtr;
     }
     else{

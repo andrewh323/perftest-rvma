@@ -194,7 +194,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
     // Set rvsocket vaddr and mailbox
     rvs->vaddr = vaddr;
-    rvs->mailboxPtr = searchHashmap(window->hashMapPtr, &rvs->vaddr);
+    rvs->mailboxPtr = searchHashmap(window->hashMapPtr, rvs->vaddr);
     if (rvs->mailboxPtr == NULL) {
         fprintf(stderr, "rvsocket: Failed to find mailbox for vaddr = %" PRIu64 "\n", rvs->vaddr);
         free(rvs);
@@ -387,6 +387,10 @@ int rvlisten(int socket, int backlog) {
     }
 
     rvs->state = rs_listening;
+    rvs->mailboxPtr->cm_id;
+    rvs->mailboxPtr->qp = NULL;
+    rvs->mailboxPtr->pd = NULL;
+    rvs->mailboxPtr->cq = NULL;
     uint64_t end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
     printf("rvlisten total time: %.3f µs\n", elapsed_us);
@@ -394,7 +398,7 @@ int rvlisten(int socket, int backlog) {
 }
 
 
-int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
+int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *window) {
     double cpu_ghz = get_cpu_ghz();
     uint64_t start, end;
     struct rvsocket *rvs, *new_rvs;
@@ -486,18 +490,38 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
     // Fill in new rvsocket fields
     new_rvs->vaddr = rvs->vaddr;
     new_rvs->type = SOCK_STREAM;
+
+    if (window == NULL) {
+        printf("rvaccept error: window is NULL");
+        return -1;
+    }
+
+    if (window->hashMapPtr == NULL) {
+        printf("rvaccept error: hashmap is NULL");
+        return -1;
+    }
+    printf("hashMapPtr = %p\n", window->hashMapPtr);
+    
+    // Create a mailbox for the new socket (server calls rvaccept for each client)
+    RVMA_Status status = newMailboxIntoHashmap(window->hashMapPtr, &new_rvs->vaddr);
+    if (status != RVMA_SUCCESS) {
+        perror("Failed to allocate new rvs");
+        return -1;
+    }
+
     new_rvs->mailboxPtr = rvs->mailboxPtr;
     new_rvs->mailboxPtr->cm_id = client_cm_id;
     new_rvs->mailboxPtr->pd = pd;
     new_rvs->mailboxPtr->cq = cq;
     new_rvs->mailboxPtr->qp = client_cm_id->qp;
+
     new_rvs->index = client_cm_id->channel->fd;
     new_rvs->state = rs_connected;
 
     end = rdtsc();
 
     // Prepost recv buffer pool
-    RVMA_Status status = postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, rvs->vaddr, EPOCH_BYTES);
+    status = postRecvPool(new_rvs->mailboxPtr, MAX_RECV_BUFS, new_rvs->vaddr, EPOCH_BYTES);
     if (status != RVMA_SUCCESS) {
         fprintf(stderr, "rvaccept: postRecvPool failed\n");
         return -1;

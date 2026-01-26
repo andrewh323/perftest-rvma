@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 	double cpu_ghz = get_cpu_ghz();
 	double elapsed_us;
 	uint16_t reserved = 0x0001;
-	int listen_fd, conn_fd;
+	int listen_fd, conn_fd1, conn_fd2;
 	struct sockaddr_in client_addr;
 	memset(&client_addr, 0, sizeof(client_addr));
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 	uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
 	printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
-	RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
     listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
 
@@ -64,29 +64,37 @@ int main(int argc, char **argv) {
     }
 
 	// Accept a connection from client
-	conn_fd = rvaccept(listen_fd, NULL, NULL);
-	if (conn_fd < 0) {
+	conn_fd1 = rvaccept(listen_fd, NULL, NULL, windowPtr);
+	if (conn_fd1 < 0) {
 		perror("rvaccept failed");
 		return -1;
 	}
-	printf("Client successfully connected!\n");
+	printf("Client 1 successfully connected!\n");
+
+	conn_fd2 = rvaccept(listen_fd, NULL, NULL, windowPtr);
+	if (conn_fd2 < 0) {
+		perror("rvaccept failed");
+		return -1;
+	}
+	printf("Client 2 successfully connected!\n");
 
 	for (int i = 0; i < num_sends; i++) {
 		// Receive data from client
 		uint64_t t2;
-		int ret = rvrecv(conn_fd, &t2);
+		int ret = rvrecv(conn_fd1, &t2);
 		if (ret < 0) {
 			perror("Error receiving message");
 		}
 
-		ret = rvsend(conn_fd, messages[i], size);
+		ret = rvsend(conn_fd1, messages[i], size);
 		if (ret < 0) {
 			perror("Error sending message");
 		}
 	}
 	
 	// Close the connection
-	rclose(conn_fd);
+	rclose(conn_fd1);
+	rclose(conn_fd2);
 	rclose(listen_fd);
 	return 0;
 }
