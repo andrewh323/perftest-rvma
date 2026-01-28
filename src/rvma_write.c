@@ -32,7 +32,7 @@ double get_cpu_ghz() {
 
 RVMA_Win *rvmaInitWindowMailboxKey(uint64_t virtualAddress, key_t key) {
 
-    if (virtualAddress == NULL){
+    if (!virtualAddress){
         print_error("rvmaInitWindowMailboxKey: Virtual address is null");
         return NULL;
     }
@@ -74,7 +74,7 @@ RVMA_Win *rvmaInitWindowMailbox(uint64_t virtualAddress) {
     double cpu_ghz = get_cpu_ghz();
     uint64_t start, end, cycles;
     start = rdtsc();
-    if (virtualAddress == NULL){
+    if (!virtualAddress){
         print_error("rvmaInitWindowMailbox: Virtual address is null");
         return NULL;
     }
@@ -93,7 +93,7 @@ RVMA_Win *rvmaInitWindowMailbox(uint64_t virtualAddress) {
         print_error("rvmaInitWindowMailbox: Failure creating mailbox hashmap...");
         return NULL;
     }
-
+    /* 
     RVMA_Status res = newMailboxIntoHashmap(hashMapPtr, virtualAddress);
     if (res != RVMA_SUCCESS) {
         freeHashmap(&hashMapPtr);
@@ -101,7 +101,8 @@ RVMA_Win *rvmaInitWindowMailbox(uint64_t virtualAddress) {
         print_error("rvmaInitWindowMailbox: Failure creating mailbox in the hashmap...");
         return NULL;
     }
-    
+    */
+
     windowPtr->hashMapPtr = hashMapPtr;
     windowPtr->key = -1;
 
@@ -159,7 +160,7 @@ RVMA_Status rvmaAddMailboxtoWindow(RVMA_Win *window, uint64_t virtualAddress, ke
         print_error("rvmaAddMailboxtoWindow: invalid key");
         return RVMA_ERROR;
     }
-    if (virtualAddress == NULL){
+    if (!virtualAddress){
         print_error("rvmaAddMailboxtoWindow: virtual address is null");
         return RVMA_ERROR;
     }
@@ -236,7 +237,6 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
     double cpu_ghz = get_cpu_ghz();
     start = rdtsc();
     for (int i = 0; i < num_bufs; i++) {
-        uint64_t singleRecvStart = rdtsc();
         char *recv_buf = malloc(MAX_RECV_SIZE);
         if (!recv_buf) {
             print_error("postRecvPool: malloc failed");
@@ -286,7 +286,6 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
             perror("postRecvPool: ibv_post_recv failed");
             return RVMA_ERROR;
         }
-        uint64_t singleRecvEnd = rdtsc();
     }
     end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
@@ -426,7 +425,6 @@ RVMA_Status rvmaRecv(uint64_t vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_times
 
     RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
     char *recv_buf = (char *)entry->realBuff;
-    int len = wc.byte_len;
 
     // Build sge
     struct ibv_sge sge = {
@@ -467,7 +465,7 @@ RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, uint64_t virtualAdd
         print_error("eventCompleted: window was NULL");
         return RVMA_ERROR;
     }
-    if (virtualAddress == NULL) {
+    if (!virtualAddress) {
         print_error("eventCompleted: virtualAddress was NULL");
         return RVMA_ERROR;
     }

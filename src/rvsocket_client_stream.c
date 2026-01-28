@@ -44,8 +44,6 @@ int main(int argc, char **argv) {
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
-
     sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
@@ -64,7 +62,7 @@ int main(int argc, char **argv) {
 
     printf("Attempting to connect to server %s:%d...\n", argv[1], PORT);
 
-    if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr) < 0) {
         perror("rconnect");
         exit(EXIT_FAILURE);
     }
@@ -100,6 +98,8 @@ int main(int argc, char **argv) {
         memset(messages[i], 'A', size);
         snprintf(messages[i], size, "Msg %d", i);
     }
+
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
 
     // Send messages to server
     for (int i = 0; i < num_sends; i++) {

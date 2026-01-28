@@ -31,7 +31,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
 
 int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen);
 
-int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen);
+int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_Win *window);
 
 int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
