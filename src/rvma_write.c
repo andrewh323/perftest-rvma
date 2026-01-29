@@ -412,7 +412,11 @@ RVMA_Status rvmaRecv(uint64_t vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_times
     do {
         num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
     } while (num_wc == 0);
-
+/* Non-blocking version
+    if (num_wc == 0) {
+        return RVMA_TRUE; // No completions yet
+    }
+ */
     if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
         fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
         return RVMA_ERROR;
@@ -442,13 +446,15 @@ RVMA_Status rvmaRecv(uint64_t vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_times
     };
     struct ibv_recv_wr *bad_wr = NULL;
 
+    int len = wc.byte_len;
+
     // Post recv
     if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
         perror("ibv_post_recv failed");
         return RVMA_ERROR;
     }
     
-    // printf("Received Message: %.*s\n", len, recv_buf);
+    printf("Received Message: %.*s\n", len, recv_buf);
     
     return RVMA_SUCCESS;
 }

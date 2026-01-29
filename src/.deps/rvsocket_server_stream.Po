@@ -141,6 +141,7 @@ src/rvsocket_server_stream.o: src/rvsocket_server_stream.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman-shared.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman_ext.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/ifaddrs.h \
  src/rvma_socket.h src/perftest_resources.h src/rvma_write.h \
  src/rvma_common.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdbool.h \
@@ -319,6 +320,7 @@ src/rvsocket_server_stream.o: src/rvsocket_server_stream.c \
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman-shared.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman_ext.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/ifaddrs.h:
 src/rvma_socket.h:
 src/perftest_resources.h:
 src/rvma_write.h:
