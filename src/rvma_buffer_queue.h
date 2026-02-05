@@ -32,7 +32,7 @@ typedef struct {
 
 RVMA_Buffer_Queue* createBufferQueue(int capacity);
 
-RVMA_Buffer_Entry* createBufferEntry(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, int64_t epochThreshold, epoch_type epochType);
+RVMA_Buffer_Entry* createBufferEntry(void *buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, int64_t epochThreshold, epoch_type epochType);
 
 RVMA_Status isFull(RVMA_Buffer_Queue* queue);
 

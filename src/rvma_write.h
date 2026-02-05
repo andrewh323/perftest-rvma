@@ -32,16 +32,12 @@ RVMA_Status rvmaCloseWin(RVMA_Win*);
 
 int64_t rvmaWinGetEpoch(RVMA_Win*);
 
-RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, uint64_t virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType);
+RVMA_Buffer_Entry* rvmaPostBuffer(void *buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, uint64_t virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType, int bufferType);
 
 RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType);
 
 RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mailbox);
 
 RVMA_Status rvmaRecv(uint64_t vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_timestamp);
-
-RVMA_Status eventCompleted(struct ibv_wc *wc, RVMA_Win *win, uint64_t virtualAddress);
-
-RVMA_Status rvmaCheckBufferQueue(RVMA_Buffer_Queue *bufferQueue, TestType type, int msgSize);
 
 #endif //ELEC498_RVMA_H

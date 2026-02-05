@@ -21,7 +21,7 @@ RVMA_Buffer_Queue* createBufferQueue(int capacity) {
     queue_ptr->capacity = capacity;
     queue_ptr->start = 0;
     queue_ptr->size = 0;
-    queue_ptr->end = capacity - 1;
+    queue_ptr->end = 0;
     queue_ptr->pBufferEntry = (RVMA_Buffer_Entry**) malloc(capacity * sizeof(RVMA_Buffer_Entry*));
     if(!queue_ptr->pBufferEntry) {
         print_error("createBufferQueue: Buffer Entry list couldn't be allocated");
@@ -33,7 +33,7 @@ RVMA_Buffer_Queue* createBufferQueue(int capacity) {
     return queue_ptr;
 }
 
-RVMA_Buffer_Entry* createBufferEntry(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, int64_t epochThreshold, epoch_type epochType){
+RVMA_Buffer_Entry* createBufferEntry(void *buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, int64_t epochThreshold, epoch_type epochType){
     if(buffer == NULL){
         print_error("createBufferEntry: Buffer is null");
         return  NULL;
@@ -64,7 +64,7 @@ RVMA_Buffer_Entry* createBufferEntry(void **buffer, int64_t size, void **notific
         return  NULL;
     }
 
-    entry->realBuff = *buffer;
+    entry->realBuff = buffer;
     entry->realBuffAddr = buffer;
     entry->realBuffSize = size;
     entry->epochCount = 0;
@@ -77,42 +77,29 @@ RVMA_Buffer_Entry* createBufferEntry(void **buffer, int64_t size, void **notific
 }
 
 RVMA_Status isFull(RVMA_Buffer_Queue* queue){
-    if(queue == NULL){
-        print_error("isFull: queue is null");
-        return RVMA_ERROR;
-    }
-    if(queue->size == queue->capacity) return RVMA_TRUE;
-    else return RVMA_FALSE;
+    if(!queue) return RVMA_ERROR;
+    return (queue->size == queue->capacity) ? RVMA_TRUE : RVMA_FALSE;
 }
 
 RVMA_Status isEmpty(RVMA_Buffer_Queue* queue){
-    if(queue == NULL){
-        print_error("isEmpty: queue is null");
-        return RVMA_ERROR;
-    }
-    if(queue->size == 0) return RVMA_TRUE;
-    else return RVMA_FALSE;
+    if(!queue) return RVMA_ERROR;
+    return (queue->size == 0) ? RVMA_TRUE : RVMA_FALSE;
 }
 
-RVMA_Status enqueue(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry){
-    if(queue == NULL){
-        print_error("enqueue: queue is null");
-        return RVMA_FAILURE;
-    }
-    if(entry == NULL){
-        print_error("enqueue: entry is null");
-        return RVMA_FAILURE;
-    }
+RVMA_Status enqueue(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry) {
+    if (!queue) return RVMA_FAILURE;
+    if (!entry) return RVMA_FAILURE;
 
-    if(isFull(queue) == RVMA_TRUE) {
+    if (isFull(queue) == RVMA_TRUE) {
         printf("enqueue: queue is full, capacity=%d, size=%d\n", queue->capacity, queue->size);
         return RVMA_QUEUE_FULL;
     }
-    queue->end = (queue->end + 1) % queue->capacity;
+    // Store entry at end position
     queue->pBufferEntry[queue->end] = entry;
-    entry = NULL;
-
-    queue->size = queue->size + 1;
+    // Advance end position
+    queue->end = (queue->end + 1) % queue->capacity;
+    // Increment size
+    queue->size++;
 
     return RVMA_SUCCESS;
 }
@@ -145,16 +132,10 @@ RVMA_Status enqueueRetiredBuffer(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* en
 }
 
 RVMA_Buffer_Entry* dequeue(RVMA_Buffer_Queue* queue){
-    if(queue == NULL){
-        print_error("dequeue: queue is null");
-        return NULL;
-    }
-
-    if(isEmpty(queue) == RVMA_TRUE) return NULL;
+    if(!queue || isEmpty(queue) == RVMA_TRUE) return NULL;
 
     RVMA_Buffer_Entry *entry = queue->pBufferEntry[queue->start];
     queue->pBufferEntry[queue->start] = NULL;
-
     queue->start = (queue->start + 1) % queue->capacity;
     queue->size--;
 

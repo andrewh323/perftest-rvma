@@ -52,7 +52,7 @@ int main(int argc) {
     addr.sin_port = htons(PORT);
 	addr.sin_addr.s_addr = INADDR_ANY; // Bind to all interfaces
 
-	RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
     dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
 

@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
     
     sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
     if (sockfd < 0) {
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
         elapsed_us = (t2 - t1) / (cpu_ghz *1e3);
 
         // Convert cycles to microseconds
-        double fragSetup_us = mailbox->fragSetupCycles / (cpu_ghz * 1e3);
+/*         double fragSetup_us = mailbox->fragSetupCycles / (cpu_ghz * 1e3);
         double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
         double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
@@ -136,12 +136,14 @@ int main(int argc, char **argv) {
         elapsed_us -= (bufferSetup_us);
         elapsed_us /= 2; // One-way time
 
+        */
+
         /* printf("Message %d send time: %.3f µs (Frag setup: %.3f µs, Buffer setup: %.3f µs, WR setup: %.3f µs, Poll: %.3f µs)\n",
             i, elapsed_us, fragSetup_us, bufferSetup_us, wrSetup_us, poll_us); */
         int record = 1;
 
         // Exclude warm-ups if configured
-        if (exclude_warmup && i < warmup_sends)
+/*         if (exclude_warmup && i < warmup_sends)
             record = 0;
 
         if (record) {
@@ -155,7 +157,7 @@ int main(int argc, char **argv) {
             buffer_setup_time += bufferSetup_us;
             wr_setup_time += wrSetup_us;
             poll_time += poll_us;
-        }
+        } */
         free(message);
     }
 

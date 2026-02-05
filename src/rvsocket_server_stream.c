@@ -97,10 +97,10 @@ int main(int argc, char **argv) {
 
 	// While server is running, poll all clients and recv messages
 	// Currently rvrecv is blocking but maintains flow control
-	while (1) {
+	for (int i = 0; i < num_sends; i++) {
 		for (int c = 0; c < num_clients; c++) {
 			rvrecv(conn_fd[c], NULL);
-			rvsend(conn_fd[c], messages[c], size);
+			rvsend(conn_fd[c], messages[i], size);
 		}
 	}
 	

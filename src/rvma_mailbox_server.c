@@ -10,6 +10,8 @@
 #include "rvma_mailbox_hashmap.h"
 #include "rvma_write.h"
 
+#define PORT 7471
+
 
 uint32_t get_host_ip(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;
@@ -43,45 +45,59 @@ uint64_t construct_vaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t por
 
 
 int main(int argc, char **argv) {
-
-    int port = 7471;
     const char *iface_name = "ib0"; // Search for RDMA device
     uint16_t reserved = 0x0001; // Reserved 16 bits for vaddr structure
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
 
-    struct sockaddr_in client_addr;
     struct rdma_cm_event *event;
-    memset(&client_addr, 0, sizeof(client_addr));
 
-    client_addr.sin_family = AF_INET;
-    client_addr.sin_port = htons(port);
-    if (inet_pton(AF_INET, argv[1], &client_addr.sin_addr) != 1) {
-        perror("inet_pton failed");
-        return -1;
-    };
+    uint32_t host_ip = get_host_ip(iface_name);
 
-    client_addr.sin_addr.s_addr = INADDR_ANY; // Bind to all interfaces
+    
+	addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
+	addr.sin_addr.s_addr = INADDR_ANY; // Bind to all interfaces
 
-    uint32_t ip_host_order = ntohl(client_addr.sin_addr.s_addr);
+    uint32_t ip_host_order = ntohl(addr.sin_addr.s_addr);
     // Construct virtual address
-    uint64_t vaddr = construct_vaddr(reserved, ip_host_order, port);
+    uint64_t vaddr = construct_vaddr(reserved, ip_host_order, PORT);
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
     // Calls newMailboxIntoHashmap, which calls setupMailbox, which gets the
     // key, bufferQueue, ec, rdma cm_id
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
     if (!windowPtr) {
         fprintf(stderr, "Failed to initialize RVMA window mailbox\n");
         return -1;
     }
 
-    RVMA_Mailbox *mailboxPtr = searchHashmap(windowPtr->hashMapPtr, &vaddr);
+    RVMA_Status res = newMailboxIntoHashmap(windowPtr->hashMapPtr, vaddr);
+    if (res != RVMA_SUCCESS) {
+        freeHashmap(&windowPtr->hashMapPtr);
+        free(windowPtr);
+        print_error("rvmaInitWindowMailbox: Failure creating mailbox in the hashmap...");
+        return -1;
+    }
+
+    RVMA_Mailbox *mailboxPtr = searchHashmap(windowPtr->hashMapPtr, vaddr);
     if (!mailboxPtr) {
         fprintf(stderr, "Failed to get mailbox for vaddr = %" PRIu64 "\n", vaddr);
         return -1;
     }
 
+    // Create RDMA cm_id
+    struct rdma_cm_id *cm_id;
+    struct rdma_event_channel *ec = rdma_create_event_channel();
+    if (rdma_create_id(ec, &cm_id, NULL, RDMA_PS_TCP)) {
+        fprintf(stderr, "rdma_create_id failed\n");
+        return -1;
+    }
+    mailboxPtr->cm_id = cm_id;
+    mailboxPtr->ec = ec;
+
     // Bind cm_id to address
-    rdma_bind_addr(mailboxPtr->cm_id, (struct sockaddr *)&client_addr);
+    rdma_bind_addr(mailboxPtr->cm_id, (struct sockaddr *)&addr);
     
     // Listen for incoming connections
     printf("Listening for incoming connections...\n");
@@ -131,13 +147,32 @@ int main(int argc, char **argv) {
 
     printf("Server accepted connection and created qp\n");
 
-    // Recv indefinitely for testing
-    uint64_t t2;
-    while (1) {
-        RVMA_Status status = rvmaRecv(&vaddr, mailboxPtr, &t2);
-        if (status != RVMA_SUCCESS) {
-            perror("Error receiving message");
-            break;
-        }
+    // Prepost buffers
+    res = postSendPool(mailboxPtr, 16, vaddr, EPOCH_BYTES);
+    if (res != RVMA_SUCCESS) {
+        perror("postSendPool failed");
+        return -1;
     }
+    res = postRecvPool(mailboxPtr, 16, vaddr, EPOCH_BYTES);
+    if (res != RVMA_SUCCESS) {
+        perror("postRecvPool failed");
+        return -1;
+    }
+
+    uint64_t t2;
+    int size = 10;
+	int num_sends = 100;
+
+    // Construct messages
+	char *messages[num_sends];
+    for (int i = 0; i < num_sends; i++) {
+        messages[i] = malloc(size);
+        memset(messages[i], 'A', size);
+        snprintf(messages[i], size, "Msg %d", i);
+    }
+    
+	for (int i = 0; i < num_sends; i++) {
+		rvmaRecv(vaddr, mailboxPtr, &t2);
+		rvmaSend(messages[i], size, vaddr, mailboxPtr);
+	}
 }

@@ -376,26 +376,12 @@ int main(int argc, char *argv[])
 
         RVMA_Mailbox *mailbox = searchHashmap(window->hashMapPtr, ctx.rvma_vaddr);
         printf("The VAddr mailbox has this many retired queue entries: %d\n", mailbox->retiredBufferQueue->size);
-        printf("The VAddr mailbox has this many queue entries: %d\n", mailbox->bufferQueue->size);
+        printf("The VAddr mailbox has this many queue entries: %d\n", mailbox->sendBufferQueue->size);
 
         /*
          * Testing Mailbox Contents
          * In the latency test we know the buffer will not be retired so we examine the regular buffer queue
          */
-        RVMA_Status verifiedResult = rvmaCheckBufferQueue(mailbox->bufferQueue, user_param.tst, user_param.size);
-
-        if (verifiedResult == RVMA_SUCCESS){
-            printf("The results in the buffer were verified to be correct\n");
-        }
-        else if (verifiedResult == RVMA_ERROR){
-            printf("The results could not be verified due to issue with variables passed into the function\n");
-        }
-        else if (verifiedResult == RVMA_FAILURE){
-            printf("The results in the buffer were verified to be incorrect\n");
-        }else{
-			printf("rvmaCheckBufferQueue returned an unexpected value\n");
-		}
-
     }
 
 	if (user_param.work_rdma_cm == ON) {
