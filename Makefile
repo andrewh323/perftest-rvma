@@ -506,13 +506,13 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} '/home/andrewh8/src/perftest-rvma/config/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/rysilve/perftest-rvma/config/missing' aclocal-1.16
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} '/home/andrewh8/src/perftest-rvma/config/missing' autoconf
-AUTOHEADER = ${SHELL} '/home/andrewh8/src/perftest-rvma/config/missing' autoheader
-AUTOMAKE = ${SHELL} '/home/andrewh8/src/perftest-rvma/config/missing' automake-1.16
+AUTOCONF = ${SHELL} '/home/rysilve/perftest-rvma/config/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/rysilve/perftest-rvma/config/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/rysilve/perftest-rvma/config/missing' automake-1.16
 AWK = gawk
 CC = gcc
 CCAS = gcc
@@ -565,7 +565,7 @@ LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
 MAJOR_VERSION = 
-MAKEINFO = ${SHELL} '/home/andrewh8/src/perftest-rvma/config/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/rysilve/perftest-rvma/config/missing' makeinfo
 MANIFEST_TOOL = :
 MINOR_VERSION = 
 MKDIR_P = /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/bin/mkdir -p
@@ -589,10 +589,10 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = strip
 VERSION = 6.20
-abs_builddir = /home/andrewh8/src/perftest-rvma
-abs_srcdir = /home/andrewh8/src/perftest-rvma
-abs_top_builddir = /home/andrewh8/src/perftest-rvma
-abs_top_srcdir = /home/andrewh8/src/perftest-rvma
+abs_builddir = /home/rysilve/perftest-rvma
+abs_srcdir = /home/rysilve/perftest-rvma
+abs_top_builddir = /home/rysilve/perftest-rvma
+abs_top_srcdir = /home/rysilve/perftest-rvma
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_CXX = g++
@@ -622,7 +622,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/andrewh8/src/perftest-rvma/config/install-sh
+install_sh = ${SHELL} /home/rysilve/perftest-rvma/config/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -631,7 +631,7 @@ mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/andrewh8/src/perftest-rvma/install
+prefix = /usr
 program_transform_name = s,x,x,
 psdir = ${docdir}
 runstatedir = ${localstatedir}/run
@@ -1516,6 +1516,25 @@ pdf: pdf-am
 pdf-am:
 
 ps: ps-am
+
+rvma_shim: # src/indexer.c src/rvma_write.c src/rvma_socket.c
+	gcc -g -c src/rvma_common.c -I. -I$(HOME)/rdma-core
+	gcc -g -c src/rvma_test_common.c -I. -I$(HOME)/rdma-core
+	gcc -g -c src/rvma_buffer_queue.c -I. -I$(HOME)/rdma-core
+	gcc -g -c src/rvma_buffer_queue_test.c -I. -I$(HOME)/rdma-core
+	gcc -g -c src/rvma_mailbox_hashmap_test.c -I. -I$(HOME)/rdma-core
+	gcc -g -c src/rvma_mailbox_hashmap.c -I. -I$(HOME)/rdma-core
+	gcc -g -c src/rvma_write.c -I. -I$(HOME)/rdma-core
+	gcc -g -c src/rvma_write_test.c -I. -I$(HOME)/rdma-core
+	gcc -g -c src/rvma_socket.c -I. -I$(HOME)/rdma-core
+	gcc -shared -fPIC rvma_shim.c src/rvma_write.c src/rvma_socket.c -L$(HOME)/perftest-rvma/libperftest.a -libverbs -lrdmacm -I. -I./src -I$(HOME)/rdma-core -o librvmashim.so -ldl
+
+rvma_shim2:
+# gcc -c -fPIC -I. -I./src -I$(HOME)/rdma-core src/rvma_socket.c
+	gcc -c -fPIC -I. -I./src -I$(HOME)/rdma-core src/rvma_write.c
+	gcc -c -fPIC -I. -I./src -I$(HOME)/rdma-core src/indexer.c
+	gcc -shared -o librvmashim.so rvma_socket.o rvma_write.o indexer.o -lrdmacm -libverbs -ldl
+
 
 ps-am:
 

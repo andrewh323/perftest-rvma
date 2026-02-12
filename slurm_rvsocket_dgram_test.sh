@@ -9,7 +9,7 @@
 #SBATCH --time=1:00:00
 
 REPEATS=10
-PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
+PATH_TO_BIN="/home/$USER/perftest-rvma"
 CSV_FILE="$PATH_TO_BIN/results/rvsocket_dgram_exclude_warmup2.csv"
 
 # Create results directory if needed

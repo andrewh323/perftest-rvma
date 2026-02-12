@@ -1,2 +1,8 @@
 # Temporary result files
 /results/temp/
+/results/
+*.o
+src/*.o
+src/.deps/
+.deps/
+install/bin/

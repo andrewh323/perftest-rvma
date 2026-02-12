@@ -1,0 +1,28 @@
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `constructVaddr':
+rvma_socket.c:(.text+0x35c): multiple definition of `constructVaddr'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x35c): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `getPort':
+rvma_socket.c:(.text+0x397): multiple definition of `getPort'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x397): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `getIP':
+rvma_socket.c:(.text+0x3a5): multiple definition of `getIP'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x3a5): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvsocket':
+rvma_socket.c:(.text+0x3dc): multiple definition of `rvsocket'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x3dc): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvbind':
+rvma_socket.c:(.text+0xb24): multiple definition of `rvbind'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0xb24): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvlisten':
+rvma_socket.c:(.text+0xc9b): multiple definition of `rvlisten'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0xc9b): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvaccept':
+rvma_socket.c:(.text+0xe16): multiple definition of `rvaccept'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0xe16): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvaccept_dgram':
+rvma_socket.c:(.text+0x1373): multiple definition of `rvaccept_dgram'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x1373): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvconnect':
+rvma_socket.c:(.text+0x1668): multiple definition of `rvconnect'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x1668): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvconnect_dgram':
+rvma_socket.c:(.text+0x1d35): multiple definition of `rvconnect_dgram'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x1d35): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvsend':
+rvma_socket.c:(.text+0x209b): multiple definition of `rvsend'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x209b): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvsendto':
+rvma_socket.c:(.text+0x2157): multiple definition of `rvsendto'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x2157): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvrecvfrom':
+rvma_socket.c:(.text+0x2762): multiple definition of `rvrecvfrom'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x2762): first defined here
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvrecv':
+rvma_socket.c:(.text+0x2a1b): multiple definition of `rvrecv'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x2a1b): first defined here

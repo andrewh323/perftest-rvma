@@ -140,7 +140,7 @@ static void ds_free(struct rvsocket *rvs) {
 
 static void rs_free(struct rvsocket *rvs) {
     if (rvs->type == SOCK_DGRAM) {
-        ds_free(rvs);
+        ds_free(rvs); 
         return;
     }
     if (rvs->index >= 0) {

@@ -1,6 +1,6 @@
 #! /bin/sh
 # Generated automatically by config.status (perftest) 6.20
-# Libtool was configured on host narval3:
+# Libtool was configured on host nc20428:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 
 # Provide generalized library-building support services.
@@ -97,7 +97,7 @@ NM="/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/bin/nm -B"
 LN_S="ln -s"
 
 # What is the maximum length of a command?
-max_cmd_len=1572864
+max_cmd_len=4718592
 
 # Object file suffix (normally "o").
 objext=o
@@ -291,7 +291,7 @@ hardcode_into_libs=yes
 sys_lib_search_path_spec="/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/lib /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/bliscore/0.9.0/lib64 /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Core/flexiblascore/3.3.1/lib64 /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcc12/openmpi/4.1.5/lib64 /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/ucc/1.2.0/lib64 /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/pmix/4.2.4/lib64 /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/libfabric/1.18.0/lib64 /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/ucx/1.14.1/lib64 /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/hwloc/2.9.1/lib64 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/lib64 /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/bliscore/0.9.0/lib /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Core/flexiblascore/3.3.1/lib /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcc12/openmpi/4.1.5/lib /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/ucc/1.2.0/lib /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/pmix/4.2.4/lib /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/libfabric/1.18.0/lib /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/ucx/1.14.1/lib /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/hwloc/2.9.1/lib /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/lib /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/lib "
 
 # Detected run-time system search path for libraries.
-sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib64//bind9-export/      /usr/lib64/llvm17/lib/ /opt/dell/srvadmin/lib64 /opt/dell/srvadmin/lib64 /opt/dell/srvadmin/lib64/srvadmin-idrac7 "
+sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib64/pipewire-0.3/jack/ /opt/dell/srvadmin/lib64 /opt/dell/srvadmin/lib64 "
 
 # Explicit LT_SYS_LIBRARY_PATH set during ./configure time.
 configure_time_lt_sys_library_path=""

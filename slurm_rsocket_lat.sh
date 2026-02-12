@@ -6,7 +6,7 @@
 #SBATCH --switches=1
 #SBATCH --time=1:00:00
 
-export RDMA_CORE_LIB="$HOME/src/rdma-core/build/lib"
+export RDMA_CORE_LIB="$HOME/rdma-core/build/lib"
 
 if [ ! -d "results" ]; then
     mkdir results
@@ -17,7 +17,7 @@ if [ ! -d "results/temp" ]; then
     echo "Created directory: results/temp"
 fi
 
-PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
+PATH_TO_BIN="/home/rysilve/perftest-rvma"
 
 # get the list of nodes
 nodes=($(scontrol show hostnames $SLURM_JOB_NODELIST))

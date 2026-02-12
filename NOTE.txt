@@ -1,0 +1,2 @@
+CAN MAKE RVMA_SHIM LIB WITH
+make rvma_shim

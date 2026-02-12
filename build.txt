@@ -1,0 +1,1 @@
+gcc -shared -fPIC rvma_shim.c src/rvma_write.c src/rvma_socket.c -L/home/rysilve/perftest-rvma/libperftest.a -libverbs -lrdmacm -I. -I./src -I/home/rysilve/rdma-core -o librvmashim.so -ldl
