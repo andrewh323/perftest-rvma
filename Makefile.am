@@ -107,10 +107,10 @@ rsocket_server_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX
 rsocket_server_dgram_SOURCES = src/rsocket_server_dgram.c
 rsocket_server_dgram_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
-rsocket_client_bw_SOURCES = src/rsocket_client_bw.C
+rsocket_client_bw_SOURCES = src/rsocket_client_bw.c
 rsocket_client_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
-rsocket_server_bw_SOURCES = src/rsocket_server_bw.C
+rsocket_server_bw_SOURCES = src/rsocket_server_bw.c
 rsocket_server_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
 ib_write_lat_SOURCES = src/write_lat.c
