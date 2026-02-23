@@ -10,7 +10,11 @@
 #include <stdint.h>
 #include <math.h>
 #include "rvma_write.h"
-#include "rvma_socket.c"
+// #include "rvma_socket.c"
+
+#include "rdtsc.h"
+
+#define RS_MAX_TRANSFER 4050
 
 #define MAX_RECV_SIZE 1024*1024 // 1MB
 
@@ -192,7 +196,7 @@ RVMA_Status rvmaCloseWin(RVMA_Win *window) {
     return RVMA_SUCCESS;
 }
 
-
+// IMPORTANT
 RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, void *virtualAddress,
                RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType) {
 

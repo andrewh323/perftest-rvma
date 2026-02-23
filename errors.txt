@@ -1,0 +1,54 @@
+src/atomic_bw.c:67:37: error: ‘VERSION’ undeclared (first use in this function)
+src/atomic_lat.c:75:37: error: ‘VERSION’ undeclared (first use in this function)
+src/cuda_memory.c:11:10: error: #include expects "FILENAME" or <FILENAME>
+src/cuda_memory.c:26:9: error: unknown type name ‘CUdevice’
+src/cuda_memory.c:27:9: error: unknown type name ‘CUcontext’
+src/cuda_memory.c:38:9: error: unknown type name ‘CUdevice’
+src/cuda_memory.c:41:9: error: unknown type name ‘CUresult’
+src/cuda_memory.c:42:22: error: ‘CUDA_SUCCESS’ undeclared (first use in this function); did you mean ‘EXIT_SUCCESS’?
+src/cuda_memory.c:15:9: error: unknown type name ‘CUresult’
+src/cuda_memory.c:66:56: error: ‘CU_DEVICE_ATTRIBUTE_PCI_BUS_ID’ undeclared (first use in this function)
+src/cuda_memory.c:67:59: error: ‘CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID’ undeclared (first use in this function)
+src/cuda_memory.c:15:9: error: unknown type name ‘CUresult’
+src/cuda_memory.c:15:9: error: unknown type name ‘CUresult’
+src/cuda_memory.c:81:46: error: ‘CU_CTX_MAP_HOST’ undeclared (first use in this function)
+src/cuda_memory.c:15:9: error: unknown type name ‘CUresult’
+src/cuda_memory.c:16:16: error: ‘CUDA_SUCCESS’ undeclared (first use in this function); did you mean ‘EXIT_SUCCESS’?
+src/cuda_memory.c:111:17: error: unknown type name ‘CUresult’
+src/cuda_memory.c:112:30: error: ‘CUDA_SUCCESS’ undeclared (first use in this function); did you mean ‘EXIT_SUCCESS’?
+src/cuda_memory.c:157:9: error: unknown type name ‘CUdeviceptr’
+src/cuda_memory.c:164:22: error: ‘CUDA_SUCCESS’ undeclared (first use in this function); did you mean ‘EXIT_SUCCESS’?
+src/cuda_memory.c:205:9: error: unknown type name ‘CUdeviceptr’
+src/cuda_memory.c:205:28: error: ‘CUdeviceptr’ undeclared (first use in this function)
+src/cuda_memory.c:205:40: error: expected ‘,’ or ‘;’ before ‘addr’
+src/cuda_memory.c:213:19: error: ‘CUdeviceptr’ undeclared (first use in this function)
+src/cuda_memory.c:213:31: error: expected ‘)’ before ‘dest’
+src/cuda_memory.c:218:23: error: ‘CUdeviceptr’ undeclared (first use in this function)
+src/cuda_memory.c:218:35: error: expected ‘)’ before ‘dest’
+src/cuda_memory.c:222:6: error: redefinition of ‘cuda_memory_supported’
+src/cuda_memory.c:226:6: error: redefinition of ‘cuda_memory_dmabuf_supported’
+src/cuda_memory.c:234:20: error: redefinition of ‘cuda_memory_create’
+src/hl_memory.c:11:10: fatal error: synapse_api.h: No such file or directory
+src/neuron_memory.c:9:10: fatal error: nrt/nrt.h: No such file or directory
+src/perftest_parameters.c:1137:54: error: ‘MLX5DV_BLOCK_SIZE_520’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_520’?
+src/perftest_parameters.c:1141:54: error: ‘MLX5DV_BLOCK_SIZE_4048’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_4048’?
+src/perftest_parameters.c:1145:54: error: ‘MLX5DV_BLOCK_SIZE_4096’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_4096’?
+src/perftest_parameters.c:1149:54: error: ‘MLX5DV_BLOCK_SIZE_4160’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_4160’?
+src/perftest_parameters.c:1153:54: error: ‘MLX5DV_BLOCK_SIZE_512’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_512’?
+src/perftest_parameters.c:2046:35: error: ‘query_hca_cap_in’ undeclared (first use in this function)
+src/perftest_parameters.c:2047:36: error: ‘query_hca_cap_out’ undeclared (first use in this function)
+src/perftest_parameters.c:2051:40: error: ‘opcode’ undeclared (first use in this function); did you mean ‘opmod’?
+src/perftest_parameters.c:2052:40: error: ‘op_mod’ undeclared (first use in this function); did you mean ‘opmod’?
+src/perftest_parameters.c:2058:39: error: ‘cmd_hca_cap’ undeclared (first use in this function)
+src/raw_ethernet_fs_rate.c:74:37: error: ‘VERSION’ undeclared (first use in this function); did you mean ‘IPVERSION’?
+src/raw_ethernet_send_burst_lat.c:84:37: error: ‘VERSION’ undeclared (first use in this function); did you mean ‘IPVERSION’?
+src/raw_ethernet_send_bw.c:84:37: error: ‘VERSION’ undeclared (first use in this function); did you mean ‘IPVERSION’?
+src/raw_ethernet_send_lat.c:85:37: error: ‘VERSION’ undeclared (first use in this function); did you mean ‘IPVERSION’?
+src/read_bw.c:67:37: error: ‘VERSION’ undeclared (first use in this function)
+src/read_lat.c:74:37: error: ‘VERSION’ undeclared (first use in this function)
+src/rocm_memory.c:9:10: fatal error: hip/hip_runtime_api.h: No such file or directory
+src/rvsocket_iperf_server.c:7:10: fatal error: iperf_api.h: No such file or directory
+src/send_bw.c:179:37: error: ‘VERSION’ undeclared (first use in this function)
+src/send_lat.c:187:37: error: ‘VERSION’ undeclared (first use in this function)
+src/write_bw.c:72:37: error: ‘VERSION’ undeclared (first use in this function)
+src/write_lat.c:80:37: error: ‘VERSION’ undeclared (first use in this function)

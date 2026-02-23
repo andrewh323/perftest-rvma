@@ -2173,11 +2173,11 @@ xrcd: __attribute__((unused))
 	#ifdef HAVE_XRCD
 	if (user_param->use_xrc)
 		ibv_close_xrcd(ctx->xrc_domain);
+	#endif
 
 xrc_srq:
 	if (user_param->use_xrc)
 		ibv_destroy_srq(ctx->srq);
-	#endif
 // cppcheck-suppress unusedLabelConfiguration
 cqs:
 	ibv_destroy_cq(ctx->send_cq);

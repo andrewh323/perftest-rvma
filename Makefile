@@ -1517,7 +1517,7 @@ pdf-am:
 
 ps: ps-am
 
-rvma_shim: # src/indexer.c src/rvma_write.c src/rvma_socket.c
+random:
 	gcc -g -c src/rvma_common.c -I. -I$(HOME)/rdma-core
 	gcc -g -c src/rvma_test_common.c -I. -I$(HOME)/rdma-core
 	gcc -g -c src/rvma_buffer_queue.c -I. -I$(HOME)/rdma-core
@@ -1527,13 +1527,34 @@ rvma_shim: # src/indexer.c src/rvma_write.c src/rvma_socket.c
 	gcc -g -c src/rvma_write.c -I. -I$(HOME)/rdma-core
 	gcc -g -c src/rvma_write_test.c -I. -I$(HOME)/rdma-core
 	gcc -g -c src/rvma_socket.c -I. -I$(HOME)/rdma-core
-	gcc -shared -fPIC rvma_shim.c src/rvma_write.c src/rvma_socket.c -L$(HOME)/perftest-rvma/libperftest.a -libverbs -lrdmacm -I. -I./src -I$(HOME)/rdma-core -o librvmashim.so -ldl
 
+# src/perftest_resources.c -I./src src/perftest_parameters.c src/perftest_counters.c src/perftest_resources.c
+rvma_shim: # src/indexer.c src/rvma_write.c src/rvma_socket.c -L$(HOME)/perftest-rvma/libperftest.a
+	gcc -shared -fPIC src/rvma_shim.c -I. -I$(HOME)/rdma-core -L$(HOME)/perftest-rvma/libperftest.a -lrdmacm -libverbs -o librvmashim.so -ldl
+# BEST ONE YET: src/perftest_parameters.c src/perftest_counters.c src/perftest_resources.c src/rdtsc.h src/rvma_common.c src/rvma_mailbox_hashmap.c src/rvma_socket.c src/rvma_shim.c src/rvma_buffer_queue.c src/indexer.c src/rvma_write.c
 rvma_shim2:
 # gcc -c -fPIC -I. -I./src -I$(HOME)/rdma-core src/rvma_socket.c
 	gcc -c -fPIC -I. -I./src -I$(HOME)/rdma-core src/rvma_write.c
 	gcc -c -fPIC -I. -I./src -I$(HOME)/rdma-core src/indexer.c
 	gcc -shared -o librvmashim.so rvma_socket.o rvma_write.o indexer.o -lrdmacm -libverbs -ldl
+
+rvma_shim3:
+	gcc -shared -fPIC \
+    src/perftest_parameters.c \
+    src/perftest_counters.c \
+    src/perftest_resources.c \
+    src/rvma_common.c \
+    src/rvma_mailbox_hashmap.c \
+    src/rvma_socket.c \
+    src/rvma_shim.c \
+    src/rvma_buffer_queue.c \
+    src/indexer.c \
+    src/rvma_write.c \
+    -I. \
+    -I$(HOME)/rdma-core \
+    $(HOME)/perftest-rvma/libperftest.a \
+    -lrdmacm -libverbs -ldl \
+    -o librvmashim.so
 
 
 ps-am:

@@ -4,6 +4,8 @@
 #ifndef MLX5_DEVX_H
 #define MLX5_DEVX_H
 
+#include <stdint.h>
+
 enum mlx5_cap_mode {
 	HCA_CAP_OPMOD_GET_MAX = 0,
 	HCA_CAP_OPMOD_GET_CUR	= 1,

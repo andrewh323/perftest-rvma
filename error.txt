@@ -1,28 +1,673 @@
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `constructVaddr':
-rvma_socket.c:(.text+0x35c): multiple definition of `constructVaddr'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x35c): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `getPort':
-rvma_socket.c:(.text+0x397): multiple definition of `getPort'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x397): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `getIP':
-rvma_socket.c:(.text+0x3a5): multiple definition of `getIP'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x3a5): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvsocket':
-rvma_socket.c:(.text+0x3dc): multiple definition of `rvsocket'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x3dc): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvbind':
-rvma_socket.c:(.text+0xb24): multiple definition of `rvbind'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0xb24): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvlisten':
-rvma_socket.c:(.text+0xc9b): multiple definition of `rvlisten'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0xc9b): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvaccept':
-rvma_socket.c:(.text+0xe16): multiple definition of `rvaccept'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0xe16): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvaccept_dgram':
-rvma_socket.c:(.text+0x1373): multiple definition of `rvaccept_dgram'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x1373): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvconnect':
-rvma_socket.c:(.text+0x1668): multiple definition of `rvconnect'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x1668): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvconnect_dgram':
-rvma_socket.c:(.text+0x1d35): multiple definition of `rvconnect_dgram'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x1d35): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvsend':
-rvma_socket.c:(.text+0x209b): multiple definition of `rvsend'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x209b): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvsendto':
-rvma_socket.c:(.text+0x2157): multiple definition of `rvsendto'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x2157): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvrecvfrom':
-rvma_socket.c:(.text+0x2762): multiple definition of `rvrecvfrom'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x2762): first defined here
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/x86_64-pc-linux-gnu/binutils-bin/2.41/ld: /tmp/ccFtO5tb.o: in function `rvrecv':
-rvma_socket.c:(.text+0x2a1b): multiple definition of `rvrecv'; /tmp/ccbStoSZ.o:rvma_write.c:(.text+0x2a1b): first defined here
+gcc -shared -fPIC src/*.c src/*.h -I. -I/home/rysilve/rdma-core -L/home/rysilve/perftest-rvma/libperftest.a -lrdmacm -libverbs -o librvmashim.so -ldl
+src/atomic_bw.c: In function ‘main’:
+src/atomic_bw.c:67:37: error: ‘VERSION’ undeclared (first use in this function)
+   67 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+src/atomic_bw.c:67:37: note: each undeclared identifier is reported only once for each function it appears in
+src/atomic_lat.c: In function ‘main’:
+src/atomic_lat.c:75:37: error: ‘VERSION’ undeclared (first use in this function)
+   75 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+src/atomic_lat.c:75:37: note: each undeclared identifier is reported only once for each function it appears in
+src/cuda_memory.c:11:10: error: #include expects "FILENAME" or <FILENAME>
+   11 | #include CUDA_PATH
+      |          ^~~~~~~~~
+src/cuda_memory.c:26:9: error: unknown type name ‘CUdevice’
+   26 |         CUdevice cuDevice;
+      |         ^~~~~~~~
+src/cuda_memory.c:27:9: error: unknown type name ‘CUcontext’
+   27 |         CUcontext cuContext;
+      |         ^~~~~~~~~
+src/cuda_memory.c: In function ‘init_gpu’:
+src/cuda_memory.c:38:9: error: unknown type name ‘CUdevice’
+   38 |         CUdevice cu_device;
+      |         ^~~~~~~~
+src/cuda_memory.c:41:9: error: unknown type name ‘CUresult’
+   41 |         CUresult error = cuInit(0);
+      |         ^~~~~~~~
+src/cuda_memory.c:41:26: warning: implicit declaration of function ‘cuInit’ [-Wimplicit-function-declaration]
+   41 |         CUresult error = cuInit(0);
+      |                          ^~~~~~
+src/cuda_memory.c:42:22: error: ‘CUDA_SUCCESS’ undeclared (first use in this function); did you mean ‘EXIT_SUCCESS’?
+   42 |         if (error != CUDA_SUCCESS) {
+      |                      ^~~~~~~~~~~~
+      |                      EXIT_SUCCESS
+src/cuda_memory.c:42:22: note: each undeclared identifier is reported only once for each function it appears in
+src/cuda_memory.c:48:17: warning: implicit declaration of function ‘cuDeviceGetCount’ [-Wimplicit-function-declaration]
+   48 |         error = cuDeviceGetCount(&deviceCount);
+      |                 ^~~~~~~~~~~~~~~~
+src/cuda_memory.c:15:9: error: unknown type name ‘CUresult’
+   15 |         CUresult result = (stmt); \
+      |         ^~~~~~~~
+src/cuda_memory.c:65:17: note: in expansion of macro ‘CUCHECK’
+   65 |                 CUCHECK(cuDeviceGet(&cu_device, index));
+      |                 ^~~~~~~
+src/cuda_memory.c:65:25: warning: implicit declaration of function ‘cuDeviceGet’ [-Wimplicit-function-declaration]
+   65 |                 CUCHECK(cuDeviceGet(&cu_device, index));
+      |                         ^~~~~~~~~~~
+src/cuda_memory.c:15:28: note: in definition of macro ‘CUCHECK’
+   15 |         CUresult result = (stmt); \
+      |                            ^~~~
+src/cuda_memory.c:66:17: warning: implicit declaration of function ‘cuDeviceGetAttribute’ [-Wimplicit-function-declaration]
+   66 |                 cuDeviceGetAttribute(&cuda_pci_bus_id, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID , cu_device);
+      |                 ^~~~~~~~~~~~~~~~~~~~
+src/cuda_memory.c:66:56: error: ‘CU_DEVICE_ATTRIBUTE_PCI_BUS_ID’ undeclared (first use in this function)
+   66 |                 cuDeviceGetAttribute(&cuda_pci_bus_id, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID , cu_device);
+      |                                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/cuda_memory.c:67:59: error: ‘CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID’ undeclared (first use in this function)
+   67 |                 cuDeviceGetAttribute(&cuda_pci_device_id, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID , cu_device);
+      |                                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/cuda_memory.c:15:9: error: unknown type name ‘CUresult’
+   15 |         CUresult result = (stmt); \
+      |         ^~~~~~~~
+src/cuda_memory.c:73:9: note: in expansion of macro ‘CUCHECK’
+   73 |         CUCHECK(cuDeviceGet(&ctx->cuDevice, cuda_device_id));
+      |         ^~~~~~~
+src/cuda_memory.c:15:9: error: unknown type name ‘CUresult’
+   15 |         CUresult result = (stmt); \
+      |         ^~~~~~~~
+src/cuda_memory.c:76:9: note: in expansion of macro ‘CUCHECK’
+   76 |         CUCHECK(cuDeviceGetName(name, sizeof(name), cuda_device_id));
+      |         ^~~~~~~
+src/cuda_memory.c:76:17: warning: implicit declaration of function ‘cuDeviceGetName’ [-Wimplicit-function-declaration]
+   76 |         CUCHECK(cuDeviceGetName(name, sizeof(name), cuda_device_id));
+      |                 ^~~~~~~~~~~~~~~
+src/cuda_memory.c:15:28: note: in definition of macro ‘CUCHECK’
+   15 |         CUresult result = (stmt); \
+      |                            ^~~~
+src/cuda_memory.c:81:17: warning: implicit declaration of function ‘cuCtxCreate’ [-Wimplicit-function-declaration]
+   81 |         error = cuCtxCreate(&ctx->cuContext, CU_CTX_MAP_HOST, ctx->cuDevice);
+      |                 ^~~~~~~~~~~
+src/cuda_memory.c:81:46: error: ‘CU_CTX_MAP_HOST’ undeclared (first use in this function)
+   81 |         error = cuCtxCreate(&ctx->cuContext, CU_CTX_MAP_HOST, ctx->cuDevice);
+      |                                              ^~~~~~~~~~~~~~~
+src/cuda_memory.c:88:17: warning: implicit declaration of function ‘cuCtxSetCurrent’ [-Wimplicit-function-declaration]
+   88 |         error = cuCtxSetCurrent(ctx->cuContext);
+      |                 ^~~~~~~~~~~~~~~
+src/cuda_memory.c: In function ‘free_gpu’:
+src/cuda_memory.c:15:9: error: unknown type name ‘CUresult’
+   15 |         CUresult result = (stmt); \
+      |         ^~~~~~~~
+src/cuda_memory.c:100:9: note: in expansion of macro ‘CUCHECK’
+  100 |         CUCHECK(cuCtxDestroy(ctx->cuContext));
+      |         ^~~~~~~
+src/cuda_memory.c:100:17: warning: implicit declaration of function ‘cuCtxDestroy’ [-Wimplicit-function-declaration]
+  100 |         CUCHECK(cuCtxDestroy(ctx->cuContext));
+      |                 ^~~~~~~~~~~~
+src/cuda_memory.c:15:28: note: in definition of macro ‘CUCHECK’
+   15 |         CUresult result = (stmt); \
+      |                            ^~~~
+In file included from src/cuda_memory.c:10:
+src/cuda_memory.c:16:16: error: ‘CUDA_SUCCESS’ undeclared (first use in this function); did you mean ‘EXIT_SUCCESS’?
+   16 |         ASSERT(CUDA_SUCCESS == result); \
+      |                ^~~~~~~~~~~~
+src/perftest_parameters.h:320:15: note: in definition of macro ‘ASSERT’
+  320 |         if (!(x)) { \
+      |               ^
+src/cuda_memory.c:100:9: note: in expansion of macro ‘CUCHECK’
+  100 |         CUCHECK(cuCtxDestroy(ctx->cuContext));
+      |         ^~~~~~~
+src/cuda_memory.c: In function ‘cuda_memory_init’:
+src/cuda_memory.c:111:17: error: unknown type name ‘CUresult’
+  111 |                 CUresult error = cuInit(0);
+      |                 ^~~~~~~~
+src/cuda_memory.c:112:30: error: ‘CUDA_SUCCESS’ undeclared (first use in this function); did you mean ‘EXIT_SUCCESS’?
+  112 |                 if (error != CUDA_SUCCESS) {
+      |                              ^~~~~~~~~~~~
+      |                              EXIT_SUCCESS
+src/cuda_memory.c:118:23: warning: implicit declaration of function ‘cuDeviceGetByPCIBusId’ [-Wimplicit-function-declaration]
+  118 |                 err = cuDeviceGetByPCIBusId(&cuda_ctx->device_id, cuda_ctx->device_bus_id);
+      |                       ^~~~~~~~~~~~~~~~~~~~~
+src/cuda_memory.c: In function ‘cuda_memory_allocate_buffer’:
+src/cuda_memory.c:157:9: error: unknown type name ‘CUdeviceptr’
+  157 |         CUdeviceptr d_A;
+      |         ^~~~~~~~~~~
+src/cuda_memory.c:163:17: warning: implicit declaration of function ‘cuMemAlloc’ [-Wimplicit-function-declaration]
+  163 |         error = cuMemAlloc(&d_A, buf_size);
+      |                 ^~~~~~~~~~
+src/cuda_memory.c:164:22: error: ‘CUDA_SUCCESS’ undeclared (first use in this function); did you mean ‘EXIT_SUCCESS’?
+  164 |         if (error != CUDA_SUCCESS) {
+      |                      ^~~~~~~~~~~~
+      |                      EXIT_SUCCESS
+src/cuda_memory.c:169:77: warning: cast to pointer from integer of different size [-Wint-to-pointer-cast]
+  169 |         printf("allocated GPU buffer address at %016llx pointer=%p\n", d_A, (void *)d_A);
+      |                                                                             ^
+src/cuda_memory.c:169:55: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘int’ [-Wformat=]
+  169 |         printf("allocated GPU buffer address at %016llx pointer=%p\n", d_A, (void *)d_A);
+      |                                                 ~~~~~~^                ~~~
+      |                                                       |                |
+      |                                                       |                int
+      |                                                       long long unsigned int
+      |                                                 %016x
+src/cuda_memory.c:170:17: warning: cast to pointer from integer of different size [-Wint-to-pointer-cast]
+  170 |         *addr = (void *)d_A;
+      |                 ^
+src/cuda_memory.c: In function ‘cuda_memory_free_buffer’:
+src/cuda_memory.c:205:9: error: unknown type name ‘CUdeviceptr’
+  205 |         CUdeviceptr d_A = (CUdeviceptr)addr;
+      |         ^~~~~~~~~~~
+src/cuda_memory.c:205:28: error: ‘CUdeviceptr’ undeclared (first use in this function)
+  205 |         CUdeviceptr d_A = (CUdeviceptr)addr;
+      |                            ^~~~~~~~~~~
+src/cuda_memory.c:205:40: error: expected ‘,’ or ‘;’ before ‘addr’
+  205 |         CUdeviceptr d_A = (CUdeviceptr)addr;
+      |                                        ^~~~
+src/cuda_memory.c:207:50: warning: format ‘%llx’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘int’ [-Wformat=]
+  207 |         printf("deallocating RX GPU buffer %016llx\n", d_A);
+      |                                            ~~~~~~^     ~~~
+      |                                                  |     |
+      |                                                  |     int
+      |                                                  long long unsigned int
+      |                                            %016x
+src/cuda_memory.c:208:9: warning: implicit declaration of function ‘cuMemFree’ [-Wimplicit-function-declaration]
+  208 |         cuMemFree(d_A);
+      |         ^~~~~~~~~
+src/cuda_memory.c: In function ‘cuda_memory_copy_host_buffer’:
+src/cuda_memory.c:213:9: warning: implicit declaration of function ‘cuMemcpy’; did you mean ‘memcpy’? [-Wimplicit-function-declaration]
+  213 |         cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
+      |         ^~~~~~~~
+      |         memcpy
+src/cuda_memory.c:213:19: error: ‘CUdeviceptr’ undeclared (first use in this function)
+  213 |         cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
+      |                   ^~~~~~~~~~~
+src/cuda_memory.c:213:31: error: expected ‘)’ before ‘dest’
+  213 |         cuMemcpy((CUdeviceptr)dest, (CUdeviceptr)src, size);
+      |                 ~             ^~~~
+      |                               )
+src/cuda_memory.c: In function ‘cuda_memory_copy_buffer_to_buffer’:
+src/cuda_memory.c:218:9: warning: implicit declaration of function ‘cuMemcpyDtoD’ [-Wimplicit-function-declaration]
+  218 |         cuMemcpyDtoD((CUdeviceptr)dest, (CUdeviceptr)src, size);
+      |         ^~~~~~~~~~~~
+src/cuda_memory.c:218:23: error: ‘CUdeviceptr’ undeclared (first use in this function)
+  218 |         cuMemcpyDtoD((CUdeviceptr)dest, (CUdeviceptr)src, size);
+      |                       ^~~~~~~~~~~
+src/cuda_memory.c:218:35: error: expected ‘)’ before ‘dest’
+  218 |         cuMemcpyDtoD((CUdeviceptr)dest, (CUdeviceptr)src, size);
+      |                     ~             ^~~~
+      |                                   )
+src/cuda_memory.c: At top level:
+src/cuda_memory.c:222:6: error: redefinition of ‘cuda_memory_supported’
+  222 | bool cuda_memory_supported() {
+      |      ^~~~~~~~~~~~~~~~~~~~~
+In file included from src/cuda_memory.c:9:
+src/cuda_memory.h:24:13: note: previous definition of ‘cuda_memory_supported’ with type ‘_Bool()’
+   24 | inline bool cuda_memory_supported() {
+      |             ^~~~~~~~~~~~~~~~~~~~~
+src/cuda_memory.c:226:6: error: redefinition of ‘cuda_memory_dmabuf_supported’
+  226 | bool cuda_memory_dmabuf_supported() {
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/cuda_memory.h:28:13: note: previous definition of ‘cuda_memory_dmabuf_supported’ with type ‘_Bool()’
+   28 | inline bool cuda_memory_dmabuf_supported() {
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/cuda_memory.c:234:20: error: redefinition of ‘cuda_memory_create’
+  234 | struct memory_ctx *cuda_memory_create(struct perftest_parameters *params) {
+      |                    ^~~~~~~~~~~~~~~~~~
+src/cuda_memory.h:32:27: note: previous definition of ‘cuda_memory_create’ with type ‘struct memory_ctx *(struct perftest_parameters *)’
+   32 | inline struct memory_ctx *cuda_memory_create(struct perftest_parameters *params) {
+      |                           ^~~~~~~~~~~~~~~~~~
+src/hl_memory.c:11:10: fatal error: synapse_api.h: No such file or directory
+   11 | #include "synapse_api.h"
+      |          ^~~~~~~~~~~~~~~
+compilation terminated.
+src/neuron_memory.c:9:10: fatal error: nrt/nrt.h: No such file or directory
+    9 | #include <nrt/nrt.h>
+      |          ^~~~~~~~~~~
+compilation terminated.
+src/perftest_communication.c: In function ‘rdma_write_keys’:
+src/perftest_communication.c:464:9: warning: ‘memcpy’ reading 56 bytes from a region of size 8 [-Wstringop-overread]
+  464 |         memcpy(comm->rdma_ctx->buf[0], &my_dest, sizeof(struct pingpong_dest));
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/perftest_communication.c:436:50: note: source object ‘my_dest’ of size 8
+  436 | static int rdma_write_keys(struct pingpong_dest *my_dest,
+      |                            ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
+src/perftest_communication.c: In function ‘rdma_read_keys’:
+src/perftest_communication.c:529:9: warning: ‘memcpy’ writing 56 bytes into a region of size 8 overflows the destination [-Wstringop-overflow=]
+  529 |         memcpy(&rem_dest,comm->rdma_ctx->buf[0],sizeof(struct pingpong_dest));
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/perftest_communication.c:499:49: note: destination object ‘rem_dest’ of size 8
+  499 | static int rdma_read_keys(struct pingpong_dest *rem_dest,
+      |                           ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~
+src/perftest_counters.c: In function ‘counters_open’:
+src/perftest_counters.c:71:21: warning: implicit declaration of function ‘asprintf’; did you mean ‘vsprintf’? [-Wimplicit-function-declaration]
+   71 |                 if (asprintf(&given_path, COUNTER_PATH, dev_name, port, next_counter) == -1) {
+      |                     ^~~~~~~~
+      |                     vsprintf
+src/perftest_parameters.c: In function ‘force_dependecies’:
+src/perftest_parameters.c:1137:54: error: ‘MLX5DV_BLOCK_SIZE_520’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_520’?
+ 1137 |                         user_param->aes_block_size = MLX5DV_BLOCK_SIZE_520;
+      |                                                      ^~~~~~~~~~~~~~~~~~~~~
+      |                                                      AES_XTS_BLOCK_SIZE_520
+src/perftest_parameters.c:1137:54: note: each undeclared identifier is reported only once for each function it appears in
+src/perftest_parameters.c:1141:54: error: ‘MLX5DV_BLOCK_SIZE_4048’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_4048’?
+ 1141 |                         user_param->aes_block_size = MLX5DV_BLOCK_SIZE_4048;
+      |                                                      ^~~~~~~~~~~~~~~~~~~~~~
+      |                                                      AES_XTS_BLOCK_SIZE_4048
+src/perftest_parameters.c:1145:54: error: ‘MLX5DV_BLOCK_SIZE_4096’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_4096’?
+ 1145 |                         user_param->aes_block_size = MLX5DV_BLOCK_SIZE_4096;
+      |                                                      ^~~~~~~~~~~~~~~~~~~~~~
+      |                                                      AES_XTS_BLOCK_SIZE_4096
+src/perftest_parameters.c:1149:54: error: ‘MLX5DV_BLOCK_SIZE_4160’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_4160’?
+ 1149 |                         user_param->aes_block_size = MLX5DV_BLOCK_SIZE_4160;
+      |                                                      ^~~~~~~~~~~~~~~~~~~~~~
+      |                                                      AES_XTS_BLOCK_SIZE_4160
+src/perftest_parameters.c:1153:54: error: ‘MLX5DV_BLOCK_SIZE_512’ undeclared (first use in this function); did you mean ‘AES_XTS_BLOCK_SIZE_512’?
+ 1153 |                         user_param->aes_block_size = MLX5DV_BLOCK_SIZE_512;
+      |                                                      ^~~~~~~~~~~~~~~~~~~~~
+      |                                                      AES_XTS_BLOCK_SIZE_512
+src/perftest_parameters.c: In function ‘get_device_max_reads_dc’:
+src/perftest_parameters.c:2046:21: warning: implicit declaration of function ‘DEVX_ST_SZ_DW’ [-Wimplicit-function-declaration]
+ 2046 |         uint32_t in[DEVX_ST_SZ_DW(query_hca_cap_in)] = {};
+      |                     ^~~~~~~~~~~~~
+src/perftest_parameters.c:2046:35: error: ‘query_hca_cap_in’ undeclared (first use in this function)
+ 2046 |         uint32_t in[DEVX_ST_SZ_DW(query_hca_cap_in)] = {};
+      |                                   ^~~~~~~~~~~~~~~~
+src/perftest_parameters.c:2047:36: error: ‘query_hca_cap_out’ undeclared (first use in this function)
+ 2047 |         uint32_t out[DEVX_ST_SZ_DW(query_hca_cap_out)] = {};
+      |                                    ^~~~~~~~~~~~~~~~~
+src/perftest_parameters.c:2051:9: warning: implicit declaration of function ‘DEVX_SET’ [-Wimplicit-function-declaration]
+ 2051 |         DEVX_SET(query_hca_cap_in, in, opcode, MLX5_CMD_OP_QUERY_HCA_CAP);
+      |         ^~~~~~~~
+src/perftest_parameters.c:2051:40: error: ‘opcode’ undeclared (first use in this function); did you mean ‘opmod’?
+ 2051 |         DEVX_SET(query_hca_cap_in, in, opcode, MLX5_CMD_OP_QUERY_HCA_CAP);
+      |                                        ^~~~~~
+      |                                        opmod
+src/perftest_parameters.c:2052:40: error: ‘op_mod’ undeclared (first use in this function); did you mean ‘opmod’?
+ 2052 |         DEVX_SET(query_hca_cap_in, in, op_mod, opmod);
+      |                                        ^~~~~~
+      |                                        opmod
+src/perftest_parameters.c:2054:15: warning: implicit declaration of function ‘mlx5dv_devx_general_cmd’ [-Wimplicit-function-declaration]
+ 2054 |         ret = mlx5dv_devx_general_cmd(context, in, sizeof(in), out,
+      |               ^~~~~~~~~~~~~~~~~~~~~~~
+src/perftest_parameters.c:2057:30: warning: implicit declaration of function ‘DEVX_GET’ [-Wimplicit-function-declaration]
+ 2057 |                 return (1 << DEVX_GET(query_hca_cap_out, out,
+      |                              ^~~~~~~~
+src/perftest_parameters.c:2058:39: error: ‘cmd_hca_cap’ undeclared (first use in this function)
+ 2058 |                                       cmd_hca_cap.log_max_ra_req_dc));
+      |                                       ^~~~~~~~~~~
+In file included from src/perftest_parameters.c:12:
+src/perftest_parameters.c: In function ‘parser’:
+src/perftest_parameters.c:2465:69: warning: implicit declaration of function ‘strdupa’; did you mean ‘strdup’? [-Wimplicit-function-declaration]
+ 2465 |                         case 'd': GET_STRING(user_param->ib_devname,strdupa(optarg)); break;
+      |                                                                     ^~~~~~~
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:2465:35: note: in expansion of macro ‘GET_STRING’
+ 2465 |                         case 'd': GET_STRING(user_param->ib_devname,strdupa(optarg)); break;
+      |                                   ^~~~~~~~~~
+src/perftest_parameters.c:2465:69: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 2465 |                         case 'd': GET_STRING(user_param->ib_devname,strdupa(optarg)); break;
+      |                                                                     ^~~~~~~~~~~~~~~
+      |                                                                     |
+      |                                                                     int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:2465:35: note: in expansion of macro ‘GET_STRING’
+ 2465 |                         case 'd': GET_STRING(user_param->ib_devname,strdupa(optarg)); break;
+      |                                   ^~~~~~~~~~
+In file included from src/perftest_parameters.c:3:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:2465:69: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 2465 |                         case 'd': GET_STRING(user_param->ib_devname,strdupa(optarg)); break;
+      |                                                                     ^~~~~~~~~~~~~~~
+      |                                                                     |
+      |                                                                     int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_parameters.c:2512:68: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 2512 |                         case 'M': GET_STRING(user_param->user_mgid,strdupa(optarg)); break;
+      |                                                                    ^~~~~~~~~~~~~~~
+      |                                                                    |
+      |                                                                    int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:2512:35: note: in expansion of macro ‘GET_STRING’
+ 2512 |                         case 'M': GET_STRING(user_param->user_mgid,strdupa(optarg)); break;
+      |                                   ^~~~~~~~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:2512:68: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 2512 |                         case 'M': GET_STRING(user_param->user_mgid,strdupa(optarg)); break;
+      |                                                                    ^~~~~~~~~~~~~~~
+      |                                                                    |
+      |                                                                    int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_parameters.c:2728:80: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 2728 |                                         GET_STRING(user_param->rate_limit_str ,strdupa(optarg));
+      |                                                                                ^~~~~~~~~~~~~~~
+      |                                                                                |
+      |                                                                                int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:2728:41: note: in expansion of macro ‘GET_STRING’
+ 2728 |                                         GET_STRING(user_param->rate_limit_str ,strdupa(optarg));
+      |                                         ^~~~~~~~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:2728:80: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 2728 |                                         GET_STRING(user_param->rate_limit_str ,strdupa(optarg));
+      |                                                                                ^~~~~~~~~~~~~~~
+      |                                                                                |
+      |                                                                                int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_parameters.c:2964:75: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 2964 |                                         GET_STRING(user_param->source_ip, strdupa(optarg));
+      |                                                                           ^~~~~~~~~~~~~~~
+      |                                                                           |
+      |                                                                           int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:2964:41: note: in expansion of macro ‘GET_STRING’
+ 2964 |                                         GET_STRING(user_param->source_ip, strdupa(optarg));
+      |                                         ^~~~~~~~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:2964:75: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 2964 |                                         GET_STRING(user_param->source_ip, strdupa(optarg));
+      |                                                                           ^~~~~~~~~~~~~~~
+      |                                                                           |
+      |                                                                           int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_parameters.c:2969:83: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 2969 |                                         GET_STRING(user_param->payload_file_path, strdupa(optarg));
+      |                                                                                   ^~~~~~~~~~~~~~~
+      |                                                                                   |
+      |                                                                                   int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:2969:41: note: in expansion of macro ‘GET_STRING’
+ 2969 |                                         GET_STRING(user_param->payload_file_path, strdupa(optarg));
+      |                                         ^~~~~~~~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:2969:83: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 2969 |                                         GET_STRING(user_param->payload_file_path, strdupa(optarg));
+      |                                                                                   ^~~~~~~~~~~~~~~
+      |                                                                                   |
+      |                                                                                   int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_parameters.c:3027:74: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 3027 |                                         GET_STRING(user_param->kek_path, strdupa(optarg));
+      |                                                                          ^~~~~~~~~~~~~~~
+      |                                                                          |
+      |                                                                          int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:3027:41: note: in expansion of macro ‘GET_STRING’
+ 3027 |                                         GET_STRING(user_param->kek_path, strdupa(optarg));
+      |                                         ^~~~~~~~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:3027:74: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 3027 |                                         GET_STRING(user_param->kek_path, strdupa(optarg));
+      |                                                                          ^~~~~~~~~~~~~~~
+      |                                                                          |
+      |                                                                          int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_parameters.c:3031:87: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 3031 |                                         GET_STRING(user_param->data_enc_key_app_path, strdupa(optarg));
+      |                                                                                       ^~~~~~~~~~~~~~~
+      |                                                                                       |
+      |                                                                                       int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:3031:41: note: in expansion of macro ‘GET_STRING’
+ 3031 |                                         GET_STRING(user_param->data_enc_key_app_path, strdupa(optarg));
+      |                                         ^~~~~~~~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:3031:87: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 3031 |                                         GET_STRING(user_param->data_enc_key_app_path, strdupa(optarg));
+      |                                                                                       ^~~~~~~~~~~~~~~
+      |                                                                                       |
+      |                                                                                       int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_parameters.c:3035:82: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 3035 |                                         GET_STRING(user_param->credentials_path, strdupa(optarg));
+      |                                                                                  ^~~~~~~~~~~~~~~
+      |                                                                                  |
+      |                                                                                  int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:3035:41: note: in expansion of macro ‘GET_STRING’
+ 3035 |                                         GET_STRING(user_param->credentials_path, strdupa(optarg));
+      |                                         ^~~~~~~~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:3035:82: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 3035 |                                         GET_STRING(user_param->credentials_path, strdupa(optarg));
+      |                                                                                  ^~~~~~~~~~~~~~~
+      |                                                                                  |
+      |                                                                                  int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_parameters.c:3239:51: warning: passing argument 1 of ‘strlen’ makes pointer from integer without a cast [-Wint-conversion]
+ 3239 |                 GET_STRING(user_param->servername,strdupa(argv[optind]));
+      |                                                   ^~~~~~~~~~~~~~~~~~~~~
+      |                                                   |
+      |                                                   int
+src/perftest_parameters.h:295:41: note: in definition of macro ‘ALLOCATE’
+  295 | { if((var = (type*)malloc(sizeof(type)*(size))) == NULL)        \
+      |                                         ^~~~
+src/perftest_parameters.c:3239:17: note: in expansion of macro ‘GET_STRING’
+ 3239 |                 GET_STRING(user_param->servername,strdupa(argv[optind]));
+      |                 ^~~~~~~~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:407:35: note: expected ‘const char *’ but argument is of type ‘int’
+  407 | extern size_t strlen (const char *__s)
+      |                       ~~~~~~~~~~~~^~~
+src/perftest_parameters.c:3239:51: warning: passing argument 2 of ‘strcpy’ makes pointer from integer without a cast [-Wint-conversion]
+ 3239 |                 GET_STRING(user_param->servername,strdupa(argv[optind]));
+      |                                                   ^~~~~~~~~~~~~~~~~~~~~
+      |                                                   |
+      |                                                   int
+src/perftest_parameters.h:310:55: note: in definition of macro ‘GET_STRING’
+  310 | { ALLOCATE(orig,char,(strlen(temp) + 1)); strcpy(orig,temp); }
+      |                                                       ^~~~
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:141:70: note: expected ‘const char * restrict’ but argument is of type ‘int’
+  141 | extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+      |                                               ~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+src/perftest_resources.c: In function ‘check_add_port’:
+src/perftest_resources.c:836:13: warning: implicit declaration of function ‘asprintf’; did you mean ‘vsprintf’? [-Wimplicit-function-declaration]
+  836 |         if (asprintf(service,"%d", port) < 0) {
+      |             ^~~~~~~~
+      |             vsprintf
+src/raw_ethernet_fs_rate.c: In function ‘main’:
+src/raw_ethernet_fs_rate.c:74:37: error: ‘VERSION’ undeclared (first use in this function); did you mean ‘IPVERSION’?
+   74 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+      |                                     IPVERSION
+src/raw_ethernet_fs_rate.c:74:37: note: each undeclared identifier is reported only once for each function it appears in
+src/raw_ethernet_send_burst_lat.c: In function ‘main’:
+src/raw_ethernet_send_burst_lat.c:84:37: error: ‘VERSION’ undeclared (first use in this function); did you mean ‘IPVERSION’?
+   84 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+      |                                     IPVERSION
+src/raw_ethernet_send_burst_lat.c:84:37: note: each undeclared identifier is reported only once for each function it appears in
+src/raw_ethernet_send_bw.c: In function ‘main’:
+src/raw_ethernet_send_bw.c:84:37: error: ‘VERSION’ undeclared (first use in this function); did you mean ‘IPVERSION’?
+   84 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+      |                                     IPVERSION
+src/raw_ethernet_send_bw.c:84:37: note: each undeclared identifier is reported only once for each function it appears in
+src/raw_ethernet_send_lat.c: In function ‘main’:
+src/raw_ethernet_send_lat.c:85:37: error: ‘VERSION’ undeclared (first use in this function); did you mean ‘IPVERSION’?
+   85 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+      |                                     IPVERSION
+src/raw_ethernet_send_lat.c:85:37: note: each undeclared identifier is reported only once for each function it appears in
+src/read_bw.c: In function ‘main’:
+src/read_bw.c:67:37: error: ‘VERSION’ undeclared (first use in this function)
+   67 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+src/read_bw.c:67:37: note: each undeclared identifier is reported only once for each function it appears in
+src/read_lat.c: In function ‘main’:
+src/read_lat.c:74:37: error: ‘VERSION’ undeclared (first use in this function)
+   74 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+src/read_lat.c:74:37: note: each undeclared identifier is reported only once for each function it appears in
+src/rocm_memory.c:9:10: fatal error: hip/hip_runtime_api.h: No such file or directory
+    9 | #include <hip/hip_runtime_api.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+src/rvma_buffer_queue_test.c: In function ‘test_dequeue’:
+src/rvma_buffer_queue_test.c:371:43: warning: comparison between pointer and integer
+  371 |     bool status = (dequeue(bq_test_queue) == RVMA_FAILURE) ? false : true;
+      |                                           ^~
+src/rvma_buffer_queue_test.c: In function ‘test_dequeueNullQueue’:
+src/rvma_buffer_queue_test.c:383:34: warning: comparison between pointer and integer
+  383 |     bool status = (dequeue(NULL) != RVMA_FAILURE) ? false : true;
+      |                                  ^~
+src/rvma_buffer_queue_test.c: In function ‘test_dequeueNullEntry’:
+src/rvma_buffer_queue_test.c:393:43: warning: comparison between pointer and integer
+  393 |     bool status = (dequeue(bq_test_queue) != RVMA_FAILURE) ? false : true;
+      |                                           ^~
+src/rvma_buffer_queue_test.c: In function ‘test_dequeueNonexistentEntry’:
+src/rvma_buffer_queue_test.c:403:43: warning: comparison between pointer and integer
+  403 |     bool status = (dequeue(bq_test_queue) != RVMA_FAILURE) ? false : true;
+      |                                           ^~
+src/rvma_shim.c: In function ‘socket’:
+src/rvma_shim.c:83:48: warning: format ‘%p’ expects argument of type ‘void *’, but argument 3 has type ‘struct in_addr’ [-Wformat=]
+   83 |     fprintf(stderr, "[shim] socket address -> %p\n", server_addr.sin_addr);
+      |                                               ~^     ~~~~~~~~~~~~~~~~~~~~
+      |                                                |                |
+      |                                                void *           struct in_addr
+src/rvma_shim.c:87:39: warning: format ‘%d’ expects argument of type ‘int’, but argument 3 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+   87 |     fprintf(stderr, "[shim] vaddr -> %d\n", vaddr);
+      |                                      ~^     ~~~~~
+      |                                       |     |
+      |                                       int   uint64_t {aka long unsigned int}
+      |                                      %ld
+In file included from src/perftest_parameters.h:64,
+                 from src/rvma_common.h:15,
+                 from src/rvma_write.h:8,
+                 from src/perftest_resources.h:56,
+                 from src/rvma_socket.c:28:
+src/memory.h:14: warning: "container_of" redefined
+   14 | #define container_of(ptr, type, member) ({                      \
+      | 
+In file included from src/rvma_socket.c:24:
+/home/rysilve/rdma-core/ccan/container_of.h:34: note: this is the location of the previous definition
+   34 | #define container_of(member_ptr, containing_type, member)               \
+      | 
+src/rvma_socket.c: In function ‘rvsocket’:
+src/rvma_socket.c:309:58: warning: passing argument 3 of ‘postRecvPool’ makes pointer from integer without a cast [-Wint-conversion]
+  309 |         if (postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+      |                                                          ^~~~~
+      |                                                          |
+      |                                                          uint64_t {aka long unsigned int}
+src/rvma_write.h:37:69: note: expected ‘void *’ but argument is of type ‘uint64_t’ {aka ‘long unsigned int’}
+   37 | RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch_type epochType);
+      |                                                               ~~~~~~^~~~~
+src/rvma_socket.c: In function ‘rvaccept’:
+src/rvma_socket.c:502:74: warning: passing argument 3 of ‘postRecvPool’ makes pointer from integer without a cast [-Wint-conversion]
+  502 |     RVMA_Status status = postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, rvs->vaddr, EPOCH_BYTES);
+      |                                                                       ~~~^~~~~~~
+      |                                                                          |
+      |                                                                          uint64_t {aka long unsigned int}
+src/rvma_write.h:37:69: note: expected ‘void *’ but argument is of type ‘uint64_t’ {aka ‘long unsigned int’}
+   37 | RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch_type epochType);
+      |                                                               ~~~~~~^~~~~
+src/rvma_socket.c: In function ‘rvconnect’:
+src/rvma_socket.c:698:74: warning: passing argument 3 of ‘postRecvPool’ makes pointer from integer without a cast [-Wint-conversion]
+  698 |     RVMA_Status status = postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, rvs->vaddr, EPOCH_BYTES);
+      |                                                                       ~~~^~~~~~~
+      |                                                                          |
+      |                                                                          uint64_t {aka long unsigned int}
+src/rvma_write.h:37:69: note: expected ‘void *’ but argument is of type ‘uint64_t’ {aka ‘long unsigned int’}
+   37 | RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, void *vaddr, epoch_type epochType);
+      |                                                               ~~~~~~^~~~~
+src/rvma_socket.c: In function ‘rvsendto’:
+src/rvma_socket.c:879:117: warning: passing argument 5 of ‘rvmaPostBuffer’ makes pointer from integer without a cast [-Wint-conversion]
+  879 |         RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)&full_buf, total_size, notifBuffPtr, (void *)notifLenPtr, vaddr,
+      |                                                                                                                     ^~~~~
+      |                                                                                                                     |
+      |                                                                                                                     uint64_t {aka long unsigned int}
+src/rvma_write.h:35:121: note: expected ‘void *’ but argument is of type ‘uint64_t’ {aka ‘long unsigned int’}
+   35 | RVMA_Buffer_Entry* rvmaPostBuffer(void **buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, void *virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType);
+      |                                                                                                                   ~~~~~~^~~~~~~~~~~~~~
+src/rvsocket_iperf_server.c:7:10: fatal error: iperf_api.h: No such file or directory
+    7 | #include <iperf_api.h>
+      |          ^~~~~~~~~~~~~
+compilation terminated.
+src/send_bw.c: In function ‘main’:
+src/send_bw.c:179:37: error: ‘VERSION’ undeclared (first use in this function)
+  179 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+src/send_bw.c:179:37: note: each undeclared identifier is reported only once for each function it appears in
+src/send_lat.c: In function ‘main’:
+src/send_lat.c:187:37: error: ‘VERSION’ undeclared (first use in this function)
+  187 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+src/send_lat.c:187:37: note: each undeclared identifier is reported only once for each function it appears in
+src/write_bw.c: In function ‘main’:
+src/write_bw.c:72:37: error: ‘VERSION’ undeclared (first use in this function)
+   72 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+src/write_bw.c:72:37: note: each undeclared identifier is reported only once for each function it appears in
+src/write_bw.c:533:63: warning: format ‘%llu’ expects argument of type ‘long long unsigned int’, but argument 2 has type ‘uint64_t’ {aka ‘long unsigned int’} [-Wformat=]
+  533 |         printf("The total number of bytes transferred was: %llu bytes (Most is repeats and throw away)\n", ctx.buff_size*user_param.iters/2);
+      |                                                            ~~~^                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                               |                                                                          |
+      |                                                               long long unsigned int                                                     uint64_t {aka long unsigned int}
+      |                                                            %lu
+src/write_lat.c: In function ‘main’:
+src/write_lat.c:80:37: error: ‘VERSION’ undeclared (first use in this function)
+   80 |         strncpy(user_param.version, VERSION, sizeof(user_param.version));
+      |                                     ^~~~~~~
+src/write_lat.c:80:37: note: each undeclared identifier is reported only once for each function it appears in
+make: *** [Makefile:1533: rvma_shim] Error 1

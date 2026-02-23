@@ -18,7 +18,7 @@
 #include <net/if.h>
 
 #include "rvma_socket.h"
-#include "rvma_write.h"
+//#include "rvma_write.h"
 
 #define PORT 5201
 

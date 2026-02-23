@@ -1,6 +1,6 @@
 #! /bin/sh
 # Generated automatically by config.status (perftest) 6.20
-# Libtool was configured on host nc20428:
+# Libtool was configured on host narval1:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 
 # Provide generalized library-building support services.
@@ -97,7 +97,7 @@ NM="/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/bin/nm -B"
 LN_S="ln -s"
 
 # What is the maximum length of a command?
-max_cmd_len=4718592
+max_cmd_len=1572864
 
 # Object file suffix (normally "o").
 objext=o
@@ -171,7 +171,7 @@ lock_old_archive_extraction=no
 LTCC="gcc"
 
 # LTCC compiler flags.
-LTCFLAGS="-g -Wall -D_GNU_SOURCE -O3 -g -O2"
+LTCFLAGS="-g -Wall -D_GNU_SOURCE -O3 -fPIC"
 
 # Take the output of nm and produce a listing of raw symbols and C names.
 global_symbol_pipe="/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/bin/sed -n -e 's/^.*[	 ]\\([ABCDGIRSTW][ABCDGIRSTW]*\\)[	 ][	 ]*\\([_A-Za-z][_A-Za-z0-9]*\\)\$/\\1 \\2 \\2/p' | /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/bin/sed '/ __gnu_lto/d'"

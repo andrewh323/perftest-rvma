@@ -27,7 +27,9 @@
 #include <rdma/rdma_verbs.h>
 #include "perftest_resources.h"
 #include "rvma_socket.h"
+#include "rvma_write.h"
 #include "indexer.h"
+#include "rdtsc.h"
 
 #define PORT 7471
 #define RS_SNDLOWAT 2048
@@ -166,14 +168,14 @@ uint32_t getIP(uint64_t vaddr) {
     return (uint32_t)((vaddr >> 16) & 0xFFFFFFFF);
 }
 
-// Function to measure clock cycles
-static inline uint64_t rdtsc(){
-    unsigned int lo, hi;
-    // Serialize to prevent out-of-order execution affecting timing
-    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
-    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)hi << 32) | lo;
-}
+// // Function to measure clock cycles
+// static inline uint64_t rdtsc(){
+//     unsigned int lo, hi;
+//     // Serialize to prevent out-of-order execution affecting timing
+//     asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
+//     asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
+//     return ((uint64_t)hi << 32) | lo;
+// }
 
 // Create rvsocket
 // Return socketfd after inserting into idm
