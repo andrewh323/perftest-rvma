@@ -519,7 +519,7 @@ CCAS = gcc
 CCASDEPMODE = depmode=gcc3
 CCASFLAGS = -g -O2
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -Wall -D_GNU_SOURCE -O3 -g -O2
+CFLAGS = -g -Wall -D_GNU_SOURCE -O3 -g -O2 -I$(HOME)/rdma-core/build/include
 CPPFLAGS =  -I$(HOME)/src/rdma-core/build/include
 CSCOPE = cscope
 CTAGS = ctags
@@ -631,7 +631,7 @@ mandir = ${datarootdir}/man
 mkdir_p = $(MKDIR_P)
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /usr
+prefix = /home/rysilve/perftest-rvma/install
 program_transform_name = s,x,x,
 psdir = ${docdir}
 runstatedir = ${localstatedir}/run
@@ -1517,6 +1517,10 @@ pdf-am:
 
 ps: ps-am
 
+ps-am:
+
+uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS
+
 random:
 	gcc -g -c src/rvma_common.c -I. -I$(HOME)/rdma-core
 	gcc -g -c src/rvma_test_common.c -I. -I$(HOME)/rdma-core
@@ -1556,10 +1560,19 @@ rvma_shim3:
     -lrdmacm -libverbs -ldl \
     -o librvmashim.so
 
+SHIMFLAGS = -fPIC -shared -DHAVE_CONFIG_H -I. \
+-I$(HOME)/rdma-core \
+-D_GNU_SOURCE -Wall -O3 -g \
+-o librvma_shim.so src/rvma_shim.c
+rvma_shim4:
+	gcc $(SHIMFLAGS)
 
-ps-am:
-
-uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS
+rvma_shim5:
+	gcc -fPIC -shared -D_GNU_SOURCE \
+	-I. -I/home/rysilve/rdma-core/build/include \
+	src/rvma_shim.c src/*.o \
+	-o librvma_shim.so \
+	-libverbs -lrdmacm
 
 .MAKE: all install-am install-strip
 
