@@ -8,6 +8,7 @@ src/.deps/
 install/bin/
 andrew_results/
 autom4te.cache/
+autom4te.cache/requests
 config/
 m4/
 
@@ -33,3 +34,4 @@ rvsocket_client_dgram
 rvsocket_client_stream
 rvsocket_server_dgram
 rvsocket_server_stream
+autom4te.cache/requests
