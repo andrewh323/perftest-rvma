@@ -1,1 +1,21 @@
-[]
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-fPIC",
+            "-DHAVE_CONFIG_H",
+            "-I.",
+            "-I/home/rysilve/rdma-core",
+            "-D_GNU_SOURCE",
+            "-Wall",
+            "-O3",
+            "-g",
+            "-o",
+            "librvma_shim.so",
+            "src/rvma_shim.c"
+        ],
+        "directory": "/home/rysilve/perftest-rvma",
+        "file": "src/rvma_shim.c"
+    }
+]
