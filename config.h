@@ -112,8 +112,8 @@
 /* Enable Sniffer Flow Specification */
 #define HAVE_SNIFFER 1
 
-/* Have SRD support */
-#define HAVE_SRD 1
+/* Have SRD support - Scalable Reliable Datagram*/
+/* #define HAVE_SRD 1 */
 
 /* Have SRD with RDMA read support */
 #define HAVE_SRD_WITH_RDMA_READ 1
