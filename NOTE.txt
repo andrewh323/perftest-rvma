@@ -39,3 +39,6 @@ rvma_shim3:
     $(HOME)/perftest-rvma/libperftest.a \
     -lrdmacm -libverbs -ldl \
     -o librvmashim.so
+
+    https://github.com/rizsotto/scan-build?tab=readme-ov-file
+    https://github.com/rizsotto/Bear/blob/master/INSTALL.md
