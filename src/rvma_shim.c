@@ -24,16 +24,24 @@
 
 static int (*real_socket)(int, int, int) = NULL;
 static int (*real_connect)(int, const struct sockaddr *, socklen_t) = NULL;
+static int (*real_bind)(int, const struct sockaddr *, socklen_t) = NULL;
+static int (*real_listen)(int, int) = NULL;
+static int (*real_accept)(int, struct sockaddr *, socklen_t *) = NULL; // Pointers were _Nullable restrict
 static ssize_t (*real_send)(int, const void *, size_t, int) = NULL;
 static ssize_t (*real_recv)(int, const void *, size_t, int) = NULL;
 static ssize_t (*real_write)(int, const void *, size_t) = NULL;
 static ssize_t (*real_read)(int, void *, size_t) = NULL;
 static int (*real_close)(int) = NULL;
 
+
+
 __attribute__((constructor)) void init()
 {
     real_socket = dlsym(RTLD_NEXT, "socket");
     real_connect = dlsym(RTLD_NEXT, "connect");
+    real_bind = dlsym(RTLD_NEXT, "bind");
+    real_listen = dlsym(RTLD_NEXT, "listen");
+    real_accept = dlsym(RTLD_NEXT, "accept");
     real_send = dlsym(RTLD_NEXT, "send");
     real_recv = dlsym(RTLD_NEXT, "recv");
     real_write = dlsym(RTLD_NEXT, "write");
@@ -59,6 +67,15 @@ char * get_ip(char * interface_name)
     return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 
+struct sockaddr_in sock_setup(void) {
+    return;
+}
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+    return 1;
+}
+
+// Called by both server/client
 int socket(int domain, int type, int protocol)
 {
     uint16_t reserved = 0x0001;
@@ -78,21 +95,34 @@ int socket(int domain, int type, int protocol)
         return -1;
     };
 
+    server_addr.sin_addr.s_addr = INADDR_ANY;
     uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
 
     fprintf(stderr, "[shim] socket address -> %p\n", server_addr.sin_addr);
 
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
 
-    fprintf(stderr, "[shim] vaddr -> %d\n", vaddr);
+    fprintf(stderr, "[shim] vaddr -> %" PRIu64 "\n", vaddr);
 
-    int fd = real_socket(domain, type, protocol);
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
 
+    int rvma_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
+    fprintf(stderr, "[shim] rvma_fd -> %d\n", rvma_fd);
+    rclose(rvma_fd);
+    int fd = rvma_fd;
+#ifndef RVMA_DISABLE
+    fd = real_socket(domain, type, protocol);
+#endif
     return fd;
 }
 
+// Called by client
 int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 {
+#ifndef RVMA_DISABLE
+    return real_connect(socket, address, address_len);
+#endif
+
     if (address->sa_family == AF_INET)
     {
         struct sockaddr_in *in = (struct sockaddr_in *)address;
@@ -105,14 +135,44 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
                 socket,
                 ip,
                 ntohs(in->sin_port));
-    }
+        
+        int ret = rvconnect(socket, (struct sockaddr *)&in, sizeof(address_len));
 
-    return real_connect(socket, address, address_len);
+        if(ret < 0) {
+            perror("rconnect");
+            exit(EXIT_FAILURE);
+        }
+
+        return ret;
+    }
+}
+
+// Called by server
+ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+
+    
+    fprintf(stderr, "[shim] successfully bound\n");
+
+#ifndef RVMA_DISABLE
+    return real_bind(sockfd, addr, addrlen);
+#endif
+    return rvbind(sockfd, addr, sizeof(addr));
+}
+
+int listen(int sockfd, int backlog) {
+
+    fprintf(stderr, "[shim] successfully started listening\n");
+
+#ifndef RVMA_DISABLE
+    return real_listen(sockfd, backlog);
+#endif
+    return rvlisten(sockfd, backlog);
 }
 
 ssize_t send(int socket, const void *buf, size_t len, int flags)
 {
     fprintf(stderr, "[shim] send fd=%d len=%zu\n", socket, len);
+    // rvsend();
 
     return real_send(socket, buf, len, flags);
 }
@@ -120,7 +180,7 @@ ssize_t send(int socket, const void *buf, size_t len, int flags)
 ssize_t recv(int socket, void *buf, size_t len, int flags)
 {
     ssize_t r = real_recv(socket, buf, len, flags);
-
+    // rvrecv();
     fprintf(stderr, "[shim] recv fd=%d got=%zd\n", socket, r);
 
     return r;
@@ -147,5 +207,6 @@ ssize_t read(int fd, void *buf, size_t count)
 int close(int fd)
 {
     fprintf(stderr, "[shim] close fd=%d\n", fd);
+    // rclose(fd);
     return real_close(fd);
 }
