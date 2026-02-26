@@ -684,8 +684,7 @@ static inline int post_send_method(struct pingpong_context *ctx, int index,
 	#endif
 	struct ibv_send_wr 	*bad_wr = NULL;
 
-	return rvmaPutHybrid(ctx->qp[index], index*user_param->post_list, ctx->wr, &bad_wr);
-
+	return;
 }
 
 #ifdef HAVE_XRCD

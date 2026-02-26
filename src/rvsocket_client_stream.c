@@ -42,9 +42,9 @@ int main(int argc, char **argv) {
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
 
     sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     if (sockfd < 0) {

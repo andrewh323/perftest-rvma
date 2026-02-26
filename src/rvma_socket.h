@@ -27,7 +27,7 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen);
 
 int rvlisten(int socket, int backlog);
 
-int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen);
+int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *window);
 
 int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen);
 
