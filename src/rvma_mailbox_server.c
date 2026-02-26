@@ -37,6 +37,13 @@ uint32_t get_host_ip(const char *iface_name) {
     return ip;
 }
 
+static inline uint64_t rdtsc(){
+    unsigned int lo, hi;
+    // Serialize to prevent out-of-order execution affecting timing
+    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
+    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi << 32) | lo;
+}
 
 uint64_t construct_vaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port) {
     uint64_t res = (uint64_t)reserved << 48 | ((uint64_t)ip_host_order << 16) | port;
@@ -48,6 +55,7 @@ int main(int argc, char **argv) {
     const char *iface_name = "ib0"; // Search for RDMA device
     uint16_t reserved = 0x0001; // Reserved 16 bits for vaddr structure
     struct sockaddr_in addr;
+    double cpu_ghz = get_cpu_ghz();
     memset(&addr, 0, sizeof(addr));
 
     struct rdma_cm_event *event;
@@ -160,7 +168,7 @@ int main(int argc, char **argv) {
     }
 
     uint64_t t2;
-    int size = 10;
+    int size = 10000;
 	int num_sends = 100;
 
     // Construct messages
@@ -172,7 +180,10 @@ int main(int argc, char **argv) {
     }
     
 	for (int i = 0; i < num_sends; i++) {
+        uint64_t t1 = rdtsc();
 		rvmaRecv(vaddr, mailboxPtr, &t2);
 		rvmaSend(messages[i], size, vaddr, mailboxPtr);
+        double elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
+        printf("RTT: %.2f microseconds\n", elapsed_us);
 	}
 }

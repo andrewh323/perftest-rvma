@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     }
 
     int num_sends = 100;
-    int size = 10;
+    int size = 10000;
     uint64_t t2;
 
     char *messages[num_sends];
@@ -94,8 +94,7 @@ int main(int argc, char **argv) {
         uint64_t t1 = rdtsc();
         rvmaSend(messages[i], size, vaddr, mailboxPtr);
         rvmaRecv(vaddr, mailboxPtr, &t2);
-        uint64_t t2 = rdtsc();
         double elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
-        printf("Elapsed time: %.2f microseconds\n", elapsed_us);
+        printf("RTT: %.2f microseconds\n", elapsed_us);
     }
 }
