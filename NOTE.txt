@@ -1,3 +1,5 @@
+EFA: https://github.com/linux-rdma/rdma-core/blob/master/providers/efa/efadv.h
+
 CAN MAKE RVMA_SHIM LIB WITH
 make rvma_shim
 
