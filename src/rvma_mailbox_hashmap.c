@@ -35,19 +35,14 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
         return NULL;
     }
 
+    mailboxPtr->pd = NULL;
+    mailboxPtr->cq = NULL;
+    mailboxPtr->qp = NULL;
     mailboxPtr->bufferQueue = bufferQueue;
     mailboxPtr->retiredBufferQueue = retiredBufferQueue;
     mailboxPtr->vaddr = vaddr;
     mailboxPtr->key = hashFunction(mailboxPtr->vaddr, hashmapCapacity);
-    mailboxPtr->ec = rdma_create_event_channel();
-    int res = rdma_create_id(mailboxPtr->ec, &mailboxPtr->cm_id, NULL, mailboxPtr->type == SOCK_DGRAM ? RDMA_PS_UDP : RDMA_PS_TCP);
-    if (res) {
-        print_error("setupMailbox: rdma_create_id failed");
-        free(mailboxPtr->bufferQueue);
-        free(mailboxPtr->retiredBufferQueue);
-        free(mailboxPtr);
-        return NULL;
-    }
+
     return mailboxPtr;
 }
 
