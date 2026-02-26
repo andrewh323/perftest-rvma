@@ -62,7 +62,7 @@ char * get_ip(char * interface_name)
     ioctl(fd, SIOCGIFADDR, &ifr);
     close(fd);
     /* display result */
-    printf("%s\n", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+    // printf("%s\n", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
 
     return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
@@ -72,7 +72,11 @@ struct sockaddr_in sock_setup(void) {
 }
 
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-    return 1;
+#ifndef RVMA_DISABLE
+    return real_accept(sockfd, addr, addrlen);
+#endif
+
+    return rvaccept(sockfd, NULL, NULL);
 }
 
 // Called by both server/client
@@ -98,7 +102,7 @@ int socket(int domain, int type, int protocol)
     server_addr.sin_addr.s_addr = INADDR_ANY;
     uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
 
-    fprintf(stderr, "[shim] socket address -> %p\n", server_addr.sin_addr);
+    fprintf(stderr, "[shim] socket address -> %s\n", server_addr.sin_addr);
 
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
 
@@ -106,9 +110,10 @@ int socket(int domain, int type, int protocol)
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
 
+    fprintf(stderr, "[shim] windowPtr -> %p\n", windowPtr);
+
     int rvma_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     fprintf(stderr, "[shim] rvma_fd -> %d\n", rvma_fd);
-    rclose(rvma_fd);
     int fd = rvma_fd;
 #ifndef RVMA_DISABLE
     fd = real_socket(domain, type, protocol);
@@ -172,15 +177,23 @@ int listen(int sockfd, int backlog) {
 ssize_t send(int socket, const void *buf, size_t len, int flags)
 {
     fprintf(stderr, "[shim] send fd=%d len=%zu\n", socket, len);
-    // rvsend();
-
+#ifndef RVMA_DISABLE
     return real_send(socket, buf, len, flags);
+#else
+    return rvsend(socket, buf, len);
+#endif
 }
 
 ssize_t recv(int socket, void *buf, size_t len, int flags)
 {
-    ssize_t r = real_recv(socket, buf, len, flags);
-    // rvrecv();
+    ssize_t r;
+    uint64_t t2;
+
+#ifndef RVMA_DISABLE
+    r = real_recv(socket, buf, len, flags);
+#else
+    r = rvrecv(socket, &t2);
+#endif
     fprintf(stderr, "[shim] recv fd=%d got=%zd\n", socket, r);
 
     return r;
@@ -188,16 +201,21 @@ ssize_t recv(int socket, void *buf, size_t len, int flags)
 
 ssize_t write(int fd, const void *buf, size_t count)
 {
-    if (fd != 5)
-        fprintf(stderr, "[shim] write fd=%d\n", fd);
-
-    return real_write(fd, buf, count);
+    fprintf(stderr, "[shim] write fd=%d\n", fd);
+    return rvsend(socket, buf, count);
+    //return real_write(fd, buf, count);
 }
 
 ssize_t read(int fd, void *buf, size_t count)
 {
-
-    ssize_t r = real_read(fd, buf, count);
+    ssize_t r;
+    uint64_t t2;
+#ifndef RVMA_DISABLE
+    //r = real_read(fd, buf, count);
+    r = real_recv(fd, buf, count, 0);
+#else  
+    r = rvrecv(fd, &t2);
+#endif
 
     fprintf(stderr, "[shim] read fd=%d got=%zd\n", fd, r);
 
@@ -207,6 +225,9 @@ ssize_t read(int fd, void *buf, size_t count)
 int close(int fd)
 {
     fprintf(stderr, "[shim] close fd=%d\n", fd);
-    // rclose(fd);
+#ifndef RVMA_DISABLE
     return real_close(fd);
+#else
+    return rclose(fd);
+#endif
 }
