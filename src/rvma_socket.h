@@ -28,11 +28,11 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen);
 
 int rvlisten(int socket, int backlog);
 
-int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen);
+int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *window);
 
 int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen);
 
-int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen);
+int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_Win *window);
 
 int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
@@ -42,6 +42,6 @@ int rvsendto(int socket, void *buf, int64_t len);
 
 int rvrecvfrom(RVMA_Mailbox *mailbox);
 
-int rvrecv(int socket, uint64_t *recv_timestamp);
+int rvrecv(int socket, void *buf, size_t len, int flags);
 
 #endif // RVMA_SOCKET_H

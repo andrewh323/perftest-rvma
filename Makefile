@@ -385,24 +385,6 @@ am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/rvsocket_server_stream.Po \
 	src/$(DEPDIR)/write_bw.Po src/$(DEPDIR)/write_lat.Po
 am__mv = mv -f
-CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CXXFLAGS) $(CXXFLAGS)
-AM_V_CXX = $(am__v_CXX_$(V))
-am__v_CXX_ = $(am__v_CXX_$(AM_DEFAULT_VERBOSITY))
-am__v_CXX_0 = @echo "  CXX     " $@;
-am__v_CXX_1 = 
-CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CXXLD = $(am__v_CXXLD_$(V))
-am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
-am__v_CXXLD_0 = @echo "  CXXLD   " $@;
-am__v_CXXLD_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -684,9 +666,9 @@ rsocket_server_lat_SOURCES = src/rsocket_server_lat.c
 rsocket_server_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rsocket_server_dgram_SOURCES = src/rsocket_server_dgram.c
 rsocket_server_dgram_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
-rsocket_client_bw_SOURCES = src/rsocket_client_bw.C
+rsocket_client_bw_SOURCES = src/rsocket_client_bw.c
 rsocket_client_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
-rsocket_server_bw_SOURCES = src/rsocket_server_bw.C
+rsocket_server_bw_SOURCES = src/rsocket_server_bw.c
 rsocket_server_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 ib_write_lat_SOURCES = src/write_lat.c
 ib_write_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH)  $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
@@ -708,7 +690,7 @@ all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .C .c .lo .o .obj
+.SUFFIXES: .c .lo .o .obj
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -897,7 +879,7 @@ src/rsocket_client_bw.$(OBJEXT): src/$(am__dirstamp) \
 
 rsocket_client_bw$(EXEEXT): $(rsocket_client_bw_OBJECTS) $(rsocket_client_bw_DEPENDENCIES) $(EXTRA_rsocket_client_bw_DEPENDENCIES) 
 	@rm -f rsocket_client_bw$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(rsocket_client_bw_OBJECTS) $(rsocket_client_bw_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(rsocket_client_bw_OBJECTS) $(rsocket_client_bw_LDADD) $(LIBS)
 src/rsocket_client_dgram.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
@@ -915,7 +897,7 @@ src/rsocket_server_bw.$(OBJEXT): src/$(am__dirstamp) \
 
 rsocket_server_bw$(EXEEXT): $(rsocket_server_bw_OBJECTS) $(rsocket_server_bw_DEPENDENCIES) $(EXTRA_rsocket_server_bw_DEPENDENCIES) 
 	@rm -f rsocket_server_bw$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(rsocket_server_bw_OBJECTS) $(rsocket_server_bw_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(rsocket_server_bw_OBJECTS) $(rsocket_server_bw_LDADD) $(LIBS)
 src/rsocket_server_dgram.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
@@ -1049,30 +1031,6 @@ $(am__depfiles_remade):
 	@echo '# dummy' >$@-t && $(am__mv) $@-t $@
 
 am--depfiles: $(am__depfiles_remade)
-
-.C.o:
-	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-	$(am__mv) $$depbase.Tpo $$depbase.Po
-#	$(AM_V_CXX)source='$<' object='$@' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(AM_V_CXX_no)$(CXXCOMPILE) -c -o $@ $<
-
-.C.obj:
-	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-	$(am__mv) $$depbase.Tpo $$depbase.Po
-#	$(AM_V_CXX)source='$<' object='$@' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(AM_V_CXX_no)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.C.lo:
-	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-	$(am__mv) $$depbase.Tpo $$depbase.Plo
-#	$(AM_V_CXX)source='$<' object='$@' libtool=yes \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(AM_V_CXX_no)$(LTCXXCOMPILE) -c -o $@ $<
 
 .c.o:
 	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\

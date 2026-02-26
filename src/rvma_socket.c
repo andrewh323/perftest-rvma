@@ -38,7 +38,7 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_BUFS 16
+#define MAX_POOL_BUFS 16
 #define MAX_RECV_SIZE 1024*1024 // 1MB
 #define SIGNAL_INTERVAL 32
 
@@ -54,6 +54,7 @@ enum {
 };
 
 static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+static int next_fd = 100; // Starting fd for rvsockets
 
 #define rvs_send_wr_id(data) ((uint64_t) data)
 
@@ -97,6 +98,11 @@ enum rs_state {
 	rs_error	   =		    0x2000,
 };
 
+// Global completion queue for all rvsockets
+// When completion is detected, need a way to check which socket it belongs to
+// Maybe check the rs_state of each rvsocket in the idm? "if rs_readable...", etc.
+struct ibv_cq *shared_cq;
+
 struct rvsocket {
     int type; // SOCK_STREAM or SOCK_DGRAM
     int index;
@@ -108,6 +114,7 @@ struct rvsocket {
             int udp_sock; // UDP socket for exchanging connection data
         };
     };
+    struct rdma_event_channel *ec;
     int qp_port; // QP port num
     int state;
     
@@ -185,33 +192,40 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     double rdmaTime = 0;
     start = rdtsc();
     struct rvsocket *rvs;
-    int index, ret;
+    int ret;
 
     rvs = calloc(1, sizeof(*rvs));
     if (!rvs)
         return -1;
     
     rvs->type = type;
-    rvs->index = -1;
 
     // Set rvsocket vaddr and mailbox
     rvs->vaddr = vaddr;
-    rvs->mailboxPtr = searchHashmap(window->hashMapPtr, &rvs->vaddr);
-    if (rvs->mailboxPtr == NULL) {
-        fprintf(stderr, "rvsocket: Failed to find mailbox for vaddr = %" PRIu64 "\n", rvs->vaddr);
+    rvs->ec = rdma_create_event_channel();
+
+    if (rdma_create_id(rvs->ec, &rvs->cm_id, NULL, rvs->type == SOCK_DGRAM ? RDMA_PS_UDP : RDMA_PS_TCP)) {
+        rdma_destroy_event_channel(rvs->ec);
+        print_error("rvsocket: rdma_create_id failed");
         free(rvs);
         return -1;
     }
 
     if (type == SOCK_STREAM) {
         // For stream sockets, pd, cq, and qp are allocated in accept/connect
-        // Use the mailbox's CM ID (should already be set when mailbox is created)
-        index = rvs->mailboxPtr->cm_id->channel->fd;
-        rvs->index = index;
+        rvs->index = next_fd++;
     } else { // datagram
         // Datagrams do not accept/connect, so we must setup pd, cq, and qp here
-        // To allocate pd, we need a valid context
+        // To allocate pd, we need a valid context and mailbox
         uint64_t rdmaStart = rdtsc();
+        RVMA_Status res = newMailboxIntoHashmap(window->hashMapPtr, vaddr);
+        if (res != RVMA_SUCCESS) {
+            print_error("rvsocket: Failure creating mailbox");
+            free(rvs);
+            return -1;
+        }
+        rvs->mailboxPtr = searchHashmap(window->hashMapPtr, vaddr);
+
         char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
         struct ibv_device *ib_dev = ctx_find_dev(&devname);
         if (!ib_dev) {
@@ -244,7 +258,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             return -1;
         }
         rvs->mailboxPtr->pd = pd;
-        
+
         struct ibv_cq *cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
         if (!cq) {
             fprintf(stderr, "rvsocket: Failed to create cq\n");
@@ -304,11 +318,14 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         // Save qp to rvs
         rvs->mailboxPtr->qp = qp;
 
-        // Post receive pool to prepare for incoming sends
-        // Do not include postRecvPool time in rvsocket timing; separate measurement
-        if (postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
-            perror("postRecvPool failed");
+        // Post pools to prepare for incoming transmissions
+        if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+            perror("postSendPool failed");
             return -1;
+        }
+        if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+            perror("postRecvPool failed");
+            return ;
         }
         uint64_t rdmaEnd = rdtsc();
         rdmaTime = (rdmaEnd - rdmaStart) / (cpu_ghz * 1e3);
@@ -316,17 +333,17 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
-        rvs->index = rvs->udp_sock;
-        index = rvs->index;
+        rvs->index = next_fd++;
     }
     // Insert rvsocket into index map
-    ret = rs_insert(rvs, index);
+    ret = rs_insert(rvs, rvs->index);
     if (ret < 0) {
-        fprintf(stderr, "Failed to insert rvsocket at index %d\n", index);
+        fprintf(stderr, "Failed to insert rvsocket at index %d\n", rvs->index);
         rs_free(rvs);
         return ret;
     }
     end = rdtsc();
+
     double elapsed_us = (end - start) / (cpu_ghz * 1e3) - rdmaTime;
     printf("rvsocket total setup time: %.3f µs\n", elapsed_us);
     // return rvsocket index
@@ -347,7 +364,7 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         return -1;
     }
     if (rvs->type == SOCK_STREAM) {
-	    ret = rdma_bind_addr(rvs->mailboxPtr->cm_id, (struct sockaddr *)addr);
+	    ret = rdma_bind_addr(rvs->cm_id, (struct sockaddr *)addr);
         if (!ret)
             rvs->state = rs_bound;
     } else { // Datagram
@@ -382,7 +399,7 @@ int rvlisten(int socket, int backlog) {
     }
 
     // Listen on server cm_id
-    ret = rdma_listen(rvs->mailboxPtr->cm_id, backlog);
+    ret = rdma_listen(rvs->cm_id, backlog);
     if (ret) {
         perror("rdma_listen failed");
         return ret;
@@ -396,7 +413,7 @@ int rvlisten(int socket, int backlog) {
 }
 
 
-int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
+int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *window) {
     double cpu_ghz = get_cpu_ghz();
     uint64_t start, end;
     struct rvsocket *rvs, *new_rvs;
@@ -407,14 +424,12 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
         fprintf(stderr, "rvaccept: rvs is NULL");
         return -1;
     }
-
-    if (rvs->state != rs_listening) {
-        fprintf(stderr, "rvaccept: rs is not in listening state");
-        return -1;
-    }
     
+    if (rvs->ec == NULL) {
+        fprintf(stderr, "rvaccept: rvs event channel is NULL");
+    }
     // Poll for connection request
-    if (rdma_get_cm_event(rvs->mailboxPtr->ec, &event)) {
+    if (rdma_get_cm_event(rvs->ec, &event)) {
         perror("rdma_get_cm_event");
         return -1;
     }
@@ -429,6 +444,13 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
     }
     struct rdma_cm_id *client_cm_id = event->id;
 
+    // Retrieve IP address and construct actual client virtual address
+    struct sockaddr_in *client_addr = rdma_get_peer_addr(client_cm_id);
+    uint32_t client_ip = ntohl(client_addr->sin_addr.s_addr);
+    uint16_t client_port = getPort(rvs->vaddr);
+
+    uint64_t vaddr = constructVaddr(0x0001, client_ip, client_port);
+    
     // Define protection domain
     struct ibv_pd *pd = ibv_alloc_pd(client_cm_id->verbs);
     if (!pd) {
@@ -436,7 +458,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
         ibv_dealloc_pd(pd);
         return -1;
     }
-    rvs->mailboxPtr->pd = pd;
 
     // Create completion queue
     struct ibv_cq *cq = ibv_create_cq(client_cm_id->verbs, 1024, NULL, NULL, 0);
@@ -445,7 +466,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
         ibv_dealloc_pd(pd);
         return -1;
     }
-    rvs->mailboxPtr->cq = cq;
 
     // Create QP
     struct ibv_qp_init_attr qp_attr = {
@@ -476,6 +496,19 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
         rdma_ack_cm_event(event);
         return -1;
     }
+
+    // Drain the event channel for established event
+    if (rdma_get_cm_event(rvs->ec, &event)) {
+        perror("rdma_get_cm_event ESTABLISHED");
+        return -1;
+    }
+
+    if (event->event != RDMA_CM_EVENT_ESTABLISHED) {
+        fprintf(stderr, "Expected ESTABLISHED event: %s\n", rdma_event_str(event->event));
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+
     rdma_ack_cm_event(event);
 
     // Create a new rvsocket for accepted connection
@@ -486,22 +519,37 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen) {
     }
 
     // Fill in new rvsocket fields
-    new_rvs->vaddr = rvs->vaddr;
+    new_rvs->vaddr = vaddr;
     new_rvs->type = SOCK_STREAM;
-    new_rvs->mailboxPtr = rvs->mailboxPtr;
-    new_rvs->mailboxPtr->cm_id = client_cm_id;
+    
+    // Create a mailbox for the new socket (server calls rvaccept for each client)
+    RVMA_Status status = newMailboxIntoHashmap(window->hashMapPtr, new_rvs->vaddr);
+    if (status != RVMA_SUCCESS) {
+        perror("Failed to allocate new rvs");
+        return -1;
+    }
+
+    new_rvs->mailboxPtr = searchHashmap(window->hashMapPtr, new_rvs->vaddr);
+    new_rvs->cm_id = client_cm_id;
+    new_rvs->ec = client_cm_id->channel;
     new_rvs->mailboxPtr->pd = pd;
     new_rvs->mailboxPtr->cq = cq;
     new_rvs->mailboxPtr->qp = client_cm_id->qp;
-    new_rvs->index = client_cm_id->channel->fd;
+
+    new_rvs->index = next_fd++;
     new_rvs->state = rs_connected;
 
     end = rdtsc();
 
-    // Prepost recv buffer pool
-    RVMA_Status status = postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, rvs->vaddr, EPOCH_BYTES);
-    if (status != RVMA_SUCCESS) {
-        fprintf(stderr, "rvaccept: postRecvPool failed\n");
+    // Prepost buffer pools
+    if (postSendPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        perror("postSendPool failed");
+        return -1;
+    }
+    
+    printf("Posting buffer pools\n");
+    if (postRecvPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        perror("postRecvPool failed");
         return -1;
     }
 
@@ -589,7 +637,7 @@ int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, sockle
 }
 
 
-int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
+int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_Win *window) {
     uint64_t start, end;
     double cpu_ghz = get_cpu_ghz();
     start = rdtsc();
@@ -603,12 +651,12 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
     }
 
     // Resolve address
-    if (rdma_resolve_addr(rvs->mailboxPtr->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
+    if (rdma_resolve_addr(rvs->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
         perror("rdma_resolve_addr");
         return -1;
     }
     // Wait for address resolved event
-    if (rdma_get_cm_event(rvs->mailboxPtr->ec, &event)) {
+    if (rdma_get_cm_event(rvs->ec, &event)) {
         perror("rdma_get_cm_event");
         return -1;
     }
@@ -619,12 +667,12 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
     }
 
     // Resolve route
-    if (rdma_resolve_route(rvs->mailboxPtr->cm_id, 2000)) {
+    if (rdma_resolve_route(rvs->cm_id, 2000)) {
         perror("rdma_resolve_route");
         return -1;
     }
     // Wait for route resolved event
-    if (rdma_get_cm_event(rvs->mailboxPtr->ec, &event)) {
+    if (rdma_get_cm_event(rvs->ec, &event)) {
         perror("rdma_get_cm_event");
         return -1;
     }
@@ -637,8 +685,20 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
     uint64_t addrRouteResolved = rdtsc();
     double addrRouteTime = (addrRouteResolved - start) / (cpu_ghz * 1e3);
 
+    RVMA_Status status = newMailboxIntoHashmap(window->hashMapPtr, rvs->vaddr);
+    if (status != RVMA_SUCCESS) {
+        perror("Failed to allocate new rvs");
+        return -1;
+    }
+
+    rvs->mailboxPtr = searchHashmap(window->hashMapPtr, rvs->vaddr);
+    if (!rvs->mailboxPtr) {
+        perror("rvconnect: searchHashmap failed");
+        return -1;
+    }
+
     // Allocate PD
-    struct ibv_pd *pd = ibv_alloc_pd(rvs->mailboxPtr->cm_id->verbs);
+    struct ibv_pd *pd = ibv_alloc_pd(rvs->cm_id->verbs);
     if (!pd) {
         perror("ibv_alloc_pd failed");
         ibv_dealloc_pd(pd);
@@ -647,7 +707,7 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
     rvs->mailboxPtr->pd = pd;
 
     // Create CQ
-    struct ibv_cq *cq = ibv_create_cq(rvs->mailboxPtr->cm_id->verbs, 16, NULL, NULL, 0);
+    struct ibv_cq *cq = ibv_create_cq(rvs->cm_id->verbs, 16, NULL, NULL, 0);
     if (!cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
@@ -668,21 +728,21 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         }
     };
 
-    if (rdma_create_qp(rvs->mailboxPtr->cm_id, pd, &qp_attr)) {
+    if (rdma_create_qp(rvs->cm_id, pd, &qp_attr)) {
         perror("rdma_create_qp");
         return -1;
     }
-    rvs->mailboxPtr->qp = rvs->mailboxPtr->cm_id->qp;
+    rvs->mailboxPtr->qp = rvs->cm_id->qp;
 
     uint64_t rdmaSetup = rdtsc();
 
     // Connect
-    if (rdma_connect(rvs->mailboxPtr->cm_id, NULL)) {
+    if (rdma_connect(rvs->cm_id, NULL)) {
         perror("rdma_connect");
         return -1;
     }
     // Wait for CM event
-    if (rdma_get_cm_event(rvs->mailboxPtr->ec, &event)) {
+    if (rdma_get_cm_event(rvs->ec, &event)) {
         perror("rdma_get_cm_event");
         return -1;
     }
@@ -694,10 +754,13 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen) {
     rdma_ack_cm_event(event);
 
     uint64_t beforePostRecv = rdtsc();
-    // Prepost recv buffer pool
-    RVMA_Status status = postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, rvs->vaddr, EPOCH_BYTES);
-    if (status != RVMA_SUCCESS) {
-        fprintf(stderr, "rvaccept: postRecvPool failed\n");
+    // Prepost buffer pools
+    if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+            perror("postSendPool failed");
+            return -1;
+    }
+    if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        perror("postRecvPool failed");
         return -1;
     }
 
@@ -806,7 +869,7 @@ int rvsend(int socket, void *buf, int64_t len) {
     rvs = idm_at(&idm, socket);
     vaddr = rvs->vaddr;
     if (rvs->type == SOCK_STREAM) {
-        if (rvmaSend(buf, len, &vaddr, rvs->mailboxPtr) != RVMA_SUCCESS) {
+        if (rvmaSend(buf, len, vaddr, rvs->mailboxPtr) != RVMA_SUCCESS) {
         fprintf(stderr, "rvmaSend failed\n");
         return -1;
         }
@@ -876,8 +939,8 @@ int rvsendto(int socket, void *buf, int64_t len) {
         uint64_t buffer_setup_start = rdtsc();
 
         // Post buffer to mailbox, fill mailbox entry
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)&full_buf, total_size, notifBuffPtr, (void *)notifLenPtr, vaddr,
-                                    rvs->mailboxPtr, threshold, EPOCH_OPS);
+        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)full_buf, total_size, notifBuffPtr, (void *)notifLenPtr, vaddr,
+                                    rvs->mailboxPtr, threshold, EPOCH_OPS, 0);
         if (!entry) {
             fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
             return -1;
@@ -889,6 +952,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
         uint64_t buffer_setup_end = rdtsc();
         buffer_setup += buffer_setup_end - buffer_setup_start;
 
+        printf("Buffer posted with size %zu bytes for fragment %d/%d\n", total_size, hdr->frag_num, hdr->total_frags);
         // Build sge, wr
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
@@ -936,7 +1000,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
             if (wc.opcode == IBV_WC_SEND) {
                 RVMA_Buffer_Entry *e = (RVMA_Buffer_Entry*)wc.wr_id;
-                RVMA_Buffer_Entry *q = dequeue(rvs->mailboxPtr->bufferQueue);
+                RVMA_Buffer_Entry *q = dequeue(rvs->mailboxPtr->sendBufferQueue);
                 freeBufferEntry(e);
                 break;
             }
@@ -952,12 +1016,13 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
     free(notifBuffPtr);
     free(notifLenPtr);
-
+/* 
     rvs->mailboxPtr->cycles = elapsed;
     rvs->mailboxPtr->fragSetupCycles = frag_setup;
     rvs->mailboxPtr->bufferSetupCycles = buffer_setup;
     rvs->mailboxPtr->wrSetupCycles = wr_setup;
     rvs->mailboxPtr->pollCycles = total_poll;
+*/
 
     return 0;
 }
@@ -1004,8 +1069,8 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         char *payload = data + sizeof(header);
         int payload_len = data_len - sizeof(header);
 
-        /* printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
-            header.frag_num, header.total_frags, payload_len, payload); */
+        printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
+            header.frag_num, header.total_frags, payload_len, payload);
 
         if (header.frag_num == 1) {
             total_frags = header.total_frags;
@@ -1050,8 +1115,7 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
 }
 
 
-
-int rvrecv(int socket, uint64_t *recv_timestamp) {
+int rvrecv(int socket, void *buf, size_t len, int flags) {
     // Read from mailbox buffer with rvmaRecv
     struct rvsocket *rvs;
     uint64_t vaddr;
@@ -1067,7 +1131,7 @@ int rvrecv(int socket, uint64_t *recv_timestamp) {
             return -1;
         }
     } else {
-        if (rvmaRecv(&vaddr, mailbox, recv_timestamp) != RVMA_SUCCESS) {
+        if (rvmaRecv(vaddr, buf, len, 0, mailbox) != RVMA_SUCCESS) {
             fprintf(stderr, "rvmaRecv failed\n");
             return -1;
         }

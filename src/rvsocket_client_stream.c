@@ -42,9 +42,7 @@ int main(int argc, char **argv) {
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
-
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
     sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     if (sockfd < 0) {
@@ -62,9 +60,9 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Attempting to connect to server %s:%d...\n", argv[1], PORT);
+    printf("Attempting to connect to server with vaddr %" PRIu64 "...\n", vaddr);
 
-    if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr) < 0) {
         perror("rconnect");
         exit(EXIT_FAILURE);
     }
@@ -101,6 +99,8 @@ int main(int argc, char **argv) {
         snprintf(messages[i], size, "Msg %d", i);
     }
 
+    void *recv_buf = malloc(size);
+    
     // Send messages to server
     for (int i = 0; i < num_sends; i++) {
         // Perform rvma send
@@ -111,51 +111,31 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
-        res = rvrecv(sockfd, &t2);
+        res = rvrecv(sockfd, recv_buf, size, 0);
         if (res < 0) {
             fprintf(stderr, "Failed to receive message %d\n", i);
         }
         uint64_t t3 = rdtsc();
-
-        // Convert cycles to microseconds
-        double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
-        double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
-        double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
-        double regmr_us = mailbox->regmrCycles / (cpu_ghz * 1e3);
-        elapsed_us = (t3 - t1) / (cpu_ghz * 1e3);
-        elapsed_us -= (regmr_us); // Remove memory registration from send time
-        elapsed_us /= 2; // One-way time
-        printf("One-way time for message %d: %.3f µs\n", i, elapsed_us);
-
         int record = 1;
 
         // Exclude warm-ups if configured
         if (exclude_warmup && i < warmup_sends)
             record = 0;
 
+        double elapsed_us = (t3 - t1) / (cpu_ghz * 1e3);
+        if (elapsed_us < min_time) min_time = elapsed_us;
+        if (elapsed_us > max_time) max_time = elapsed_us;
+        sum_time += elapsed_us;
+
         if (record) {
             int idx = exclude_warmup ? (i - warmup_sends) : i;
             send_times[idx] = elapsed_us;
-
-            // printf("rvmaSend time [%d]: %.3f µs\n", i, elapsed_us);
-
-            if (elapsed_us < min_time) min_time = elapsed_us;
-            if (elapsed_us > max_time) max_time = elapsed_us;
-            sum_time += elapsed_us;
-            buffer_setup_time += bufferSetup_us;
-            wr_setup_time += wrSetup_us;
-            poll_time += poll_us;
-            regmr_time += regmr_us;
         }
         free(messages[i]);
     }
 
     // Compute averages
     double avg_time = sum_time / measured_sends;
-    double avg_buffer_setup = buffer_setup_time / measured_sends;
-    double avg_wr_setup = wr_setup_time / measured_sends;
-    double avg_poll_time = poll_time / measured_sends;
-    double avg_regmr_time = regmr_time / measured_sends;
 
     // Compute standard deviation
     double variance = 0.0;
@@ -170,10 +150,6 @@ int main(int argc, char **argv) {
     printf("\n===== RVMA Send Timing Results =====\n");
     printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
     printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
-    printf("Average buffer setup:     %.3f µs\n", avg_buffer_setup);
-    printf("Average regmr time:       %.3f µs\n", avg_regmr_time);
-    printf("Average WR setup:         %.3f µs\n", avg_wr_setup);
-    printf("Average poll:             %.3f µs\n", avg_poll_time);
     printf("Min send time:            %.3f µs\n", min_time);
     printf("Max send time:            %.3f µs\n", max_time);
     printf("Avg send time:            %.3f µs\n", avg_time);

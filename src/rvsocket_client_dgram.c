@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, &vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
     
     sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
     if (sockfd < 0) {
@@ -98,6 +98,8 @@ int main(int argc, char **argv) {
     double wr_setup_time = 0;
     double poll_time = 0;
 
+    void *recv_buf = malloc(size);
+
     for (int i = 0; i < num_sends; i++) {
         char *message = malloc(size + 1);
         if (!message) {
@@ -120,7 +122,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
-        res = rvrecv(sockfd, NULL);
+        res = rvrecv(sockfd, recv_buf, size, 0);
         if (res < 0) {
             perror("rvrecv failed");
         }
@@ -128,13 +130,11 @@ int main(int argc, char **argv) {
         elapsed_us = (t2 - t1) / (cpu_ghz *1e3);
 
         // Convert cycles to microseconds
-        double fragSetup_us = mailbox->fragSetupCycles / (cpu_ghz * 1e3);
+/*         double fragSetup_us = mailbox->fragSetupCycles / (cpu_ghz * 1e3);
         double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
         double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
-
-        elapsed_us -= (bufferSetup_us);
-        elapsed_us /= 2; // One-way time
+*/
 
         /* printf("Message %d send time: %.3f µs (Frag setup: %.3f µs, Buffer setup: %.3f µs, WR setup: %.3f µs, Poll: %.3f µs)\n",
             i, elapsed_us, fragSetup_us, bufferSetup_us, wrSetup_us, poll_us); */
@@ -151,20 +151,12 @@ int main(int argc, char **argv) {
             if (elapsed_us < min_time) min_time = elapsed_us;
             if (elapsed_us > max_time) max_time = elapsed_us;
             sum_time += elapsed_us;
-            frag_setup_time += fragSetup_us;
-            buffer_setup_time += bufferSetup_us;
-            wr_setup_time += wrSetup_us;
-            poll_time += poll_us;
         }
         free(message);
     }
 
     // Compute averages
     double avg_time = sum_time / measured_sends;
-    double avg_frag_setup = frag_setup_time / measured_sends;
-    double avg_buffer_setup = buffer_setup_time / measured_sends;
-    double avg_wr_setup = wr_setup_time / measured_sends;
-    double avg_poll_time = poll_time / measured_sends;
 
     // Compute standard deviation
     double variance = 0.0;
@@ -181,10 +173,6 @@ int main(int argc, char **argv) {
     printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
     printf("Size of each message:     %d bytes\n", size);
     printf("Fragments per message:    %d\n", (size + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER);
-    printf("Average buffer setup:     %.3f µs\n", avg_buffer_setup);
-    printf("Average frag setup:       %.3f µs\n", avg_frag_setup);
-    printf("Average WR setup:         %.3f µs\n", avg_wr_setup);
-    printf("Average poll time:        %.3f µs\n", avg_poll_time);
     printf("Min send time:            %.3f µs\n", min_time);
     printf("Max send time:            %.3f µs\n", max_time);
     printf("Avg send time:            %.3f µs\n", avg_time);

@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     memset(message, 'A', msg_size - 1);
     message[msg_size - 1] = '\0';
 
-    int num_sends = 2;
+    int num_sends = 100;
     double *latencies = malloc(num_sends * sizeof(double));
     char ack[8];
 
@@ -114,8 +114,8 @@ int main(int argc, char **argv) {
         usleep(10);
     }
 
-    double one_way = rtt / (2 * (num_sends));
-    printf("One-way time per send: %.3f microseconds\n", one_way);
+    double send_time = rtt / (num_sends);
+    printf("RTT: %.3f microseconds\n", send_time);
 
     // Close the socket
     rclose(sockfd);
