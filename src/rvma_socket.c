@@ -52,6 +52,7 @@ enum {
 };
 
 static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+static int next_fd = 100; // Starting fd for rvsockets
 
 #define rvs_send_wr_id(data) ((uint64_t) data)
 
@@ -184,14 +185,13 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     double rdmaTime = 0;
     start = rdtsc();
     struct rvsocket *rvs;
-    int index, ret;
+    int ret;
 
     rvs = calloc(1, sizeof(*rvs));
     if (!rvs)
         return -1;
     
     rvs->type = type;
-    rvs->index = -1;
 
     // Set rvsocket vaddr and mailbox
     rvs->vaddr = vaddr;
@@ -206,8 +206,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
     if (type == SOCK_STREAM) {
         // For stream sockets, pd, cq, and qp are allocated in accept/connect
-        index = rvs->cm_id->channel->fd;
-        rvs->index = index;
+        rvs->index = next_fd++;
     } else { // datagram
         // Datagrams do not accept/connect, so we must setup pd, cq, and qp here
         // To allocate pd, we need a valid context
@@ -316,17 +315,17 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
-        rvs->index = rvs->udp_sock;
-        index = rvs->index;
+        rvs->index = next_fd++;
     }
     // Insert rvsocket into index map
-    ret = rs_insert(rvs, index);
+    ret = rs_insert(rvs, rvs->index);
     if (ret < 0) {
-        fprintf(stderr, "Failed to insert rvsocket at index %d\n", index);
+        fprintf(stderr, "Failed to insert rvsocket at index %d\n", rvs->index);
         rs_free(rvs);
         return ret;
     }
     end = rdtsc();
+
     double elapsed_us = (end - start) / (cpu_ghz * 1e3) - rdmaTime;
     printf("rvsocket total setup time: %.3f µs\n", elapsed_us);
     // return rvsocket index
@@ -408,6 +407,9 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         return -1;
     }
     
+    if (rvs->ec == NULL) {
+        fprintf(stderr, "rvaccept: rvs event channel is NULL");
+    }
     // Poll for connection request
     if (rdma_get_cm_event(rvs->ec, &event)) {
         perror("rdma_get_cm_event");
@@ -424,6 +426,13 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     }
     struct rdma_cm_id *client_cm_id = event->id;
 
+    // Retrieve IP address and construct actual client virtual address
+    struct sockaddr_in *client_addr = rdma_get_peer_addr(client_cm_id);
+    uint32_t client_ip = ntohl(client_addr->sin_addr.s_addr);
+    uint16_t client_port = getPort(rvs->vaddr);
+
+    uint64_t vaddr = constructVaddr(0x0001, client_ip, client_port);
+    
     // Define protection domain
     struct ibv_pd *pd = ibv_alloc_pd(client_cm_id->verbs);
     if (!pd) {
@@ -469,6 +478,19 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         rdma_ack_cm_event(event);
         return -1;
     }
+
+    // Drain the event channel for established event
+    if (rdma_get_cm_event(rvs->ec, &event)) {
+        perror("rdma_get_cm_event ESTABLISHED");
+        return -1;
+    }
+
+    if (event->event != RDMA_CM_EVENT_ESTABLISHED) {
+        fprintf(stderr, "Expected ESTABLISHED event: %s\n", rdma_event_str(event->event));
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+
     rdma_ack_cm_event(event);
 
     // Create a new rvsocket for accepted connection
@@ -479,7 +501,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     }
 
     // Fill in new rvsocket fields
-    new_rvs->vaddr = rvs->vaddr;
+    new_rvs->vaddr = vaddr;
     new_rvs->type = SOCK_STREAM;
     
     // Create a mailbox for the new socket (server calls rvaccept for each client)
@@ -491,11 +513,12 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
 
     new_rvs->mailboxPtr = searchHashmap(window->hashMapPtr, new_rvs->vaddr);
     new_rvs->cm_id = client_cm_id;
+    new_rvs->ec = client_cm_id->channel;
     new_rvs->mailboxPtr->pd = pd;
     new_rvs->mailboxPtr->cq = cq;
     new_rvs->mailboxPtr->qp = client_cm_id->qp;
 
-    new_rvs->index = client_cm_id->channel->fd;
+    new_rvs->index = next_fd++;
     new_rvs->state = rs_connected;
 
     end = rdtsc();

@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Attempting to connect to server %s:%d...\n", argv[1], PORT);
+    printf("Attempting to connect to server with vaddr %" PRIu64 "...\n", vaddr);
 
     if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr) < 0) {
         perror("rconnect");
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 1000;
+    int num_sends = 100;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
