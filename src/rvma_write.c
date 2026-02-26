@@ -414,7 +414,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
 
 
 // Recv buffer pool should be preposted, so just poll cq for completions
-RVMA_Status rvmaRecv(uint64_t vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_timestamp) {
+RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mailbox *mailbox) {
     struct ibv_wc wc;
     int num_wc;
     do {
@@ -426,19 +426,14 @@ RVMA_Status rvmaRecv(uint64_t vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_times
         return RVMA_ERROR;
     }
 
-    uint64_t t2 = rdtsc();
-    if (recv_timestamp) {
-        *recv_timestamp = t2;
-    }
-
     RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
-    char *recv_buf = (char *)entry->realBuff;
+    buf = (char *)entry->realBuff;
     // printf("Received Message: %.*s\n", wc.byte_len, recv_buf);
 
     // Build sge
     struct ibv_sge sge = {
-        .addr = (uintptr_t)recv_buf,
-        .length = entry->realBuffSize,
+        .addr = (uintptr_t)buf,
+        .length = len,
         .lkey = entry->mr->lkey
     };
 

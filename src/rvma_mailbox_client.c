@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
     int size = 10000;
     uint64_t t2;
 
+    void *recv_buf = malloc(size);
     char *messages[num_sends];
     for (int i = 0; i < num_sends; i++) {
         messages[i] = malloc(size);
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < num_sends; i++) {
         uint64_t t1 = rdtsc();
         rvmaSend(messages[i], size, vaddr, mailboxPtr);
-        rvmaRecv(vaddr, mailboxPtr, &t2);
+        rvmaRecv(vaddr, recv_buf, size, 0, mailboxPtr);
         double elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
         printf("RTT: %.2f microseconds\n", elapsed_us);
     }

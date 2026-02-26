@@ -37,7 +37,7 @@ uint32_t get_host_addr(const char *iface_name) {
 }
 
 
-int main(int argc) {
+int main(int argc, char **argv) {
 	uint16_t reserved = 0x0001;
 	struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -83,8 +83,14 @@ int main(int argc) {
     int warmup_sends = 10;
     int ret;
 
+    int64_t size = 1024;
+    if (argc > 1) {
+        size = atoi(argv[1]);
+    }
+
+    void *recv_buf = malloc(size);
     for (int i = 0; i < num_sends; i++){
-        ret = rvrecv(dgram_fd, &t2);
+        ret = rvrecv(dgram_fd, recv_buf, size, 0);
         if (ret < 0) {
             perror("Error receiving message");
         }

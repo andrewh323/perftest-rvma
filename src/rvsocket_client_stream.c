@@ -99,6 +99,8 @@ int main(int argc, char **argv) {
         snprintf(messages[i], size, "Msg %d", i);
     }
 
+    void *recv_buf = malloc(size);
+    
     // Send messages to server
     for (int i = 0; i < num_sends; i++) {
         // Perform rvma send
@@ -109,7 +111,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
-        res = rvrecv(sockfd, &t2);
+        res = rvrecv(sockfd, recv_buf, size, 0);
         if (res < 0) {
             fprintf(stderr, "Failed to receive message %d\n", i);
         }

@@ -178,10 +178,12 @@ int main(int argc, char **argv) {
         memset(messages[i], 'A', size);
         snprintf(messages[i], size, "Msg %d", i);
     }
+
+    void *recv_buf = malloc(size);
     
 	for (int i = 0; i < num_sends; i++) {
         uint64_t t1 = rdtsc();
-		rvmaRecv(vaddr, mailboxPtr, &t2);
+		rvmaRecv(vaddr, recv_buf, size, 0, mailboxPtr);
 		rvmaSend(messages[i], size, vaddr, mailboxPtr);
         double elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
         printf("RTT: %.2f microseconds\n", elapsed_us);

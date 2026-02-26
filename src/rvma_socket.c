@@ -1067,8 +1067,8 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         char *payload = data + sizeof(header);
         int payload_len = data_len - sizeof(header);
 
-        /* printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
-            header.frag_num, header.total_frags, payload_len, payload); */
+        printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
+            header.frag_num, header.total_frags, payload_len, payload);
 
         if (header.frag_num == 1) {
             total_frags = header.total_frags;
@@ -1113,7 +1113,7 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
 }
 
 
-int rvrecv(int socket, uint64_t *recv_timestamp) {
+int rvrecv(int socket, void *buf, size_t len, int flags) {
     // Read from mailbox buffer with rvmaRecv
     struct rvsocket *rvs;
     uint64_t vaddr;
@@ -1129,7 +1129,7 @@ int rvrecv(int socket, uint64_t *recv_timestamp) {
             return -1;
         }
     } else {
-        if (rvmaRecv(vaddr, mailbox, recv_timestamp) != RVMA_SUCCESS) {
+        if (rvmaRecv(vaddr, buf, len, 0, mailbox) != RVMA_SUCCESS) {
             fprintf(stderr, "rvmaRecv failed\n");
             return -1;
         }

@@ -98,6 +98,8 @@ int main(int argc, char **argv) {
     double wr_setup_time = 0;
     double poll_time = 0;
 
+    void *recv_buf = malloc(size);
+
     for (int i = 0; i < num_sends; i++) {
         char *message = malloc(size + 1);
         if (!message) {
@@ -120,7 +122,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
-        res = rvrecv(sockfd, NULL);
+        res = rvrecv(sockfd, recv_buf, size, 0);
         if (res < 0) {
             perror("rvrecv failed");
         }

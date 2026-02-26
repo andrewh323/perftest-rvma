@@ -79,7 +79,6 @@ int main() {
         if (n < (ssize_t)sizeof(struct msg_hdr))
             continue;
 
-        /* echo back exactly what was received */
         rsendto(sockfd, buf, n, 0,
                 (struct sockaddr *)&client_addr, client_len);
 		printf("sent!\n");

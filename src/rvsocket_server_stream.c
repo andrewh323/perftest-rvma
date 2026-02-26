@@ -81,6 +81,8 @@ int main(int argc, char **argv) {
     }
 	int num_sends = 1000;
 
+	void *recv_buf = malloc(size);
+
 	char *messages[num_sends];
     for (int i = 0; i < num_sends; i++) {
         messages[i] = malloc(size);
@@ -103,7 +105,7 @@ int main(int argc, char **argv) {
 	// Currently rvrecv is blocking but maintains flow control
 	for (int i = 0; i < num_sends; i++) {
 		for (int c = 0; c < num_clients; c++) {
-			rvrecv(conn_fd[c], NULL);
+			rvrecv(conn_fd[c], recv_buf, size, 0);
 			rvsend(conn_fd[c], messages[i], size);
 		}
 	}
