@@ -22,14 +22,9 @@ typedef struct {
     struct rdma_event_channel *ec; // Event channel
     struct ibv_context *ctx; // Device context
     int type;
-    uint64_t bufferSetupCycles;
-    uint64_t fragSetupCycles;
-    uint64_t wrSetupCycles;
-    uint64_t pollCycles;
-    uint64_t regmrCycles;
-    uint64_t cycles;
 
-    RVMA_Buffer_Queue *bufferQueue;
+    RVMA_Buffer_Queue *sendBufferQueue;
+    RVMA_Buffer_Queue *recvBufferQueue;
     RVMA_Buffer_Queue *retiredBufferQueue;
 } RVMA_Mailbox;
 

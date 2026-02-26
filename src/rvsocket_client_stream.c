@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
     // Define message size
-    int size = 1024;
+    int size = 10;
     if (argc > 2) {
         size = atoi(argv[2]);
     }
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to receive message %d\n", i);
         }
         uint64_t t3 = rdtsc();
-
+/* 
         // Convert cycles to microseconds
         double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
         double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
         elapsed_us -= (regmr_us); // Remove memory registration from send time
         elapsed_us /= 2; // One-way time
         printf("One-way time for message %d: %.3f µs\n", i, elapsed_us);
-
+ */
         int record = 1;
 
         // Exclude warm-ups if configured
@@ -138,14 +138,14 @@ int main(int argc, char **argv) {
             send_times[idx] = elapsed_us;
 
             // printf("rvmaSend time [%d]: %.3f µs\n", i, elapsed_us);
-
+/* 
             if (elapsed_us < min_time) min_time = elapsed_us;
             if (elapsed_us > max_time) max_time = elapsed_us;
             sum_time += elapsed_us;
             buffer_setup_time += bufferSetup_us;
             wr_setup_time += wrSetup_us;
             poll_time += poll_us;
-            regmr_time += regmr_us;
+            regmr_time += regmr_us; */
         }
         free(messages[i]);
     }

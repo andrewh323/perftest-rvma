@@ -96,6 +96,11 @@ enum rs_state {
 	rs_error	   =		    0x2000,
 };
 
+// Global completion queue for all rvsockets
+// When completion is detected, need a way to check which socket it belongs to
+// Maybe check the rs_state of each rvsocket in the idm? "if rs_readable...", etc.
+struct ibv_cq *shared_cq;
+
 struct rvsocket {
     int type; // SOCK_STREAM or SOCK_DGRAM
     int index;
@@ -209,8 +214,14 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         rvs->index = next_fd++;
     } else { // datagram
         // Datagrams do not accept/connect, so we must setup pd, cq, and qp here
-        // To allocate pd, we need a valid context
+        // To allocate pd, we need a valid context and mailbox
         uint64_t rdmaStart = rdtsc();
+        RVMA_Status res = newMailboxIntoHashmap(window->hashMapPtr, vaddr);
+        if (res != RVMA_SUCCESS) {
+            print_error("rvsocket: Failure creating mailbox");
+            free(rvs);
+            return -1;
+        }
         char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
         struct ibv_device *ib_dev = ctx_find_dev(&devname);
         if (!ib_dev) {
@@ -913,8 +924,8 @@ int rvsendto(int socket, void *buf, int64_t len) {
         uint64_t buffer_setup_start = rdtsc();
 
         // Post buffer to mailbox, fill mailbox entry
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)&full_buf, total_size, notifBuffPtr, (void *)notifLenPtr, vaddr,
-                                    rvs->mailboxPtr, threshold, EPOCH_OPS);
+        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)full_buf, total_size, notifBuffPtr, (void *)notifLenPtr, vaddr,
+                                    rvs->mailboxPtr, threshold, EPOCH_OPS, 0);
         if (!entry) {
             fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
             return -1;
@@ -973,7 +984,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
             if (wc.opcode == IBV_WC_SEND) {
                 RVMA_Buffer_Entry *e = (RVMA_Buffer_Entry*)wc.wr_id;
-                RVMA_Buffer_Entry *q = dequeue(rvs->mailboxPtr->bufferQueue);
+                RVMA_Buffer_Entry *q = dequeue(rvs->mailboxPtr->sendBufferQueue);
                 freeBufferEntry(e);
                 break;
             }
@@ -989,12 +1000,13 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
     free(notifBuffPtr);
     free(notifLenPtr);
-
+/* 
     rvs->mailboxPtr->cycles = elapsed;
     rvs->mailboxPtr->fragSetupCycles = frag_setup;
     rvs->mailboxPtr->bufferSetupCycles = buffer_setup;
     rvs->mailboxPtr->wrSetupCycles = wr_setup;
     rvs->mailboxPtr->pollCycles = total_poll;
+*/
 
     return 0;
 }

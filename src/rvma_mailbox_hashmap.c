@@ -18,11 +18,20 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
 
     if(!mailboxPtr) return NULL;
 
-    RVMA_Buffer_Queue *bufferQueue;
-    bufferQueue = createBufferQueue(QUEUE_CAPACITY);
-    if(!bufferQueue) {
-        print_error("setupMailbox: Buffer Queue failed to be created");
+    RVMA_Buffer_Queue *sendBufferQueue;
+    sendBufferQueue = createBufferQueue(QUEUE_CAPACITY);
+    if(!sendBufferQueue) {
+        print_error("setupMailbox: Send Buffer Queue failed to be created");
         free(mailboxPtr);
+        return NULL;
+    }
+
+    RVMA_Buffer_Queue *recvBufferQueue;
+    recvBufferQueue = createBufferQueue(QUEUE_CAPACITY);
+    if(!recvBufferQueue) {
+        print_error("setupMailbox: Recv Buffer Queue failed to be created");
+        free(mailboxPtr);
+        free(sendBufferQueue);
         return NULL;
     }
 
@@ -31,14 +40,16 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     if(!retiredBufferQueue) {
         print_error("setupMailbox: Retired Buffer Queue failed to be created");
         free(mailboxPtr);
-        free(bufferQueue);
+        free(sendBufferQueue);
+        free(recvBufferQueue);
         return NULL;
     }
 
     mailboxPtr->pd = NULL;
     mailboxPtr->cq = NULL;
     mailboxPtr->qp = NULL;
-    mailboxPtr->bufferQueue = bufferQueue;
+    mailboxPtr->sendBufferQueue = sendBufferQueue;
+    mailboxPtr->recvBufferQueue = recvBufferQueue;
     mailboxPtr->retiredBufferQueue = retiredBufferQueue;
     mailboxPtr->vaddr = vaddr;
     mailboxPtr->key = hashFunction(mailboxPtr->vaddr, hashmapCapacity);
@@ -73,8 +84,11 @@ Mailbox_HashMap* initMailboxHashmap(){
 RVMA_Status freeMailbox(RVMA_Mailbox** mailboxPtr){
     if (mailboxPtr && *mailboxPtr) {
         // Here you should also properly free your bufferQueues, which inside them free the possibly allocated buffers
-        if ((*mailboxPtr)->bufferQueue) {
-            freeBufferQueue(((*mailboxPtr)->bufferQueue));
+        if ((*mailboxPtr)->sendBufferQueue) {
+            freeBufferQueue(((*mailboxPtr)->sendBufferQueue));
+        }
+        if ((*mailboxPtr)->recvBufferQueue) {
+            freeBufferQueue(((*mailboxPtr)->recvBufferQueue));
         }
         if ((*mailboxPtr)->retiredBufferQueue) {
             freeBufferQueue(((*mailboxPtr)->retiredBufferQueue));
@@ -164,12 +178,6 @@ RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, uint64_t key){
     }
 }
 
-RVMA_Status retireBuffer(RVMA_Mailbox* RVMA_Mailbox, RVMA_Buffer_Entry* entry){
-
-    dequeue(RVMA_Mailbox->bufferQueue);
-
-    return enqueueRetiredBuffer(RVMA_Mailbox->retiredBufferQueue, entry);
-}
 
 int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *remote_addr) {
     struct rdma_cm_event *event;
