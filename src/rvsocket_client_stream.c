@@ -69,13 +69,13 @@ int main(int argc, char **argv) {
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
     // Define message size
-    int size = 10;
+    int size = 1024;
     if (argc > 2) {
         size = atoi(argv[2]);
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 100;
+    int num_sends = 1000;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
@@ -116,46 +116,26 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to receive message %d\n", i);
         }
         uint64_t t3 = rdtsc();
-/* 
-        // Convert cycles to microseconds
-        double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
-        double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
-        double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
-        double regmr_us = mailbox->regmrCycles / (cpu_ghz * 1e3);
-        elapsed_us = (t3 - t1) / (cpu_ghz * 1e3);
-        elapsed_us -= (regmr_us); // Remove memory registration from send time
-        elapsed_us /= 2; // One-way time
-        printf("One-way time for message %d: %.3f µs\n", i, elapsed_us);
- */
         int record = 1;
 
         // Exclude warm-ups if configured
         if (exclude_warmup && i < warmup_sends)
             record = 0;
 
+        double elapsed_us = (t3 - t1) / (cpu_ghz * 1e3);
+        if (elapsed_us < min_time) min_time = elapsed_us;
+        if (elapsed_us > max_time) max_time = elapsed_us;
+        sum_time += elapsed_us;
+
         if (record) {
             int idx = exclude_warmup ? (i - warmup_sends) : i;
             send_times[idx] = elapsed_us;
-
-            // printf("rvmaSend time [%d]: %.3f µs\n", i, elapsed_us);
-/* 
-            if (elapsed_us < min_time) min_time = elapsed_us;
-            if (elapsed_us > max_time) max_time = elapsed_us;
-            sum_time += elapsed_us;
-            buffer_setup_time += bufferSetup_us;
-            wr_setup_time += wrSetup_us;
-            poll_time += poll_us;
-            regmr_time += regmr_us; */
         }
         free(messages[i]);
     }
 
     // Compute averages
     double avg_time = sum_time / measured_sends;
-    double avg_buffer_setup = buffer_setup_time / measured_sends;
-    double avg_wr_setup = wr_setup_time / measured_sends;
-    double avg_poll_time = poll_time / measured_sends;
-    double avg_regmr_time = regmr_time / measured_sends;
 
     // Compute standard deviation
     double variance = 0.0;
@@ -170,10 +150,6 @@ int main(int argc, char **argv) {
     printf("\n===== RVMA Send Timing Results =====\n");
     printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
     printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
-    printf("Average buffer setup:     %.3f µs\n", avg_buffer_setup);
-    printf("Average regmr time:       %.3f µs\n", avg_regmr_time);
-    printf("Average WR setup:         %.3f µs\n", avg_wr_setup);
-    printf("Average poll:             %.3f µs\n", avg_poll_time);
     printf("Min send time:            %.3f µs\n", min_time);
     printf("Max send time:            %.3f µs\n", max_time);
     printf("Avg send time:            %.3f µs\n", avg_time);

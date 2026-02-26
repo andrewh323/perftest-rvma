@@ -1,9 +1,9 @@
-Server Node: nc20133
-Client Node: nc20137
+Server Node: rc12717
+Client Node: rc12721
 Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
 Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
-Server IB HW IP: 10.82.41.33
-Client IB HW IP: 10.82.41.37
+Server IB HW IP: 10.85.27.17
+Client IB HW IP: 10.85.27.21
 === Run 1 of 10 ===
 Running test with message size: 1 bytes
 Running test with message size: 4 bytes

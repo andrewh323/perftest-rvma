@@ -13,7 +13,7 @@
 #include "rvma_socket.c"
 
 #define MAX_SEND_SIZE 1024*1024
-#define MAX_RECV_SIZE 1024*1024 // 1MB
+#define MAX_RECV_SIZE 1024*1024 // 1 MB
 
 // Helper function to get CPU frequency
 double get_cpu_ghz() {
@@ -344,7 +344,6 @@ RVMA PUT STEPS
     5. Post send
 */
 RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mailbox) {
-    uint64_t start = rdtsc();
     // Pull a buffer from the mailbox's buffer queue
     RVMA_Buffer_Entry *entry = dequeue(mailbox->sendBufferQueue);
     if (!entry) {
@@ -355,7 +354,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
     // Fill the buffer with data to send
     memcpy(entry->realBuff, buf, size);
     void *data = entry->realBuff;
-    int64_t dataSize = entry->realBuffSize;
+    int64_t dataSize = size;
 
     struct ibv_send_wr *bad_wr = NULL;
 
@@ -404,8 +403,8 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         perror("rvmaSend: ibv_poll_cq failed");
         return RVMA_ERROR;
     }
-    
-    //TODO: Add in buffer status field
+
+    //TODO: Add in buffer status field to track in-flight buffers
     // Repost the buffer back to the send queue
     RVMA_Buffer_Entry *completed_entry = (RVMA_Buffer_Entry *)wc.wr_id;
     enqueue(mailbox->sendBufferQueue, completed_entry);
@@ -434,7 +433,7 @@ RVMA_Status rvmaRecv(uint64_t vaddr, RVMA_Mailbox *mailbox, uint64_t *recv_times
 
     RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
     char *recv_buf = (char *)entry->realBuff;
-    printf("Received Message: %.*s\n", wc.byte_len, recv_buf);
+    // printf("Received Message: %.*s\n", wc.byte_len, recv_buf);
 
     // Build sge
     struct ibv_sge sge = {

@@ -65,9 +65,8 @@ int main() {
 		if (n <= 0) break;
 		uint64_t t3 = rdtsc();
 		recv_times[i] = t2 / (cpu_ghz * 1e3);
-		//printf("Server received message %d, first byte: 0x%02X\n", i, buffer[0]);
+		printf("Server received message %d\n", i);
 		rsend(conn_fd, "ACK", 4, 0);
-		usleep(10);
 	}
 
 	// Close the connection

@@ -48,12 +48,12 @@ uint32_t get_host_addr(const char *iface_name) {
 int main(int argc, char **argv) {
 	uint64_t start, end;
 	double cpu_ghz = get_cpu_ghz();
-	double elapsed_us;
+	double elapsed_time, send_time, recv_time;
 	uint16_t reserved = 0x0001;
 	struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
 	int listen_fd;
-	int num_clients = 2;
+	int num_clients = 1;
 	int conn_fd[num_clients];
 
 	uint32_t host_ip = get_host_addr("ib0");
@@ -75,8 +75,11 @@ int main(int argc, char **argv) {
 	rvlisten(listen_fd, 5);
 	printf("Server listening on port %d...\n", PORT);
 
-	int size = 10;
-	int num_sends = 100;
+	int size = 1024;
+    if (argc > 1) {
+        size = atoi(argv[1]);
+    }
+	int num_sends = 1000;
 
 	char *messages[num_sends];
     for (int i = 0; i < num_sends; i++) {
@@ -94,6 +97,7 @@ int main(int argc, char **argv) {
 		}
 		printf("Client %d successfully connected!\n", i+1);
 	}
+	 uint64_t t1, t2, t3;
 
 	// While server is running, poll all clients and recv messages
 	// Currently rvrecv is blocking but maintains flow control

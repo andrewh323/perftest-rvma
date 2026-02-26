@@ -36,7 +36,7 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_RECV_BUFS 16
+#define MAX_POOL_BUFS 16
 #define MAX_RECV_SIZE 1024*1024 // 1MB
 #define SIGNAL_INTERVAL 32
 
@@ -314,11 +314,14 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         // Save qp to rvs
         rvs->mailboxPtr->qp = qp;
 
-        // Post receive pool to prepare for incoming sends
-        // Do not include postRecvPool time in rvsocket timing; separate measurement
-        if (postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
-            perror("postRecvPool failed");
+        // Post pools to prepare for incoming transmissions
+        if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+            perror("postSendPool failed");
             return -1;
+        }
+        if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+            perror("postRecvPool failed");
+            return ;
         }
         uint64_t rdmaEnd = rdtsc();
         rdmaTime = (rdmaEnd - rdmaStart) / (cpu_ghz * 1e3);
@@ -534,10 +537,15 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
 
     end = rdtsc();
 
-    // Prepost recv buffer pool
-    status = postRecvPool(new_rvs->mailboxPtr, MAX_RECV_BUFS, new_rvs->vaddr, EPOCH_BYTES);
-    if (status != RVMA_SUCCESS) {
-        fprintf(stderr, "rvaccept: postRecvPool failed\n");
+    // Prepost buffer pools
+    if (postSendPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        perror("postSendPool failed");
+        return -1;
+    }
+    
+    printf("Posting buffer pools\n");
+    if (postRecvPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        perror("postRecvPool failed");
         return -1;
     }
 
@@ -742,10 +750,13 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     rdma_ack_cm_event(event);
 
     uint64_t beforePostRecv = rdtsc();
-    // Prepost recv buffer pool
-    status = postRecvPool(rvs->mailboxPtr, MAX_RECV_BUFS, rvs->vaddr, EPOCH_BYTES);
-    if (status != RVMA_SUCCESS) {
-        fprintf(stderr, "rvaccept: postRecvPool failed\n");
+    // Prepost buffer pools
+    if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+            perror("postSendPool failed");
+            return -1;
+    }
+    if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        perror("postRecvPool failed");
         return -1;
     }
 
@@ -1097,7 +1108,6 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
     free(msg_buf);
     return 0;
 }
-
 
 
 int rvrecv(int socket, uint64_t *recv_timestamp) {
