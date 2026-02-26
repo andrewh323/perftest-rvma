@@ -99,8 +99,6 @@ int main(int argc, char **argv) {
         snprintf(messages[i], size, "Msg %d", i);
     }
 
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
-
     // Send messages to server
     for (int i = 0; i < num_sends; i++) {
         // Perform rvma send

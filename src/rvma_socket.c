@@ -222,6 +222,8 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             free(rvs);
             return -1;
         }
+        rvs->mailboxPtr = searchHashmap(window->hashMapPtr, vaddr);
+
         char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
         struct ibv_device *ib_dev = ctx_find_dev(&devname);
         if (!ib_dev) {
@@ -254,7 +256,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             return -1;
         }
         rvs->mailboxPtr->pd = pd;
-        
+
         struct ibv_cq *cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
         if (!cq) {
             fprintf(stderr, "rvsocket: Failed to create cq\n");
@@ -948,6 +950,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
         uint64_t buffer_setup_end = rdtsc();
         buffer_setup += buffer_setup_end - buffer_setup_start;
 
+        printf("Buffer posted with size %zu bytes for fragment %d/%d\n", total_size, hdr->frag_num, hdr->total_frags);
         // Build sge, wr
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
