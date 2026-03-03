@@ -213,7 +213,8 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
     if (type == SOCK_STREAM) {
         // For stream sockets, pd, cq, and qp are allocated in accept/connect
-        rvs->index = next_fd++;
+        //rvs->index = next_fd++;
+        rvs->index = eventfd(0, 0);
     } else { // datagram
         // Datagrams do not accept/connect, so we must setup pd, cq, and qp here
         // To allocate pd, we need a valid context and mailbox
@@ -333,7 +334,8 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
-        rvs->index = next_fd++;
+        //rvs->index = next_fd++;
+        rvs->index = eventfd(0, 0);
     }
     // Insert rvsocket into index map
     ret = rs_insert(rvs, rvs->index);
@@ -536,7 +538,8 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     new_rvs->mailboxPtr->cq = cq;
     new_rvs->mailboxPtr->qp = client_cm_id->qp;
 
-    new_rvs->index = next_fd++;
+    // new_rvs->index = next_fd++;
+    new_rvs->index = eventfd(0, 0);
     new_rvs->state = rs_connected;
 
     end = rdtsc();
@@ -1137,4 +1140,12 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
         }
     }
     return 0;
+}
+
+ssize_t rvwrite(int socket, void *buf, size_t count) {
+    return -1;
+}
+
+ssize_t rvread(int socket, void *buf, size_t count) {
+    return -1;
 }

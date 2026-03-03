@@ -33,8 +33,6 @@ static ssize_t (*real_write)(int, const void *, size_t) = NULL;
 static ssize_t (*real_read)(int, void *, size_t) = NULL;
 static int (*real_close)(int) = NULL;
 
-
-
 __attribute__((constructor)) void init()
 {
     real_socket = dlsym(RTLD_NEXT, "socket");
@@ -50,6 +48,8 @@ __attribute__((constructor)) void init()
 
     fprintf(stderr, "[shim] loaded\n");
 }
+
+static int current_rvma_fd = 0;
 
 char * get_ip(char * interface_name)
 {
@@ -67,29 +67,15 @@ char * get_ip(char * interface_name)
     return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 
-struct sockaddr_in sock_setup(void) {
-    return;
-}
-
-int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-#ifndef RVMA_DISABLE
-    return real_accept(sockfd, addr, addrlen);
-#else
-    uint16_t reserved = 0x0001;
-    struct sockaddr_in *in = (struct sockaddr_in *)address;
-
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
-
-    uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    RVMA_Win* windowPtr = rvmaInitWindowMailbox();
-    return rvaccept(sockfd, (struct sockaddr *)in, addrlen, windowPtr);
-#endif
-}
+int get_fd(int rvsocket);
 
 // Called by both server/client
 int socket(int domain, int type, int protocol)
 {
+    int fd = 0;
+#ifndef RVMA_DISABLE
+    fd = real_socket(domain, type, protocol);
+#else
     uint16_t reserved = 0x0001;
     fprintf(stderr, "[shim] socket generated\n");
 
@@ -122,13 +108,26 @@ int socket(int domain, int type, int protocol)
 
     int rvma_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     fprintf(stderr, "[shim] rvma_fd -> %d\n", rvma_fd);
-    int fd = real_socket(domain, type, protocol);
-    dup2(rvma_fd, fd);
+    current_rvma_fd = rvma_fd;
     fd = rvma_fd;
-#ifndef RVMA_DISABLE
-    fd = real_socket(domain, type, protocol);
 #endif
     return fd;
+}
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+#ifndef RVMA_DISABLE
+    return real_accept(sockfd, addr, addrlen);
+#else
+    uint16_t reserved = 0x0001;
+    struct sockaddr_in *in = (struct sockaddr_in *)address;
+
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
+
+    uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
+    RVMA_Win* windowPtr = rvmaInitWindowMailbox();
+    return rvaccept(sockfd, (struct sockaddr *)in, addrlen, windowPtr);
+#endif
 }
 
 // Called by client
@@ -175,7 +174,12 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
  int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 
     
-    fprintf(stderr, "[shim] successfully bound\n");
+    fprintf(stderr, "[shim] successfully bound on fd = %d\n", sockfd);
+    fprintf(stderr, "[shim] current_rvma_fd = %d\n", current_rvma_fd);
+    fprintf(stderr, "bind_errno=%d (%s)\n", errno, strerror(errno));
+
+    if (sockfd != current_rvma_fd) return real_bind(sockfd, addr, addrlen);
+    return rvbind(sockfd, addr, sizeof(addr));
 
 #ifndef RVMA_DISABLE
     return real_bind(sockfd, addr, addrlen);
@@ -186,6 +190,7 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 int listen(int sockfd, int backlog) {
 
     fprintf(stderr, "[shim] successfully started listening\n");
+    fprintf(stderr, "[shim] sockfd -> %d\n", sockfd);
 
 #ifndef RVMA_DISABLE
     return real_listen(sockfd, backlog);
@@ -214,37 +219,47 @@ ssize_t recv(int socket, void *buf, size_t len, int flags)
     r = rvrecv(socket, &t2);
 #endif
     fprintf(stderr, "[shim] recv fd=%d got=%zd\n", socket, r);
+    fprintf(stderr, "recv_errno=%d (%s)\n", errno, strerror(errno));
 
     return r;
 }
 
 ssize_t write(int fd, const void *buf, size_t count)
 {
-    // fprintf(stderr, "[shim] write fd=%d\n", fd);
-    //return rvsend(socket, buf, count);
-    return real_write(fd, buf, count);
+    //fprintf(stderr, "[shim] write fd=%d\n", fd);
+    if (fd != current_rvma_fd) return real_write(fd, buf, count);
+    return rvsend(fd, buf, count);
 }
 
+// idm_lookup/idm_at
 ssize_t read(int fd, void *buf, size_t count)
 {
+    // Have to write a get_fd function, if my fd is this then do it
     ssize_t r;
     uint64_t t2;
+    
 #ifndef RVMA_DISABLE
-    //r = real_read(fd, buf, count);
     r = real_read(fd, buf, count);
 #else
-    r = real_read(fd, buf, count);
-    // r = rvrecv(fd, &t2);
+    
+    if (fd != current_rvma_fd) {
+        fprintf(stderr, "[shim] real_fd -> %d\n", fd);
+        r = real_read(fd, buf, count);
+    } else {
+        fprintf(stderr, "[shim] rvma_fd -> %d\n", fd);
+        r = rvrecv(fd, &t2);
+    }
+    
 #endif
-    fprintf(stderr, "errno=%d (%s)\n", errno, strerror(errno));
-    fprintf(stderr, "[shim] read fd=%d got=%zd\n", fd, r);
+    //fprintf(stderr, "[shim] read fd=%d got=%zd\n", fd, r);
+    //fprintf(stderr, "errno=%d (%s)\n", errno, strerror(errno));
 
     return r;
 }
 
 int close(int fd)
 {
-    fprintf(stderr, "[shim] close fd=%d\n", fd);
+    // fprintf(stderr, "[shim] close fd=%d\n", fd);
 #ifndef RVMA_DISABLE
     return real_close(fd);
 #else
