@@ -1,0 +1,27 @@
+socket(AF_INET, SOCK_STREAM, IPPROTO_IP) = 4
+connect(4, {sa_family=AF_INET, sin_port=htons(5201), sin_addr=inet_addr("10.82.85.19")}, 16) = 0
+setsockopt(4, SOL_TCP, TCP_NODELAY, [1], 4) = 0
+getsockopt(4, SOL_TCP, TCP_MAXSEG, [1992], [4]) = 0
+
+socket(AF_INET, SOCK_STREAM, IPPROTO_IP) = 5
+getsockopt(5, SOL_SOCKET, SO_SNDBUF, [87380], [4]) = 0
+getsockopt(5, SOL_SOCKET, SO_RCVBUF, [87380], [4]) = 0
+connect(5, {sa_family=AF_INET, sin_port=htons(5201), sin_addr=inet_addr("10.82.85.19")}, 16) = 0
+getsockopt(5, SOL_TCP, TCP_CONGESTION, "bbr\0\0\0\0\0\0\0\0\0\0\0\0\0", [16]) = 0
+getsockname(5, {sa_family=AF_INET, sin_port=htons(60788), sin_addr=inet_addr("10.82.85.23")}, [128 => 16]) = 0
+getpeername(5, {sa_family=AF_INET, sin_port=htons(5201), sin_addr=inet_addr("10.82.85.19")}, [128 => 16]) = 0
+getsockname(5, {sa_family=AF_INET, sin_port=htons(60788), sin_addr=inet_addr("10.82.85.23")}, [128 => 16]) = 0
+strace: Process 2576729 attached
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\300\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\300\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\300\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\340\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\240\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\240\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\240\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\300\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576728] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\300\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 2576729] --- SIGRTMIN {si_signo=SIGRTMIN, si_code=SI_TKILL, si_pid=2576728, si_uid=3156678} ---
+[pid 2576729] +++ exited with 0 +++
+getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\0(\21\3\0\0\0\0\0\310\7\0\0\30\2\0\0\4\0\0\0\0\0\0\0"..., [232]) = 0
++++ exited with 0 +++

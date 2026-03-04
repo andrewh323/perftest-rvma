@@ -1,0 +1,35 @@
+socket(AF_INET, SOCK_STREAM, IPPROTO_IP) = 3
+setsockopt(3, SOL_SOCKET, SO_REUSEADDR, [1], 4) = 0
+bind(3, {sa_family=AF_INET, sin_port=htons(5201), sin_addr=inet_addr("0.0.0.0")}, 16) = 0
+listen(3, 2147483647)                   = 0
+accept(3, {sa_family=AF_INET, sin_port=htons(60774), sin_addr=inet_addr("10.82.85.23")}, [128 => 16]) = 4
+setsockopt(4, SOL_TCP, TCP_NODELAY, [1], 4) = 0
+getsockopt(3, SOL_SOCKET, SO_SNDBUF, [87380], [4]) = 0
+getsockopt(3, SOL_SOCKET, SO_RCVBUF, [87380], [4]) = 0
+getpeername(4, {sa_family=AF_INET, sin_port=htons(60774), sin_addr=inet_addr("10.82.85.23")}, [128 => 16]) = 0
+getsockname(4, {sa_family=AF_INET, sin_port=htons(5201), sin_addr=inet_addr("10.82.85.19")}, [128 => 16]) = 0
+
+accept(3, {sa_family=AF_INET, sin_port=htons(60788), sin_addr=inet_addr("10.82.85.23")}, [128 => 16]) = 5
+getsockopt(5, SOL_TCP, TCP_CONGESTION, "bbr\0\0\0\0\0\0\0\0\0\0\0\0\0", [16]) = 0
+getsockname(5, {sa_family=AF_INET, sin_port=htons(5201), sin_addr=inet_addr("10.82.85.19")}, [128 => 16]) = 0
+getpeername(5, {sa_family=AF_INET, sin_port=htons(60788), sin_addr=inet_addr("10.82.85.23")}, [128 => 16]) = 0
+getsockname(5, {sa_family=AF_INET, sin_port=htons(5201), sin_addr=inet_addr("10.82.85.19")}, [128 => 16]) = 0
+strace: Process 101496 attached
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101333] getsockopt(5, SOL_TCP, TCP_INFO, "\1\0\0\0\0\7\335\1\370\30\3\0@\234\0\0\310\7\0\0\310\7\0\0\0\0\0\0\0\0\0\0"..., [232]) = 0
+[pid 101496] +++ exited with 0 +++
+socket(AF_INET, SOCK_STREAM, IPPROTO_IP) = 3
+setsockopt(3, SOL_SOCKET, SO_REUSEADDR, [1], 4) = 0
+bind(3, {sa_family=AF_INET, sin_port=htons(5201), sin_addr=inet_addr("0.0.0.0")}, 16) = 0
+listen(3, 2147483647)                   = 0
+strace: Process 101333 detached
+iperf3: interrupt - the server has terminated by signal Interrupt(2)
