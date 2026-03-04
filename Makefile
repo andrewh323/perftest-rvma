@@ -1546,6 +1546,27 @@ rvma_shim5:
 	-o librvma_shim.so \
 	-libverbs -lrdmacm -lpci -lmlx5
 
+rvma_server_shim:
+	gcc -fPIC -shared -D_GNU_SOURCE \
+	-I. -I/home/rysilve/rdma-core/build/include \
+	src/rvma_shim_server.c \
+	src/rvma_socket.o \
+	src/rvma_write.o \
+	src/rvma_mailbox_hashmap.o \
+	src/rvma_common.o \
+	src/rvma_buffer_queue.o \
+	src/indexer.o \
+	src/perftest_parameters.o \
+	src/perftest_counters.o \
+	src/perftest_resources.o \
+	src/perftest_communication.o \
+	src/host_memory.o \
+	src/mmap_memory.o \
+	src/raw_ethernet_resources.o \
+	src/get_clock.o \
+	-o librvmaserver_shim.so \
+	-libverbs -lrdmacm -lpci -lmlx5
+
 .MAKE: all install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles am--refresh check \

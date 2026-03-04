@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <stdint.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -11,6 +12,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <rdma/rsocket.h>
+#include <stdatomic.h>
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -18,8 +20,9 @@
 #include <net/if.h>
 
 #include "rvma_socket.h"
-//#include "rvma_write.h"
 
+
+#define PERROR(str) fprintf(stderr, "%s_errno=%d (%s)\n", str, errno, strerror(errno));
 #define PORT 5201
 
 static int (*real_socket)(int, int, int) = NULL;
@@ -32,6 +35,7 @@ static ssize_t (*real_recv)(int, const void *, size_t, int) = NULL;
 static ssize_t (*real_write)(int, const void *, size_t) = NULL;
 static ssize_t (*real_read)(int, void *, size_t) = NULL;
 static int (*real_close)(int) = NULL;
+static int (*real_setsockopt)(int, int, int, const void *, socklen_t) = NULL;
 
 __attribute__((constructor)) void init()
 {
@@ -45,11 +49,14 @@ __attribute__((constructor)) void init()
     real_write = dlsym(RTLD_NEXT, "write");
     real_read = dlsym(RTLD_NEXT, "read");
     real_close = dlsym(RTLD_NEXT, "close");
+    real_setsockopt = dlsym(RTLD_NEXT, "setsockopt");
 
     fprintf(stderr, "[shim] loaded\n");
 }
 
-static int current_rvma_fd = 0;
+// Have multiple sockets available
+static int _Atomic current_rvma_fd = 0;
+static int _Atomic sockets_created = 0;
 
 char * get_ip(char * interface_name)
 {
@@ -67,67 +74,103 @@ char * get_ip(char * interface_name)
     return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 
-int get_fd(int rvsocket);
+int is_socket(int fd) {
+    struct stat st;
 
-// Called by both server/client
+    if (fstat(fd, &st) == -1)
+        return 0;
+
+    return S_ISSOCK(st.st_mode);
+}
+
+int get_fd(int rvsocket); // use strace -f -e trace=network to see sockets
+
+
+int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
+{
+    if (!is_socket(fd)) {
+        fprintf(stderr, "[shim] ESCAPED SETSOCKOPT\n");
+        // Pretend success
+        return 0;
+    }
+
+    return real_setsockopt(fd, level, optname, optval, optlen);
+}
+
+/*
+Called by both server/client- how do I separate from client/server
+I need to let the first control socket pass, then let the others go after
+Need to let first two sockets pass me by
+Seems that iperf opens it at the IP layer, not TCP
+*/
 int socket(int domain, int type, int protocol)
 {
+    if (sockets_created == 0) {
+        sockets_created++;
+        fprintf(stderr, "[shim] created REAL socket\n");
+        return real_socket(domain, type, protocol);
+    }
+
     int fd = 0;
-#ifndef RVMA_DISABLE
-    fd = real_socket(domain, type, protocol);
-#else
+
+// Below is rvsocket crap
     uint16_t reserved = 0x0001;
     fprintf(stderr, "[shim] socket generated\n");
 
-    struct sockaddr_in server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
-
-    server_addr.sin_family = domain;
-    server_addr.sin_port = htons(PORT);
-
     char* ip = get_ip("ib0");
+    fprintf(stderr, "[shim] ib0 -> %s\n", ip);
 
-    if (inet_pton(AF_INET, ip, &server_addr.sin_addr) != 1)
-    {
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = domain;
+    addr.sin_port = htons(PORT);
+    
+    if (inet_pton(AF_INET, ip, &addr.sin_addr) != 1) {
         perror("inet_pton failed");
         return -1;
-    };
+    }
 
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
+    // addr.sin_addr.s_addr = INADDR_ANY;
+    uint32_t ip_host_order = ntohl(addr.sin_addr.s_addr);
 
-    fprintf(stderr, "[shim] socket address -> %s\n", server_addr.sin_addr);
+    char ip_str[INET_ADDRSTRLEN];
+    if(inet_ntop(AF_INET, &addr.sin_addr, ip_str, INET_ADDRSTRLEN) == NULL) {
+        perror("inet_ntop failed");
+        return -1;
+    }
+    fprintf(stderr, "[shim] socket address -> %s\n", ip_str);
 
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-
     fprintf(stderr, "[shim] vaddr -> %" PRIu64 "\n", vaddr);
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
-
     fprintf(stderr, "[shim] windowPtr -> %p\n", windowPtr);
 
     int rvma_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     fprintf(stderr, "[shim] rvma_fd -> %d\n", rvma_fd);
+
     current_rvma_fd = rvma_fd;
     fd = rvma_fd;
-#endif
     return fd;
 }
 
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-#ifndef RVMA_DISABLE
-    return real_accept(sockfd, addr, addrlen);
-#else
-    uint16_t reserved = 0x0001;
-    struct sockaddr_in *in = (struct sockaddr_in *)address;
 
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
+    if (sockets_created == 1) {
+        fprintf(stderr, "[shim] created REAL accept\n");
+        return real_accept(sockfd, addr, addrlen);
+    } else {
+    PERROR("accept")
+    uint16_t reserved = 0x0001;
+    struct sockaddr_in *in = (struct sockaddr_in *)addr;
+
+    in->sin_addr.s_addr = INADDR_ANY;
+    uint32_t ip_host_order = ntohl(in->sin_addr.s_addr);
 
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    RVMA_Win* windowPtr = rvmaInitWindowMailbox();
+    RVMA_Win* windowPtr = rvmaInitWindowMailbox(&vaddr);
     return rvaccept(sockfd, (struct sockaddr *)in, addrlen, windowPtr);
-#endif
+    }
 }
 
 // Called by client
@@ -136,7 +179,7 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 #ifndef RVMA_DISABLE
     return real_connect(socket, address, address_len);
 #endif
-
+    PERROR("connect")
     if (address->sa_family == AF_INET)
     {
         uint16_t reserved = 0x0001;
@@ -155,7 +198,6 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
         uint32_t ip_host_order = ntohl(in->sin_addr.s_addr);
 
         uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-        
         RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
         
         // Need to fix this
@@ -173,18 +215,17 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 // Called by server
  int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 
-    
-    fprintf(stderr, "[shim] successfully bound on fd = %d\n", sockfd);
-    fprintf(stderr, "[shim] current_rvma_fd = %d\n", current_rvma_fd);
-    fprintf(stderr, "bind_errno=%d (%s)\n", errno, strerror(errno));
+    int status = 0;
+    PERROR("bind")
 
-    if (sockfd != current_rvma_fd) return real_bind(sockfd, addr, addrlen);
-    return rvbind(sockfd, addr, sizeof(addr));
-
-#ifndef RVMA_DISABLE
-    return real_bind(sockfd, addr, addrlen);
-#endif
-    return rvbind(sockfd, addr, sizeof(addr));
+    if (sockets_created == 1 && is_socket(sockfd)) {
+        fprintf(stderr, "[shim] successfully bound on fd = %d\n", sockfd);
+        fprintf(stderr, "[shim] created REAL bind\n");
+        status = real_bind(sockfd, addr, addrlen);
+    } else if (!is_socket(sockfd)){
+        status = rvbind(sockfd, addr, sizeof(addr));
+    }
+    return status;
 }
 
 int listen(int sockfd, int backlog) {
@@ -192,10 +233,12 @@ int listen(int sockfd, int backlog) {
     fprintf(stderr, "[shim] successfully started listening\n");
     fprintf(stderr, "[shim] sockfd -> %d\n", sockfd);
 
-#ifndef RVMA_DISABLE
-    return real_listen(sockfd, backlog);
-#endif
-    return rvlisten(sockfd, backlog);
+    if (sockets_created == 1) {
+        fprintf(stderr, "[shim] created REAL listener\n");
+        return real_listen(sockfd, backlog);
+    } else {
+        return rvlisten(sockfd, backlog);
+    }
 }
 
 ssize_t send(int socket, const void *buf, size_t len, int flags)
