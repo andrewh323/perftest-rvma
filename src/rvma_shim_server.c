@@ -147,13 +147,14 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
     struct sockaddr_in *in = (struct sockaddr_in *)address;
     // in->sin_addr.s_addr = INADDR_ANY;
     in->sin_family = AF_INET;
+    in->sin_port = htons(PORT);
     uint32_t ip_host_order = ntohl(in->sin_addr.s_addr);
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
     char ip_str[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &in->sin_addr, ip_str, sizeof(ip_str));
-    fprintf(stderr, "[shim] attempting rdma_resolve_addr with -> %s\n", ip_str);
-    fprintf(stderr, "[shim] attempting connection with fd -> %d\n", socket);
+    fprintf(stderr, "[server_shim] (connect) attempting rdma_resolve_addr with -> %s\n", ip_str);
+    fprintf(stderr, "[server_shim] (connect) attempting connection with fd -> %d\n", socket);
     int ret = rvconnect(socket, (struct sockaddr *)&in, sizeof(address_len), windowPtr);
     return ret;
 }
@@ -161,11 +162,16 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
  int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
     if (sockets_created == 1) return real_bind(sockfd, addr, addrlen);
-    return rvbind(sockfd, addr, addrlen);
+    struct sockaddr_in *in = (struct sockaddr_in *)addr;
+    in->sin_addr.s_addr = INADDR_ANY;
+    int status = rvbind(sockfd, (struct sockaddr *)in, addrlen);
+    status = rvlisten(sockfd, 5);
+    return status;
 }
 
 int listen(int sockfd, int backlog) {
     if (sockets_created == 1) return real_listen(sockfd, backlog);
+    return 0;
     return rvlisten(sockfd, 5);
 }
 

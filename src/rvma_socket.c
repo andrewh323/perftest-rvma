@@ -227,7 +227,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         }
         rvs->mailboxPtr = searchHashmap(window->hashMapPtr, vaddr);
 
-        char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
+        char *devname = "mlx5_2"; // mlx_0/1/2 probably - change as needed
         struct ibv_device *ib_dev = ctx_find_dev(&devname);
         if (!ib_dev) {
             fprintf(stderr, "rvsocket: Failed to find IB device\n");
@@ -366,6 +366,14 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         return -1;
     }
     if (rvs->type == SOCK_STREAM) {
+        char ip_str[INET_ADDRSTRLEN];
+        /*
+         * This is returning 0.0.0.0, therefore the INADDR_ANY is probably set, but is that
+         * iperf or this code?
+         */
+        inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr, ip_str, sizeof(addr));
+        fprintf(stderr, "[rvsocket_shim] (bind) -> addr %s\n", ip_str);
+        fprintf(stderr, "[rvsocket_shim] (bind) -> rdma_cm_id %p\n", (void *)rvs->cm_id);
 	    ret = rdma_bind_addr(rvs->cm_id, (struct sockaddr *)addr);
         if (!ret)
             rvs->state = rs_bound;
@@ -654,6 +662,7 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     }
 
     // Resolve address
+    fprintf(stderr, "[rvsocket_shim] -> (connect) rdma_cm_id %p\n", (void *)rvs->cm_id);
     if (rdma_resolve_addr(rvs->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
         perror("rdma_resolve_addr");
         return -1;

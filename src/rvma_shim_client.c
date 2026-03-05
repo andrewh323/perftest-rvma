@@ -111,7 +111,7 @@ int socket(int domain, int type, int protocol)
     }
     uint32_t ip_host_order = ntohl(addr.sin_addr.s_addr);
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
     int rvma_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     fprintf(stderr, "[server_shim] fd (RVMA) -> %d\n", rvma_fd);
     return rvma_fd;
