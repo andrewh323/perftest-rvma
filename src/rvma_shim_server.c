@@ -19,9 +19,10 @@
 #include <netinet/in.h>
 #include <net/if.h>
 
+#include "log.h"
 #include "rvma_socket.h"
 
-#define PORT 5201
+#define PORT 7471 
 
 static int (*real_socket)(int, int, int) = NULL;
 static int (*real_connect)(int, const struct sockaddr *, socklen_t) = NULL;
@@ -57,6 +58,13 @@ __attribute__((constructor)) void init()
 // Should change to a struct
 static int _Atomic sockets_created = 0;
 static int _Atomic sockets_accepted = 0;
+
+RVMA_Win *globalWindowPtr = NULL;
+
+void generateWindowPtr(uint64_t vaddr)
+{
+    globalWindowPtr = rvmaInitWindowMailbox(vaddr);
+}
 
 char * get_ip(char * interface_name)
 {
@@ -111,8 +119,11 @@ int socket(int domain, int type, int protocol)
     }
     uint32_t ip_host_order = ntohl(addr.sin_addr.s_addr);
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
-    int rvma_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
+    fprintf(stderr, "[server_shim] ip_host_order -> %" PRIu32 " port -> %d\n", ip_host_order, PORT);
+    fprintf(stderr, "[server_shim] socket_vaddr -> %" PRIu64 "\n", vaddr);
+    // RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
+    generateWindowPtr(vaddr);
+    int rvma_fd = rvsocket(SOCK_STREAM, vaddr, globalWindowPtr);
     fprintf(stderr, "[server_shim] fd (RVMA) -> %d\n", rvma_fd);
     return rvma_fd;
 }
@@ -135,9 +146,9 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
     in->sin_addr.s_addr = INADDR_ANY;
     uint32_t ip_host_order = ntohl(in->sin_addr.s_addr);
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    RVMA_Win* windowPtr = rvmaInitWindowMailbox(&vaddr);
-
-    return rvaccept(sockfd, (struct sockaddr *)in, addrlen, windowPtr);
+    fprintf(stderr, "[server_shim] accept_vaddr -> %" PRIu64 "\n", vaddr);
+    // RVMA_Win* windowPtr = rvmaInitWindowMailbox(vaddr);
+    return rvaccept(sockfd, (struct sockaddr *)in, addrlen, globalWindowPtr);
 }
 
 int connect(int socket, const struct sockaddr *address, socklen_t address_len)
@@ -150,12 +161,13 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
     in->sin_port = htons(PORT);
     uint32_t ip_host_order = ntohl(in->sin_addr.s_addr);
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(&vaddr);
+    fprintf(stderr, "[server_shim] connect_vaddr -> %" PRIu64 "\n", vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
     char ip_str[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &in->sin_addr, ip_str, sizeof(ip_str));
     fprintf(stderr, "[server_shim] (connect) attempting rdma_resolve_addr with -> %s\n", ip_str);
     fprintf(stderr, "[server_shim] (connect) attempting connection with fd -> %d\n", socket);
-    int ret = rvconnect(socket, (struct sockaddr *)&in, sizeof(address_len), windowPtr);
+    int ret = rvconnect(socket, (struct sockaddr *)&in, sizeof(address_len), globalWindowPtr);
     return ret;
 }
 
@@ -183,7 +195,7 @@ ssize_t send(int socket, const void *buf, size_t len, int flags)
 
 ssize_t recv(int socket, void *buf, size_t len, int flags)
 {
-    ssize_t r;
+    // ssize_t r;
     if (sockets_created == 1) return real_recv(socket, buf, len, flags);
     return rvrecv(socket, buf, len, flags);
 }

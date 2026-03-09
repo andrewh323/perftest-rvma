@@ -1522,6 +1522,9 @@ SHIMFLAGS = -fPIC -shared -DHAVE_CONFIG_H -I. \
 -I$(HOME)/rdma-core \
 -D_GNU_SOURCE -Wall -O3 -g \
 -o librvma_shim.so src/rvma_shim.c
+
+OTHERFLAGS = -Wall -Wextra -Wpedantic -pedantic -g
+
 rvma_shim4:
 	gcc $(SHIMFLAGS)
 
@@ -1550,6 +1553,8 @@ rvma_server_shim:
 	gcc -fPIC -shared -D_GNU_SOURCE \
 	-I. -I/home/rysilve/rdma-core/build/include \
 	src/rvma_shim_server.c \
+	src/log.c \
+	src/log.h \
 	src/rvma_socket.o \
 	src/rvma_write.o \
 	src/rvma_mailbox_hashmap.o \
@@ -1565,6 +1570,7 @@ rvma_server_shim:
 	src/raw_ethernet_resources.o \
 	src/get_clock.o \
 	-o librvmaserver_shim.so \
+	$(OTHERFLAGS) \
 	-libverbs -lrdmacm -lpci -lmlx5
 
 rvma_client_shim:
@@ -1572,6 +1578,8 @@ rvma_client_shim:
 	-I. \
 	-I/home/rysilve/rdma-core/build/include \
 	src/rvma_shim_client.c \
+	src/log.c \
+	src/log.h \
 	src/rvma_socket.o \
 	src/rvma_write.o \
 	src/rvma_mailbox_hashmap.o \
@@ -1586,6 +1594,7 @@ rvma_client_shim:
 	src/mmap_memory.o \
 	src/raw_ethernet_resources.o \
 	src/get_clock.o \
+	$(OTHERFLAGS) \
 	-o librvmaclient_shim.so \
 	-libverbs -lrdmacm -lpci -lmlx5
 

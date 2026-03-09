@@ -375,6 +375,7 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         fprintf(stderr, "[rvsocket_shim] (bind) -> addr %s\n", ip_str);
         fprintf(stderr, "[rvsocket_shim] (bind) -> rdma_cm_id %p\n", (void *)rvs->cm_id);
 	    ret = rdma_bind_addr(rvs->cm_id, (struct sockaddr *)addr);
+        fprintf(stderr, "[rvsocket_shim] (bind) -> ret %d\n", ret);
         if (!ret)
             rvs->state = rs_bound;
     } else { // Datagram
@@ -661,9 +662,15 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
         return -1;
     }
 
+    struct sockaddr_in *in = (struct sockaddr_in *)addr;
+    char ip_str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(in->sin_addr), ip_str, INET_ADDRSTRLEN);
     // Resolve address
     fprintf(stderr, "[rvsocket_shim] -> (connect) rdma_cm_id %p\n", (void *)rvs->cm_id);
+    fprintf(stderr, "[rvsocket_shim] -> (connect) addr %s\n", ip_str);
+    // fprintf(stderr, "[rvsocket_shim] -> (connect) dev %s\n", rvs->cm_id->verbs->device->name);
     if (rdma_resolve_addr(rvs->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
+        // Segfaults here with a fprintf
         perror("rdma_resolve_addr");
         return -1;
     }
