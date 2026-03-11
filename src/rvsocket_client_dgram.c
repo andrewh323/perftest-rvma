@@ -41,9 +41,8 @@ int main(int argc, char **argv) {
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
     
-    sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
+    sockfd = rvsocket(AF_INET, SOCK_DGRAM, NULL, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
@@ -58,20 +57,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    int ret;
-    // In case server is not yet ready for connection request, reattempt
-    for (int i = 0; i < 50; i++) {
-        ret = rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-        if (ret == 0) {
-            break;  // successfully connected
-        }
-        usleep(1000 * 100); // wait for 100 ms before reattempting
-    }
-
-    if (ret != 0) {
-        fprintf(stderr, "Failed to connect after multiple retries\n");
-        exit(1);
-    }
     int res;
 
     int size = 1024;
@@ -93,10 +78,6 @@ int main(int argc, char **argv) {
     double min_time = 1e9;
     double max_time = 0;
     double sum_time = 0;
-    double frag_setup_time = 0;
-    double buffer_setup_time = 0;
-    double wr_setup_time = 0;
-    double poll_time = 0;
 
     void *recv_buf = malloc(size);
 
@@ -117,12 +98,12 @@ int main(int argc, char **argv) {
         printf("Sending message %d: %.40s...\n", i, message);
 
         uint64_t t1 = rdtsc();
-        res = rvsendto(sockfd, message, size);
+        res = rvsendto(sockfd, message, size, 0, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
-        res = rvrecv(sockfd, recv_buf, size, 0);
+        res = rvrecvfrom(sockfd, recv_buf, size, 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
         if (res < 0) {
             perror("rvrecv failed");
         }

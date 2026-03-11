@@ -39,7 +39,9 @@ uint32_t get_host_addr(const char *iface_name) {
 
 int main(int argc, char **argv) {
 	uint16_t reserved = 0x0001;
-	struct sockaddr_in addr;
+    struct sockaddr_in addr, client_addr;
+    socklen_t client_len = sizeof(client_addr);
+
     memset(&addr, 0, sizeof(addr));
 	int dgram_fd;
 
@@ -54,28 +56,11 @@ int main(int argc, char **argv) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
+    dgram_fd = rvsocket(AF_INET, SOCK_DGRAM, NULL, vaddr, windowPtr);
 
 	// Bind host address for datagram socket
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));
 	printf("Host IP address bound to socket\n");
-
-    int tcp_listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    int opt = 1;
-
-    setsockopt(tcp_listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (bind(tcp_listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("bind tcp_listenfd");
-        exit(1);
-    }
-
-    if (listen(tcp_listenfd, 1) < 0) {
-        perror("listen");
-        exit(1);
-    }
-    socklen_t addrlen = sizeof(addr);
-    // Accept connection to exchange UD connection info
-    rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
     uint64_t t2;
     
@@ -89,20 +74,19 @@ int main(int argc, char **argv) {
     }
 
     void *recv_buf = malloc(size);
-    for (int i = 0; i < num_sends; i++){
-        ret = rvrecv(dgram_fd, recv_buf, size, 0);
+    for (int i = 0; i < num_sends; i++) {
+        ret = rvrecvfrom(dgram_fd, recv_buf, size, 0, (struct sockaddr *)&client_addr, &client_len);
         if (ret < 0) {
             perror("Error receiving message");
         }
 
-        ret = rvsendto(dgram_fd, "ACK", 4);
+        ret = rvsendto(dgram_fd, "ACK", 4, 0, (struct sockaddr *)&client_addr, client_len, windowPtr);
         if (ret < 0) {
             perror("Error sending ACK");
         }
     }
 
     close(dgram_fd);
-    close(tcp_listenfd);
     // Wait for test to finish
     usleep(50 * 1000);
 	return 0;

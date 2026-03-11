@@ -14,14 +14,9 @@
 
 #define RS_MAX_TRANSFER 4050 /* 4KB MTU - 40B GRH */ /* set to 4050 so message fragments can be observed*/
 
-struct dgram_frag_header {
-    uint32_t frag_num;
-    uint32_t total_frags;
-};
-
 uint64_t constructVaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port);
 
-uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window);
+uint64_t rvsocket(int domain, int type, int protocol, uint64_t vaddr, RVMA_Win *window);
 
 int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen);
 
@@ -37,9 +32,9 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 int rvsend(int socket, void *buf, int64_t len);
 
-int rvsendto(int socket, void *buf, int64_t len);
+int rvsendto(int socket, void *buf, int64_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen, RVMA_Win *windowPtr);
 
-int rvrecvfrom(RVMA_Mailbox *mailbox);
+int rvrecvfrom(int socket, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
 
 int rvrecv(int socket, void *buf, size_t len, int flags);
 

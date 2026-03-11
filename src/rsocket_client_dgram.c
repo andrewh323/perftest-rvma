@@ -82,7 +82,6 @@ int main(int argc, char **argv) {
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET; // IPv4
     server_addr.sin_port = htons(PORT); // Port number
-    inet_pton(AF_INET, argv[1], &server_addr.sin_addr); // Convert IP address from text to binary form
 
     if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) <= 0) {
         perror("inet_pton");

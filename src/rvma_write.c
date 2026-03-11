@@ -404,10 +404,8 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         return RVMA_ERROR;
     }
 
-    // Maybe TODO: Add in buffer status field to track in-flight buffers
     // Repost the buffer back to the send queue
-    RVMA_Buffer_Entry *completed_entry = (RVMA_Buffer_Entry *)wc.wr_id;
-    enqueue(mailbox->sendBufferQueue, completed_entry);
+    enqueue(mailbox->sendBufferQueue, (RVMA_Buffer_Entry *)wc.wr_id);
 
     return RVMA_SUCCESS;
 }

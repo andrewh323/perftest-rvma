@@ -17,6 +17,7 @@
 #include <sys/eventfd.h>
 #include <search.h>
 #include <time.h>
+#include <math.h>
 #include <stdint.h>
 #include <byteswap.h>
 #include <util/compiler.h>
@@ -55,6 +56,9 @@ static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 static int next_fd = 100; // Starting fd for rvsockets
 
 #define rvs_send_wr_id(data) ((uint64_t) data)
+#define MAX_PORTS 65536
+
+static uint32_t port_to_qpn[MAX_PORTS];
 
 static struct index_map idm;
 struct rvsocket;
@@ -65,14 +69,39 @@ union socket_addr {
 	struct sockaddr_in6	sin6;
 };
 
-struct rv_dest {
-    struct ibv_ah *ah;
-    uint32_t qpn;
-    uint32_t qkey;
-    uint16_t lid;
-    uint8_t gid[16];
-    uint64_t vaddr;
-    int port_num;
+struct ds_header {
+    uint8_t length;
+    uint16_t port;
+    union {
+		__be32  ipv4;
+		struct {
+			__be32 flowinfo;
+			uint8_t  addr[16];
+		} ipv6;
+	} addr;
+    int frag_num;
+    int total_frags;
+};
+
+struct ds_dest {
+	union socket_addr addr;	/* must be first */
+	struct ds_qp	  *qp;
+	struct ibv_ah	  *ah;
+	uint32_t	   qpn;
+};
+
+struct ds_qp {
+	dlist_entry	  list;
+	struct rvsocket	  *rvs;
+	struct rdma_cm_id *cm_id;
+	struct ds_header  hdr;
+	struct ds_dest	  dest;
+
+	struct ibv_mr	  *smr;
+	struct ibv_mr	  *rmr;
+	uint8_t		  *rbuf;
+
+	int		  cq_armed;
 };
 
 /*
@@ -96,31 +125,143 @@ enum rs_state {
 	rs_error	   =		    0x2000,
 };
 
-// Global completion queue for all rvsockets
-// When completion is detected, need a way to check which socket it belongs to
-// Maybe check the rs_state of each rvsocket in the idm? "if rs_readable...", etc.
-struct ibv_cq *shared_cq;
 
 struct rvsocket {
     int type; // SOCK_STREAM or SOCK_DGRAM
     int index;
-    union {
-        struct { // data stream
-            struct rdma_cm_id *cm_id; // RDMA CM ID
-        };
-        struct { // datagram
-            int udp_sock; // UDP socket for exchanging connection data
-        };
-    };
+    struct rdma_cm_id *cm_id; // RDMA CM ID
+    int udp_sock; // UDP socket for exchanging connection data
+    struct ds_qp	  *qp_list;
+    struct ds_dest *conn_dest;
+
     struct rdma_event_channel *ec;
     int qp_port; // QP port num
     int state;
     
+    uint16_t local_lid;
+    struct ibv_ah *ah;
     RVMA_Mailbox *mailboxPtr;
     uint64_t vaddr;
-    struct rv_dest *dest;
+    struct ds_dest *dest; // TO REMOVE
 };
 
+/* Helper Functions */
+static int ds_compare_addr(const void *dst1, const void *dst2)
+{
+	const struct sockaddr *sa1, *sa2;
+	size_t len;
+
+	sa1 = (const struct sockaddr *) dst1;
+	sa2 = (const struct sockaddr *) dst2;
+
+	len = (sa1->sa_family == AF_INET6 && sa2->sa_family == AF_INET6) ?
+	      sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in);
+	return memcmp(dst1, dst2, len);
+}
+
+static int ds_get_src_addr(struct rvsocket *rvs,
+			   const struct sockaddr *dest_addr, socklen_t dest_len,
+			   union socket_addr *src_addr, socklen_t *src_len)
+{
+	int sock, ret;
+	__be16 port;
+
+	*src_len = sizeof(*src_addr);
+	ret = getsockname(rvs->udp_sock, &src_addr->sa, src_len);
+
+	port = src_addr->sin.sin_port;
+	sock = socket(dest_addr->sa_family, SOCK_DGRAM, 0);
+	if (sock < 0)
+		return sock;
+
+	ret = connect(sock, dest_addr, dest_len);
+	if (ret)
+		goto out;
+
+	*src_len = sizeof(*src_addr);
+	ret = getsockname(sock, &src_addr->sa, src_len);
+	src_addr->sin.sin_port = port;
+out:
+	close(sock);
+	return ret;
+}
+
+static int ds_create_qp(struct rvsocket *rvs, union socket_addr *src_addr,
+			socklen_t addrlen, struct ds_qp **new_qp, RVMA_Win *windowPtr)
+{
+    struct ds_qp *qp;
+    struct ibv_qp_init_attr qp_attr;
+
+    qp = calloc(1, sizeof(*qp));
+	if (!qp)
+		return -1;
+
+    int ret = rdma_create_id(NULL, &rvs->cm_id, rvs, RDMA_PS_UDP);
+    if(ret){
+        perror("ds_create_qp: rdma_create_id failed");
+        return ret;
+    }
+
+    // Format headers
+    qp->hdr.length = 8;
+    qp->hdr.port = src_addr->sin.sin_port;
+    qp->hdr.addr.ipv4 = src_addr->sin.sin_addr.s_addr;
+
+    ret = rdma_bind_addr(rvs->cm_id, &src_addr->sa);
+    if(ret){
+        perror("ds_create_qp: rdma_bind_addr failed");
+        return ret;
+    }
+
+    // Create new mailbox for this connection
+    if (newMailboxIntoHashmap(windowPtr->hashMapPtr, rvs->vaddr) != RVMA_SUCCESS) {
+        fprintf(stderr, "ds_create_qp: Failed to create mailbox for new connection\n");
+        rdma_destroy_id(rvs->cm_id);
+        return -1;
+    }
+
+    // TODO: maybe use completion channels to improve performance
+    // Create cq
+    rvs->cm_id->recv_cq = ibv_create_cq(rvs->cm_id->verbs, 256, rvs->cm_id, NULL, 0);
+    if (!rvs->cm_id->recv_cq) {
+        perror("ds_create_qp: ibv_create_cq failed");
+        rdma_destroy_id(rvs->cm_id);
+        return -1;
+    }
+    rvs->cm_id->send_cq = rvs->cm_id->recv_cq;
+
+    // prepost buffer pools
+    if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        fprintf(stderr, "ds_create_qp: Failed to post send buffer pool for new connection\n");
+        rdma_destroy_id(rvs->cm_id);
+        return -1;
+    }
+    if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        fprintf(stderr, "ds_create_qp: Failed to post receive buffer pool for new connection\n");
+        rdma_destroy_id(rvs->cm_id);
+        return -1;
+    }
+
+    memset(&qp_attr, 0, sizeof qp_attr);
+	qp_attr.qp_context = qp;
+	qp_attr.send_cq = qp->cm_id->send_cq;
+	qp_attr.recv_cq = qp->cm_id->recv_cq;
+	qp_attr.qp_type = IBV_QPT_UD;
+	qp_attr.sq_sig_all = 1;
+	qp_attr.cap.max_send_wr = 128;
+	qp_attr.cap.max_recv_wr = 128;
+	qp_attr.cap.max_send_sge = 1;
+	qp_attr.cap.max_recv_sge = 2;
+	ret = rdma_create_qp(qp->cm_id, NULL, &qp_attr);
+	if (ret) {
+        perror("ds_create_qp: rdma_create_qp failed");
+        rdma_destroy_id(qp->cm_id);
+        return ret;
+    }
+
+    *new_qp = qp;
+    return 0;
+}
 
 static int rs_insert(struct rvsocket *rvs, int index)
 {
@@ -184,7 +325,7 @@ static inline uint64_t rdtsc(){
 
 // Create rvsocket
 // Return socketfd after inserting into idm
-uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
+uint64_t rvsocket(int domain, int type, int protocol, uint64_t vaddr, RVMA_Win *window) {
     double cpu_ghz = get_cpu_ghz();
 	uint64_t start, end;
     double rdmaTime = 0;
@@ -202,7 +343,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     rvs->vaddr = vaddr;
     rvs->ec = rdma_create_event_channel();
 
-    if (rdma_create_id(rvs->ec, &rvs->cm_id, NULL, rvs->type == SOCK_DGRAM ? RDMA_PS_UDP : RDMA_PS_TCP)) {
+    if (rdma_create_id(rvs->ec, &rvs->cm_id, rvs, rvs->type == SOCK_DGRAM ? RDMA_PS_UDP : RDMA_PS_TCP)) {
         rdma_destroy_event_channel(rvs->ec);
         print_error("rvsocket: rdma_create_id failed");
         free(rvs);
@@ -213,125 +354,9 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         // For stream sockets, pd, cq, and qp are allocated in accept/connect
         rvs->index = next_fd++;
     } else { // datagram
-        // Datagrams do not accept/connect, so we must setup pd, cq, and qp here
-        // To allocate pd, we need a valid context and mailbox
-        uint64_t rdmaStart = rdtsc();
-        RVMA_Status res = newMailboxIntoHashmap(window->hashMapPtr, vaddr);
-        if (res != RVMA_SUCCESS) {
-            print_error("rvsocket: Failure creating mailbox");
-            free(rvs);
-            return -1;
-        }
-        rvs->mailboxPtr = searchHashmap(window->hashMapPtr, vaddr);
-
-        char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
-        struct ibv_device *ib_dev = ctx_find_dev(&devname);
-        if (!ib_dev) {
-            fprintf(stderr, "rvsocket: Failed to find IB device\n");
-            return -1;
-        }
-        struct ibv_context *ctx = ibv_open_device(ib_dev);
-        if (!ctx) {
-            fprintf(stderr, "rvsocket: Failed to open device\n");
-            return -1;
-        }
-
-        struct ibv_device_attr dev_attr;
-        if (ibv_query_device(ctx, &dev_attr)) {
-            perror("ibv_query_device");
-            return -1;
-        }
-        struct ibv_port_attr port_attr;
-        int ret = ibv_query_port(ctx, 1, &port_attr);
-        if (ret) {
-            perror("ibv_query_port failed");
-            return -1;
-        }
-        rvs->qp_port = 1;
-
-        // Allocate pd, cq, and qp here
-        struct ibv_pd *pd = ibv_alloc_pd(ctx);
-        if (!pd) {
-            fprintf(stderr, "rvsocket: Failed to allocate pd\n");
-            return -1;
-        }
-        rvs->mailboxPtr->pd = pd;
-
-        struct ibv_cq *cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
-        if (!cq) {
-            fprintf(stderr, "rvsocket: Failed to create cq\n");
-            return -1;
-        }
-        rvs->mailboxPtr->cq = cq;
-
-        // Define QP
-        struct ibv_qp_init_attr qp_attr = {
-            .send_cq = cq,
-            .recv_cq = cq,
-            .qp_type = IBV_QPT_UD,
-            .cap = {
-                .max_send_wr = 128,
-                .max_recv_wr = 128,
-                .max_send_sge = 1,
-                .max_recv_sge = 1
-            },
-        };
-        struct ibv_qp *qp = ibv_create_qp(pd, &qp_attr);
-        if (!qp) {
-            perror("ibv_create_qp failed");
-            return -1;
-        }
-
-        // Now transition the qp to RTS
-        // INIT
-        struct ibv_qp_attr attr = {0};
-        attr.qp_state   = IBV_QPS_INIT;
-        attr.pkey_index = 0;
-        attr.port_num   = rvs->qp_port;
-        attr.qkey       = 0x11111111;
-        int mask = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_QKEY;
-        if(ibv_modify_qp(qp, &attr, mask)) {
-            perror("INIT transition failed");
-            return -1;
-        }
-        // RTR
-        attr.qp_state = IBV_QPS_RTR;
-        if(ibv_modify_qp(qp, &attr, IBV_QP_STATE)) {
-            perror("RTR transition failed");
-            return -1;
-        }
-        // RTS
-        attr.qp_state = IBV_QPS_RTS;
-        attr.sq_psn = lrand48() & 0xffffff;
-        mask = IBV_QP_STATE | IBV_QP_SQ_PSN;
-        if (ibv_modify_qp(qp, &attr, mask)) {
-            perror("RTS transition failed");
-            return -1;
-        }
-
-        uint64_t setupQPend = rdtsc();
-        double setupQPtime = (setupQPend - rdmaStart) / (cpu_ghz * 1e3);
-        printf("Time to setup QP in rvsocket: %.3f µs\n", setupQPtime);
-
-        // Save qp to rvs
-        rvs->mailboxPtr->qp = qp;
-
-        // Post pools to prepare for incoming transmissions
-        if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
-            perror("postSendPool failed");
-            return -1;
-        }
-        if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
-            perror("postRecvPool failed");
-            return ;
-        }
-        uint64_t rdmaEnd = rdtsc();
-        rdmaTime = (rdmaEnd - rdmaStart) / (cpu_ghz * 1e3);
-        printf("Time to setup rdma resources in rvsocket: %.3f µs\n", rdmaTime);
-
         // Create socket index for insertion
-        rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
-        rvs->index = next_fd++;
+        rvs->udp_sock = socket(domain, SOCK_DGRAM, 0);
+        rvs->index = rvs->udp_sock;
     }
     // Insert rvsocket into index map
     ret = rs_insert(rvs, rvs->index);
@@ -458,7 +483,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     }
 
     // Create completion queue
-    struct ibv_cq *cq = ibv_create_cq(client_cm_id->verbs, 1024, NULL, NULL, 0);
+    struct ibv_cq *cq = ibv_create_cq(client_cm_id->verbs, 256, client_cm_id, NULL, 0);
     if (!cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
@@ -516,7 +541,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         return -1;
     }
 
-    // Fill in new rvsocket fields
     new_rvs->vaddr = vaddr;
     new_rvs->type = SOCK_STREAM;
     
@@ -527,6 +551,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         return -1;
     }
 
+    // Construct new rvsocket
     new_rvs->mailboxPtr = searchHashmap(window->hashMapPtr, new_rvs->vaddr);
     new_rvs->cm_id = client_cm_id;
     new_rvs->ec = client_cm_id->channel;
@@ -544,8 +569,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         perror("postSendPool failed");
         return -1;
     }
-    
-    printf("Posting buffer pools\n");
     if (postRecvPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
         perror("postRecvPool failed");
         return -1;
@@ -561,77 +584,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     printf("rvaccept time: %.3f µs\n", elapsed_us);
 
     return new_rvs->index;
-}
-
-
-// Accepts datagram connection and exchanges endpoint info
-int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen) {
-    uint64_t start, end;
-    double cpu_ghz = get_cpu_ghz();
-    struct rvsocket *rvs;
-    struct rv_dest local_info, remote_info;
-    int tcp_fd;
-
-    rvs = idm_lookup(&idm, dgram_fd);
-
-    if (!rvs->dest) {
-        rvs->dest = calloc(1, sizeof(*rvs->dest));
-        if (!rvs->dest) {
-            perror("calloc rvs->dest");
-            return -1;
-        }
-    }
-
-    tcp_fd = accept(tcp_listenfd, addr, addrlen);
-    if (tcp_fd < 0) {
-        perror("rvaccept_dgram: accept failed");
-        return -1;
-    }
-    start = rdtsc(); // Start timing after accept since accept is blocking
-    struct ibv_port_attr port_attr;
-    ibv_query_port(rvs->mailboxPtr->pd->context, rvs->qp_port, &port_attr);
-    local_info.lid  = port_attr.lid;
-    local_info.qpn  = rvs->mailboxPtr->qp->qp_num;
-    local_info.qkey = 0x11111111;
-    local_info.port_num = rvs->qp_port;
-    
-    ssize_t n;
-    n = write(tcp_fd, &local_info, sizeof(local_info));
-    if (n != sizeof(local_info)) {
-        perror("write local_info");
-        return -1;
-    }
-    n = read(tcp_fd, &remote_info, sizeof(remote_info));
-    if (n != sizeof(remote_info)) {
-        perror("read remote_info");
-        return -1;
-    }
-    
-    struct ibv_ah_attr ah_attr = {
-        .is_global     = 1,
-        .dlid          = remote_info.lid,
-        .sl            = 0,
-        .src_path_bits = 0,
-        .port_num      = rvs->qp_port
-    };
-
-    struct ibv_ah *ah = ibv_create_ah(rvs->mailboxPtr->pd, &ah_attr);
-    if (!ah) {
-        perror("rvaccept_dgram: ibv_create_ah failed");
-        close(tcp_fd);
-        return -1;
-    }
-
-    rvs->dest->ah = ah;
-    rvs->dest->qpn = remote_info.qpn;
-    rvs->dest->qkey = remote_info.qkey;
-
-    end = rdtsc();
-    double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("rvaccept_dgram total time: %.3f µs\n", elapsed_us);
-
-    close(tcp_fd);
-    return 0;
 }
 
 
@@ -705,7 +657,7 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     rvs->mailboxPtr->pd = pd;
 
     // Create CQ
-    struct ibv_cq *cq = ibv_create_cq(rvs->cm_id->verbs, 16, NULL, NULL, 0);
+    struct ibv_cq *cq = ibv_create_cq(rvs->cm_id->verbs, 256, rvs->cm_id, NULL, 0);
     if (!cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
@@ -776,89 +728,6 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
 }
 
 
-// Connects to datagram socket and exchanges endpoint info
-int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-    uint64_t start, end;
-    double cpu_ghz = get_cpu_ghz();
-    start = rdtsc();
-    struct rvsocket *rvs;
-    struct rv_dest local_info, remote_info;
-    int tcp_fd;
-
-    rvs = idm_lookup(&idm, sockfd);
-    if (!rvs) {
-        fprintf(stderr, "rvconnect_dgram: rvs is NULL\n");
-        return -1;
-    }
-    tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (tcp_fd < 0) {
-        perror("socket failed");
-        return -1;
-    }
-    if (!rvs->dest) {
-        rvs->dest = calloc(1, sizeof(*rvs->dest));
-        if (!rvs->dest) {
-            perror("calloc rvs->dest");
-            close(tcp_fd);
-            return -1;
-        }
-    }
-
-    if (connect(tcp_fd, addr, addrlen) < 0) {
-        perror("connect failed");
-        close(tcp_fd);
-        return -1;
-    }
-
-    // Fill in local UD info
-    struct ibv_port_attr port_attr;
-    ibv_query_port(rvs->mailboxPtr->pd->context, rvs->qp_port, &port_attr);
-
-    local_info.lid  = port_attr.lid;
-    local_info.qpn  = rvs->mailboxPtr->qp->qp_num;
-    local_info.qkey = 0x11111111;
-    local_info.port_num = rvs->qp_port;
-
-    // Exchange endpoint info
-    ssize_t n;
-    n = read(tcp_fd, &remote_info, sizeof(remote_info));
-    if (n != sizeof(remote_info)) {
-        perror("read remote_info");
-        return -1;
-    }
-    n = write(tcp_fd, &local_info, sizeof(local_info));
-    if (n != sizeof(local_info)) {
-        perror("write local_info");
-        return -1;
-    }
-
-    // Build AH from remote info
-    struct ibv_ah_attr ah_attr = {
-        .is_global     = 1,
-        .dlid          = remote_info.lid,
-        .sl            = 0,
-        .src_path_bits = 0,
-        .port_num      = rvs->qp_port
-    };
-
-    struct ibv_ah *ah = ibv_create_ah(rvs->mailboxPtr->pd, &ah_attr);
-    if (!ah) {
-        perror("rvconnect_dgram: ibv_create_ah failed");
-        close(tcp_fd);
-        return -1;
-    }
-    rvs->dest->ah = ah;
-    rvs->dest->qpn  = remote_info.qpn;
-    rvs->dest->qkey = remote_info.qkey;
-
-    end = rdtsc();
-    double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("rvconnect_dgram total time: %.3f µs\n", elapsed_us);
-    close(tcp_fd);
-    return 0;
-}
-
-
 // Send for stream sockets
 int rvsend(int socket, void *buf, int64_t len) {
     struct rvsocket *rvs;
@@ -879,16 +748,17 @@ int rvsend(int socket, void *buf, int64_t len) {
 }
 
 // Send for datagram sockets
-int rvsendto(int socket, void *buf, int64_t len) {
+// TODO: Address resolution, header for routing
+int rvsendto(int socket, void *buf, int64_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen, RVMA_Win *windowPtr) {
     uint64_t elapsed = 0, frag_setup = 0, buffer_setup = 0, wr_setup = 0, total_poll = 0;
+    union socket_addr src_addr;
+	socklen_t src_len;
+	struct ds_qp *qp;
+	struct ds_dest **tdest, *new_dest;
+	int ret = 0;
 
-    struct rvsocket *rvs;
-    uint64_t vaddr;
-
-    rvs = idm_at(&idm, socket);
-
-    vaddr = rvs->vaddr;
-    struct rv_dest *dest = rvs->dest;
+    struct rvsocket *rvs = idm_at(&idm, socket);
+    uint64_t vaddr = rvs->vaddr;
 
     int hardware_counter = 0; // Counter to compare with threshold (Should only exist in hardware)
 
@@ -900,55 +770,42 @@ int rvsendto(int socket, void *buf, int64_t len) {
     int *notifLenPtr = malloc(sizeof(int));
 
     for (int offset = 0; offset < threshold; offset++) {
-        uint64_t start = rdtsc();
-        uint64_t frag_setup_start = rdtsc();
         // Define message fragment
         // i=0->RS_MAX_TRANSFER-1, RS_MAX_TRANSFER->2*RS_MAX_TRANSFER-1, ...
-        int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
+        size_t frag_len = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
         void *frag_ptr = (uint8_t *)buf + offset * RS_MAX_TRANSFER;
 
-        // Construct fragment header (for ordering at receiver)
-        struct dgram_frag_header header = {
-            .frag_num = offset + 1,
-            .total_frags = threshold
-        };
-
-        size_t total_size = sizeof(header) + frag_size;
-        // Allocate buffer for fragment + header
-        void *full_buf = malloc(total_size);
-        if (!full_buf) {
-            fprintf(stderr, "rvsendto: malloc full_buf failed\n");
-            return -1;
-        }
-
-        // Copy header and fragment into full buffer
-        memcpy(full_buf, &header, sizeof(header));
-        memcpy((uint8_t *)full_buf + sizeof(header), frag_ptr, frag_size);
-
-        struct dgram_frag_header *hdr = (struct dgram_frag_header *)full_buf;
-        char *payload = (char *)full_buf + sizeof(*hdr);
-
-        uint64_t frag_setup_end = rdtsc();
-        frag_setup += frag_setup_end - frag_setup_start;
-
-        /* printf("Sending fragment %d/%d (%zu bytes) | Payload: %.40s...\n",
-            hdr->frag_num, hdr->total_frags, frag_size, payload); */
-
-        uint64_t buffer_setup_start = rdtsc();
-
-        // Post buffer to mailbox, fill mailbox entry
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)full_buf, total_size, notifBuffPtr, (void *)notifLenPtr, vaddr,
-                                    rvs->mailboxPtr, threshold, EPOCH_OPS, 0);
+        // Retrieve a buffer from the send pool
+        RVMA_Buffer_Entry *entry = dequeue(rvs->mailboxPtr->sendBufferQueue);
         if (!entry) {
-            fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
+            perror("rvsendto: Failed to retrieve buffer from send pool");
             return -1;
         }
-        
-        memcpy(entry->realBuff, &header, sizeof(header));
-        memcpy((uint8_t*)entry->realBuff + sizeof(header), frag_ptr, frag_size);
 
-        uint64_t buffer_setup_end = rdtsc();
-        buffer_setup += buffer_setup_end - buffer_setup_start;
+        struct ds_header *hdr = (struct dgram_frag_header *)entry->realBuff;
+        hdr->frag_num = offset + 1;
+        hdr->total_frags = threshold;
+
+        memcpy((char *)entry->realBuff + sizeof(*hdr), frag_ptr, frag_len);
+        size_t total_size = sizeof(*hdr) + frag_len;
+
+        // if dest is null or different from last, create dest from addr and save in rvs->dest
+        // ah creation, qpn, qkey extraction, etc.
+        if (!rvs->dest || ds_compare_addr(dest_addr, &rvs->dest->addr)) {
+            int ret = ds_get_src_addr(rvs, dest_addr, addrlen, &src_addr, &src_len);
+            if (ret) {
+                perror("ds_get_src_addr failed");
+                return -1;
+            }
+            ds_create_qp(rvs, &src_addr, addrlen, qp, windowPtr);
+            new_dest = calloc(1, sizeof(*new_dest));
+            if (!new_dest) {
+                perror("calloc new_dest failed");
+                return -1;
+            }
+            memcpy(&new_dest->addr, dest_addr, addrlen);
+            new_dest->qp = qp;
+        }
 
         printf("Buffer posted with size %zu bytes for fragment %d/%d\n", total_size, hdr->frag_num, hdr->total_frags);
         // Build sge, wr
@@ -965,9 +822,9 @@ int rvsendto(int socket, void *buf, int64_t len) {
         wr.num_sge            = 1;
         wr.opcode             = IBV_WR_SEND;
         wr.send_flags         = IBV_SEND_SIGNALED;
-        wr.wr.ud.ah           = dest->ah;
-        wr.wr.ud.remote_qpn   = dest->qpn;
-        wr.wr.ud.remote_qkey  = dest->qkey;
+        wr.wr.ud.ah           = rvs->dest->ah;
+        wr.wr.ud.remote_qpn   = rvs->dest->qpn;
+        wr.wr.ud.remote_qkey  = RDMA_UDP_QKEY;
 
         struct ibv_send_wr *bad_wr = NULL;
 
@@ -975,117 +832,131 @@ int rvsendto(int socket, void *buf, int64_t len) {
             perror("rvmasendto: ibv_post_send failed");
             return -1;
         }
-        uint64_t wr_setup_end = rdtsc();
-        wr_setup += wr_setup_end - buffer_setup_end;
-        uint64_t end = rdtsc();
-        elapsed += end - start;
 
         hardware_counter++; // Hardware counter is incremented after every operation (By # ops)
         if (hardware_counter == threshold) {
-            // IWrite address of head of buffer to notification pointer
-            *notifBuffPtr = full_buf;
+            // Write address of head of buffer to notification pointer
+            *notifBuffPtr = entry->realBuff;
             // Write length of buffer to notifLenPtr in case buffer is reused
             *notifLenPtr = total_size;
         }
-
-        uint64_t poll_start = rdtsc();
-
-        struct ibv_wc wc;
-        int num_wc = 0;
-        while (1) {
-            do { num_wc = ibv_poll_cq(rvs->mailboxPtr->cq, 1, &wc); } while (num_wc == 0);
-            if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) return -1;
-
-            if (wc.opcode == IBV_WC_SEND) {
-                RVMA_Buffer_Entry *e = (RVMA_Buffer_Entry*)wc.wr_id;
-                RVMA_Buffer_Entry *q = dequeue(rvs->mailboxPtr->sendBufferQueue);
-                freeBufferEntry(e);
-                break;
-            }
-        }
-
-        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
-            fprintf(stderr, "rvsendto: ibv_poll_cq failed\n");
-            return -1;
-        }
-        uint64_t poll_end = rdtsc();
-        total_poll += poll_end - poll_start;
     }
 
+    int completed = 0;
+    while (completed < threshold) {
+        struct ibv_wc wc;
+        int n = ibv_poll_cq(rvs->cm_id->send_cq, 1, &wc);
+        if (n < 0) {
+            perror("rvsendto: ibv_poll_cq failed");
+            return -1;
+        }
+        if (wc.status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "CQ error\n");
+            return -1;
+        }
+
+        if (wc.opcode == IBV_WC_SEND) {
+            enqueue(rvs->mailboxPtr->sendBufferQueue, (RVMA_Buffer_Entry *)wc.wr_id);
+            completed++;
+        }
+    }
     free(notifBuffPtr);
     free(notifLenPtr);
-/* 
-    rvs->mailboxPtr->cycles = elapsed;
-    rvs->mailboxPtr->fragSetupCycles = frag_setup;
-    rvs->mailboxPtr->bufferSetupCycles = buffer_setup;
-    rvs->mailboxPtr->wrSetupCycles = wr_setup;
-    rvs->mailboxPtr->pollCycles = total_poll;
-*/
-
     return 0;
 }
 
+
+static void ds_set_src(struct sockaddr *addr, socklen_t *addrlen, void *vaddr) {
+    union socket_addr sa;
+
+    memset(&sa, 0, sizeof sa);
+    if (*addrlen > sizeof(sa.sin))
+        *addrlen = sizeof(sa.sin);
+
+    sa.sin.sin_family = AF_INET;
+    sa.sin.sin_port = 0;
+    sa.sin.sin_addr.s_addr = 0;
+    memcpy(addr, &sa, *addrlen);
+}
+
+
 // Receive buffer pool should already be preposted, manage fragments and poll completion
-int rvrecvfrom(RVMA_Mailbox *mailbox) {
-    char *msg_buf = NULL;
+int rvrecvfrom(int socket, void *buf, size_t len,
+               int flags, struct sockaddr *src_addr,
+               socklen_t *addrlen)
+{
+    struct rvsocket *rvs = idm_at(&idm, socket);
+    RVMA_Mailbox *mailbox = rvs->mailboxPtr;
+
     int total_frags = 0;
-    int total_len = 0;
-    int num_recvs = 1;
-    int recv_count = 0;
+    int received_frags = 0;
+    int expected_alloc = 0;
+    int actual_total_bytes = 0;
+
+    void *msg_buf = NULL;
+
     struct ibv_wc wc;
-    int num_wc;
-
-    for (int i = 0; i < num_recvs; i++) {
-        // Poll for a completed receive
-        while (1) {
-            do { num_wc = ibv_poll_cq(mailbox->cq, 1, &wc); } while (num_wc == 0);
-            if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) return -1;
-            if (wc.opcode == IBV_WC_RECV) break;
-        }
-
-        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
-        if (!entry) {
-            perror("rvrecvfrom: entry is NULL");
+    printf("Im in rvrecvfrom! 1\n");
+    while (1) {
+        int n;
+        do {
+            n = ibv_poll_cq(rvs->cm_id->recv_cq, 1, &wc);
+        } while (n == 0);
+        if (n < 0 || wc.status != IBV_WC_SUCCESS) {
+            perror("rvrecvfrom: CQ poll error");
             return -1;
         }
+        if (wc.opcode != IBV_WC_RECV)
+            continue;
+
+        printf("Im in rvrecvfrom! 2\n");
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
 
         char *recv_buf = (char *)entry->realBuff;
-        int len = wc.byte_len;
-
-        int grh = (wc.wc_flags & IBV_WC_GRH) ? 40 : 0;
+        int grh = 40;
+        int data_len = wc.byte_len - grh;
         char *data = recv_buf + grh;
-        int data_len = len - grh;
 
-        if (data_len < (int)sizeof(struct dgram_frag_header)) {
-            fprintf(stderr, "rvrecvfrom: runt packet\n");
-            return -1;
-        }
+        if (data_len < (int)sizeof(struct ds_header))
+            continue;
 
-        struct dgram_frag_header header;
-        memcpy(&header, data, sizeof(header));
+        struct ds_header *hdr = (struct ds_header *)data;
+        char *payload = data + sizeof(struct ds_header);
+        int payload_len = data_len - sizeof(struct ds_header);
+        if (payload_len < 0)
+            continue;
 
-        char *payload = data + sizeof(header);
-        int payload_len = data_len - sizeof(header);
+        printf("Im in rvrecvfrom! 3\n");
+        ds_set_src(src_addr, addrlen, hdr);
 
-        printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
-            header.frag_num, header.total_frags, payload_len, payload);
+        printf("Received fragment %d/%d (%d bytes)\n",
+               hdr->frag_num,
+               hdr->total_frags,
+               payload_len);
 
-        if (header.frag_num == 1) {
-            total_frags = header.total_frags;
-            num_recvs = total_frags;
-
-            msg_buf = malloc(total_frags * RS_MAX_TRANSFER);
+        if (hdr->frag_num == 1) {
+            total_frags = hdr->total_frags;
+            expected_alloc = total_frags * RS_MAX_TRANSFER;
+            msg_buf = malloc(expected_alloc);
             if (!msg_buf) {
-                perror("rvrecvfrom: malloc msg_buf failed");
+                perror("malloc msg_buf failed");
                 return -1;
             }
+
+            received_frags = 0;
+            actual_total_bytes = 0;
         }
 
-        int offset = (header.frag_num - 1) * RS_MAX_TRANSFER;
-        memcpy(msg_buf + offset, payload, payload_len);
-        total_len += payload_len;
+        int offset = (hdr->frag_num - 1) * RS_MAX_TRANSFER;
 
-        // Repost the same recv buffer for future receives
+        memcpy((char *)msg_buf + offset,
+               payload,
+               payload_len);
+
+        received_frags++;
+        actual_total_bytes += payload_len;
+
+        // Repost receive buffer
         struct ibv_sge sge = {
             .addr = (uintptr_t)recv_buf,
             .length = MAX_RECV_SIZE,
@@ -1095,21 +966,27 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         struct ibv_recv_wr recv_wr = {
             .wr_id = (uintptr_t)entry,
             .sg_list = &sge,
-            .num_sge = 1,
-            .next = NULL
+            .num_sge = 1
         };
-
         struct ibv_recv_wr *bad_wr = NULL;
+
+        printf("Before posted recv\n");
         if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
-            perror("rvrecvfrom: ibv_post_recv failed");
+            perror("rvrecvfrom: post_recv failed");
             free(msg_buf);
             return -1;
         }
+        printf("After posted recv\n");
 
-        recv_count++;
+        // Check for completion
+        if (received_frags == total_frags) {
+            if ((size_t)actual_total_bytes > len)
+                actual_total_bytes = len;
+            memcpy(buf, msg_buf, actual_total_bytes);
+            free(msg_buf);
+            return actual_total_bytes;
+        }
     }
-    free(msg_buf);
-    return 0;
 }
 
 
@@ -1124,13 +1001,11 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
 
     if (rvs->type == SOCK_DGRAM) {
-        if (rvrecvfrom(mailbox) != RVMA_SUCCESS) {
-            fprintf(stderr, "rvmaRecvfrom failed\n");
-            return -1;
-        }
+        fprintf(stderr, "rvrecv: Socket type is datagram, use rvrecvfrom instead\n");
+        return -1;
     } else {
         if (rvmaRecv(vaddr, buf, len, 0, mailbox) != RVMA_SUCCESS) {
-            fprintf(stderr, "rvmaRecv failed\n");
+            fprintf(stderr, "rvrecv: rvmaRecv failed\n");
             return -1;
         }
     }

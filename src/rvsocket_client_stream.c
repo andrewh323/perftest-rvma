@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
+    sockfd = rvsocket(AF_INET, SOCK_STREAM, NULL, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
