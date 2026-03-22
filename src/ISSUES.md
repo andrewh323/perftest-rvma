@@ -26,3 +26,7 @@ How can I make it benchmark agnostic, what needs to be different and what calls 
 - tcpdump
 -netstat/ss
 - lldptool/dcbtool
+
+# Benchmarks
+https://computing.llnl.gov/projects/sphinx-integrated-parallel-microbenchmark-suite/files-distribution
+https://iperf.fr
