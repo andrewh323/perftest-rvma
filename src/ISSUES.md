@@ -20,6 +20,9 @@ How can I make it benchmark agnostic, what needs to be different and what calls 
 # Epiphany 2 (2026-03-08)
 - Seems I cannot open a iperf3 on PORT 1023, WHY? Who knows? but that is where the rdma cm_id is :D
 
+# Epiphany 3 (2026-03-21)
+- After capstone hell I have made some of the most shoddy code I have ever written. I am fitting a square into an amorphous blob hole, what is libc and sockets god help me. New error though so we might be cooking? 377 most useful class on god, and 373.
+
 # Debugging Tools
 - Ethtool
 - iplink/ifconfig
