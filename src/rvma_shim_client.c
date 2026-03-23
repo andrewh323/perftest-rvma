@@ -90,13 +90,13 @@ int is_socket(int fd)
 int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
 {
     
-    if (sockets_created == 1) return real_setsockopt(fd, level, optname, optval, optlen);
+    if (sockets_created < 2) return real_setsockopt(fd, level, optname, optval, optlen);
     return 0;
 }
 
 int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t* optlen)
 {
-    if (sockets_created == 1) return real_getsockopt(sockfd, level, optname, optval, optlen);
+    if (sockets_created < 2) return real_getsockopt(sockfd, level, optname, optval, optlen);
     return 0;
 }
 
@@ -120,13 +120,8 @@ int socket(int domain, int type, int protocol)
     }
     uint32_t ip_host_order = ntohl(addr.sin_addr.s_addr);
     uint64_t vaddr = 0x00000000;
-    if (sockets_created < 2) {
-        vaddr = constructVaddr(reserved, ip_host_order, PORT);
-        log_debug("DATA vaddr -> %" PRIu64 "\n", vaddr);
-    } else {
-        vaddr = constructVaddr(reserved, ip_host_order, DATA_PORT);
-        log_debug("DATA_PORT vaddr -> %" PRIu64 "\n", vaddr);
-    }
+    vaddr = constructVaddr(reserved, ip_host_order, PORT);
+    log_debug("vaddr -> %" PRIu64 "\n", vaddr);
 
     //uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
     //RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
@@ -161,7 +156,10 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 
 int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 {
-    if (sockets_created == 1) return real_connect(socket, address, address_len);
+    if (sockets_created < 2) return real_connect(socket, address, address_len);
+
+    if (address->sa_family != AF_INET) return real_connect(socket, address, address_len);
+
     uint16_t reserved = 0x0001;
     //struct sockaddr_in addr;
     //memset(&addr, 0, sizeof(addr));
@@ -185,7 +183,8 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
         perror("RVMA_Win Init:");
         exit(EXIT_FAILURE);
     }
-    int ret = rvconnect(socket, address, sizeof(address_len), globalWindowPtr);
+    int ret = rvconnect(socket, address, address_len, globalWindowPtr);
+    log_debug("Socket connected successfully with ret = %d\n", ret);
     //int ret = rvconnect(socket, (const struct sockaddr *)in, sizeof(address_len), globalWindowPtr);
     return ret;
 }

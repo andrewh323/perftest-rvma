@@ -52,8 +52,8 @@ __attribute__((constructor)) void init()
     real_close = dlsym(RTLD_NEXT, "close");
     real_setsockopt = dlsym(RTLD_NEXT, "setsockopt");
     real_getsockopt = dlsym(RTLD_NEXT, "getsockopt");
-
-    fprintf(stderr, "[shim] loaded\n");
+    log_debug("Shim loaded.\n");
+    
 }
 
 // Should change to a struct
@@ -122,13 +122,8 @@ int socket(int domain, int type, int protocol)
     uint32_t ip_host_order = ntohl(addr.sin_addr.s_addr);
     uint64_t vaddr = 0x00000000;
     vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    if (sockets_created == 2) {
-        vaddr = constructVaddr(reserved, ip_host_order, DATA_PORT);
-        log_debug("Port -> %d\n", DATA_PORT);
-    } else {
-        log_debug("ip_host_order -> %" PRIu32 "\n", ip_host_order);
-        log_debug("Port -> %d\n", PORT);
-    }
+    log_debug("ip_host_order -> %" PRIu32 "\n", ip_host_order);
+    log_debug("Port -> %d\n", PORT);
     log_debug("Vaddr -> %" PRIu64 "\n", vaddr);
     generateWindowPtr(vaddr);
     int rvma_fd = rvsocket(SOCK_STREAM, vaddr, globalWindowPtr);
@@ -154,11 +149,7 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
     in->sin_addr.s_addr = INADDR_ANY;
     uint32_t ip_host_order = ntohl(in->sin_addr.s_addr);
     uint64_t vaddr = 0x00000000;
-    if (sockets_accepted == 2) {
-        vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    } else {
-        vaddr = constructVaddr(reserved, ip_host_order, DATA_PORT);
-    }
+    vaddr = constructVaddr(reserved, ip_host_order, PORT);
     log_debug("accept_vaddr -> %" PRIu64 "\n", vaddr);
     return rvaccept(sockfd, (struct sockaddr *)in, addrlen, globalWindowPtr);
 }

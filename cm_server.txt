@@ -1,0 +1,40 @@
+11:26:35 DEBUG src/rvma_shim_server.c:55: Shim loaded.
+
+iperf 3.20+
+Linux nc30309 5.14.0-611.36.1.el9_7.x86_64 #1 SMP PREEMPT_DYNAMIC Tue Mar 3 11:23:52 EST 2026 x86_64
+11:26:35 DEBUG src/rvma_shim_server.c:107: Sockets created = 1
+
+11:26:35 DEBUG src/rvma_shim_server.c:108: Initial socket created.
+
+11:26:51 DEBUG src/rvma_shim_server.c:143: Sockets accepted -> 1
+
+11:26:51 DEBUG src/rvma_shim_server.c:144: Initial socket accepted.
+-----------------------------------------------------------
+Server listening on 7471 (test #1)
+-----------------------------------------------------------
+Time: Mon, 23 Mar 2026 15:26:51 GMT
+Accepted connection from 10.82.83.37, port 40354
+      Cookie: ch5suzhl7prbxa5dtejuaoftnijwim7rafdq
+      TCP MSS: 0 (default)
+iperf 3.20+
+Linux nc30309 5.14.0-611.36.1.el9_7.x86_64 #1 SMP PREEMPT_DYNAMIC Tue Mar 3 11:23:52 EST 2026 x86_64
+11:26:51 DEBUG src/rvma_shim_server.c:107: Sockets created = 2
+
+11:26:51 DEBUG src/rvma_shim_server.c:125: ip_host_order -> 173167369
+
+11:26:51 DEBUG src/rvma_shim_server.c:126: Port -> 7471
+
+11:26:51 DEBUG src/rvma_shim_server.c:127: Vaddr -> 292823673412911
+
+11:26:51 DEBUG src/rvma_shim_server.c:130: RVMA FD -> 4
+
+[rvsocket_shim] (bind) -> addr 0.0.0.0
+[rvsocket_shim] (bind) -> rdma_cm_id 0x17897d0
+[rvsocket_shim] (bind) -> ret 0
+iperf3: interrupt - the server has terminated by signal Interrupt(2)
+Window init setup time: 2.455 µs
+rvsocket total setup time: 280.729 µs
+rvbind total time: 6.683 µs
+-----------------------------------------------------------
+Server listening on 7471 (test #2)
+-----------------------------------------------------------

@@ -1550,7 +1550,7 @@ rvma_shim5:
 	-libverbs -lrdmacm -lpci -lmlx5
 
 rvma_server_shim:
-	gcc -fPIC -shared -D_GNU_SOURCE \
+	gcc -fPIC -shared -DLOG_USE_COLOR -D_GNU_SOURCE \
 	-I. -I/home/rysilve/rdma-core/build/include \
 	src/rvma_shim_server.c \
 	src/log.c \
@@ -1574,7 +1574,7 @@ rvma_server_shim:
 	-libverbs -lrdmacm -lpci -lmlx5
 
 rvma_client_shim:
-	gcc -fPIC -shared -D_GNU_SOURCE \
+	gcc -fPIC -shared -DLOG_USE_COLOR -D_GNU_SOURCE \
 	-I. \
 	-I/home/rysilve/rdma-core/build/include \
 	src/rvma_shim_client.c \

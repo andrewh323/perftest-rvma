@@ -23,6 +23,11 @@ How can I make it benchmark agnostic, what needs to be different and what calls 
 # Epiphany 3 (2026-03-21)
 - After capstone hell I have made some of the most shoddy code I have ever written. I am fitting a square into an amorphous blob hole, what is libc and sockets god help me. New error though so we might be cooking? 377 most useful class on god, and 373.
 
+# Epiphany 4 (2026-03-23)
+- RDMA_CM_EVENT_REJECTED is the error that is the bane of my existence, it does bind for first socket but not for the next? Why does iperf give me a new address even though I told it to use ib0? Thank you Narval, very cool.
+- TCP Control Socket is created with ephemeral port if that matters.
+- By forcing AF_INET it seems to remove an error and fix the rdma_resolve_addr error?
+
 # Debugging Tools
 - Ethtool
 - iplink/ifconfig

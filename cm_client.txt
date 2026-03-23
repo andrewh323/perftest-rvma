@@ -1,0 +1,5 @@
+11:28:35 INFO  src/rvma_shim_client.c:56: Loaded shim.
+
+iperf 3.20+
+Linux nc30337 5.14.0-611.36.1.el9_7.x86_64 #1 SMP PREEMPT_DYNAMIC Tue Mar 3 11:23:52 EST 2026 x86_64
+iperf3: error - unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: Device or resource busy

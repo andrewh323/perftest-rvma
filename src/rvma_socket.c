@@ -30,6 +30,7 @@
 #include "rvma_write.h"
 #include "indexer.h"
 #include "rdtsc.h"
+#include "log.h"
 
 #define PORT 7471
 #define RS_SNDLOWAT 2048
@@ -665,17 +666,20 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     struct sockaddr_in *in = (struct sockaddr_in *)addr;
     char ip_str[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(in->sin_addr), ip_str, INET_ADDRSTRLEN);
+
+
     // Resolve address
-    fprintf(stderr, "[rvsocket_shim] -> (connect) rdma_cm_id %p\n", (void *)rvs->cm_id);
-    fprintf(stderr, "[rvsocket_shim] -> (connect) addr %s\n", ip_str);
-    // fprintf(stderr, "[rvsocket_shim] -> (connect) dev %s\n", rvs->cm_id->verbs->device->name);
+    //log_debug("(connect) rdma_cm_id %p\n", (void *)rvs->cm_id);
+    // log_debug("(connect) addr %s\n", ip_str);
     if (rdma_resolve_addr(rvs->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
-        // Segfaults here with a fprintf
+        // log_fatal("rdma_resolve_addr failed\n");
         perror("rdma_resolve_addr");
         return -1;
     }
     // Wait for address resolved event
+    // log_debug("rdma_get_cm_event with %d\n", rvs->ec);
     if (rdma_get_cm_event(rvs->ec, &event)) {
+        // log_fatal("rdma_get_cm_failed");
         perror("rdma_get_cm_event");
         return -1;
     }
