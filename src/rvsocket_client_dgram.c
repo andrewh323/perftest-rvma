@@ -114,10 +114,10 @@ int main(int argc, char **argv) {
         }
         message[size] = '\0';
 
-        printf("Sending message %d: %.40s...\n", i, message);
+        // printf("Sending message %d: %.40s...\n", i, message);
 
         uint64_t t1 = rdtsc();
-        res = rvsendto(sockfd, message, size);
+        res = rvsendto(sockfd, message, size, windowPtr);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }

@@ -428,7 +428,7 @@ RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mail
 
     RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
     buf = (char *)entry->realBuff;
-    // printf("Received Message: %.*s\n", wc.byte_len, recv_buf);
+    // printf("Received Message: %.*s\n", wc.byte_len, buf);
 
     // Build sge
     struct ibv_sge sge = {

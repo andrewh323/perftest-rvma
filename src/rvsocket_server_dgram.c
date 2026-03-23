@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
             perror("Error receiving message");
         }
 
-        ret = rvsendto(dgram_fd, "ACK", 4);
+        ret = rvsendto(dgram_fd, "ACK", 4, windowPtr);
         if (ret < 0) {
             perror("Error sending ACK");
         }

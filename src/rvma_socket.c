@@ -879,7 +879,7 @@ int rvsend(int socket, void *buf, int64_t len) {
 }
 
 // Send for datagram sockets
-int rvsendto(int socket, void *buf, int64_t len) {
+int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
     uint64_t elapsed = 0, frag_setup = 0, buffer_setup = 0, wr_setup = 0, total_poll = 0;
 
     struct rvsocket *rvs;
@@ -889,6 +889,8 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
     vaddr = rvs->vaddr;
     struct rv_dest *dest = rvs->dest;
+
+    RVMA_Mailbox *mailbox = searchHashmap(window->hashMapPtr, vaddr);
 
     int hardware_counter = 0; // Counter to compare with threshold (Should only exist in hardware)
 
@@ -936,9 +938,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
         uint64_t buffer_setup_start = rdtsc();
 
-        // Post buffer to mailbox, fill mailbox entry
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer((void *)full_buf, total_size, notifBuffPtr, (void *)notifLenPtr, vaddr,
-                                    rvs->mailboxPtr, threshold, EPOCH_OPS, 0);
+        RVMA_Buffer_Entry *entry = dequeue(mailbox->sendBufferQueue);
         if (!entry) {
             fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
             return -1;
@@ -950,7 +950,9 @@ int rvsendto(int socket, void *buf, int64_t len) {
         uint64_t buffer_setup_end = rdtsc();
         buffer_setup += buffer_setup_end - buffer_setup_start;
 
-        printf("Buffer posted with size %zu bytes for fragment %d/%d\n", total_size, hdr->frag_num, hdr->total_frags);
+        /* REMOVE PRINT WHEN COLLECTING RESULTS */
+        printf("Posting send with size %zu bytes for fragment %d/%d\n", total_size, hdr->frag_num, hdr->total_frags);
+        
         // Build sge, wr
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
@@ -982,7 +984,7 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
         hardware_counter++; // Hardware counter is incremented after every operation (By # ops)
         if (hardware_counter == threshold) {
-            // IWrite address of head of buffer to notification pointer
+            // Write address of head of buffer to notification pointer
             *notifBuffPtr = full_buf;
             // Write length of buffer to notifLenPtr in case buffer is reused
             *notifLenPtr = total_size;
@@ -990,24 +992,25 @@ int rvsendto(int socket, void *buf, int64_t len) {
 
         uint64_t poll_start = rdtsc();
 
+        // Poll cq
         struct ibv_wc wc;
-        int num_wc = 0;
-        while (1) {
-            do { num_wc = ibv_poll_cq(rvs->mailboxPtr->cq, 1, &wc); } while (num_wc == 0);
-            if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) return -1;
-
-            if (wc.opcode == IBV_WC_SEND) {
-                RVMA_Buffer_Entry *e = (RVMA_Buffer_Entry*)wc.wr_id;
-                RVMA_Buffer_Entry *q = dequeue(rvs->mailboxPtr->sendBufferQueue);
-                freeBufferEntry(e);
-                break;
-            }
+        int res;
+        do {
+            res = ibv_poll_cq(mailbox->cq, 1, &wc);
+        } while (res == 0);
+        if (res < 0) {
+            perror("rvmaSend: ibv_poll_cq failed");
+            return RVMA_ERROR;
+        }
+        if (wc.status!= IBV_WC_SUCCESS) {
+            perror("rvmaSend: ibv_poll_cq failed");
+            return RVMA_ERROR;
         }
 
-        if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
-            fprintf(stderr, "rvsendto: ibv_poll_cq failed\n");
-            return -1;
-        }
+        // Replenish buffer pool
+        RVMA_Buffer_Entry *completed_entry = (RVMA_Buffer_Entry *)wc.wr_id;
+        enqueue(mailbox->sendBufferQueue, completed_entry);
+
         uint64_t poll_end = rdtsc();
         total_poll += poll_end - poll_start;
     }
@@ -1043,6 +1046,7 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
             if (wc.opcode == IBV_WC_RECV) break;
         }
 
+        // Pull entry from wr
         RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
         if (!entry) {
             perror("rvrecvfrom: entry is NULL");
@@ -1052,6 +1056,7 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         char *recv_buf = (char *)entry->realBuff;
         int len = wc.byte_len;
 
+        // If using a GRH (i.e. ROCE), add space to data buffer
         int grh = (wc.wc_flags & IBV_WC_GRH) ? 40 : 0;
         char *data = recv_buf + grh;
         int data_len = len - grh;
@@ -1067,6 +1072,7 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         char *payload = data + sizeof(header);
         int payload_len = data_len - sizeof(header);
 
+        /* REMOVE PRINT WHEN COLLECTING RESULTS */
         printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
             header.frag_num, header.total_frags, payload_len, payload);
 
