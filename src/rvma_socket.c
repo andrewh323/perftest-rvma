@@ -223,7 +223,6 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             return -1;
         }
         rvs->mailboxPtr = searchHashmap(window->hashMapPtr, vaddr);
-
         char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
         struct ibv_device *ib_dev = ctx_find_dev(&devname);
         if (!ib_dev) {
@@ -765,11 +764,12 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
     double rdmaTime = (rdmaSetup - addrRouteResolved) / (cpu_ghz * 1e3);
+    double rdmaConnect = (beforePostRecv - rdmaSetup) / (cpu_ghz * 1e3);
     double postRecvTime = (end - beforePostRecv) / (cpu_ghz * 1e3);
-    elapsed_us -= (rdmaTime + postRecvTime);
     printf("postRecvPool time in rvconnect: %.3f µs\n", postRecvTime);
     printf("rvconnect time for address and route resolution: %.3f µs\n", addrRouteTime);
     printf("rvconnect time for RDMA resources setup: %.3f µs\n", rdmaTime);
+    printf("rdmaconnect time: %.3f µs\n", rdmaConnect);
     printf("rvconnect total time: %.3f µs\n", elapsed_us);
 
     return 0;
@@ -951,7 +951,7 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
         buffer_setup += buffer_setup_end - buffer_setup_start;
 
         /* REMOVE PRINT WHEN COLLECTING RESULTS */
-        printf("Posting send with size %zu bytes for fragment %d/%d\n", total_size, hdr->frag_num, hdr->total_frags);
+        // printf("Posting send with size %zu bytes for fragment %d/%d\n", total_size, hdr->frag_num, hdr->total_frags);
         
         // Build sge, wr
         struct ibv_sge sge = {
@@ -1073,9 +1073,9 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         int payload_len = data_len - sizeof(header);
 
         /* REMOVE PRINT WHEN COLLECTING RESULTS */
-        printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
+/*         printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
             header.frag_num, header.total_frags, payload_len, payload);
-
+ */
         if (header.frag_num == 1) {
             total_frags = header.total_frags;
             num_recvs = total_frags;
@@ -1122,10 +1122,8 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
 int rvrecv(int socket, void *buf, size_t len, int flags) {
     // Read from mailbox buffer with rvmaRecv
     struct rvsocket *rvs;
-    uint64_t vaddr;
 
     rvs = idm_at(&idm, socket);
-    vaddr = rvs->vaddr;
 
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
 
@@ -1135,7 +1133,7 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
             return -1;
         }
     } else {
-        if (rvmaRecv(vaddr, buf, len, 0, mailbox) != RVMA_SUCCESS) {
+        if (rvmaRecv(rvs->vaddr, buf, len, 0, mailbox) != RVMA_SUCCESS) {
             fprintf(stderr, "rvmaRecv failed\n");
             return -1;
         }

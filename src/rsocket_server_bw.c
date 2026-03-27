@@ -18,7 +18,7 @@ The client then disconnects from the server
 #include <arpa/inet.h>
 
 #define PORT 7471
-#define MSG_SIZE (128 * 1024 * 1024) // Size of expected message
+#define MSG_SIZE (1024 * 1024) // Size of expected message
 
 
 int main() {

@@ -22,7 +22,6 @@ static inline uint64_t rdtsc(){
 
 
 int main(int argc, char **argv) {
-    double elapsed_us;
     double cpu_ghz = get_cpu_ghz();
     uint16_t reserved = 0x0001;
     int sockfd;
@@ -84,6 +83,7 @@ int main(int argc, char **argv) {
     int measured_sends = exclude_warmup ? (num_sends - warmup_sends) : num_sends;
     double *send_times = malloc(measured_sends * sizeof(double));
 
+    double elapsed_us = 0;
     double min_time = 1e9;
     double max_time = 0;
     double sum_time = 0;
@@ -117,17 +117,16 @@ int main(int argc, char **argv) {
         }
         uint64_t t3 = rdtsc();
         int record = 1;
+        elapsed_us = (t3 - t1) / (cpu_ghz * 1e3);
 
         // Exclude warm-ups if configured
         if (exclude_warmup && i < warmup_sends)
             record = 0;
 
-        double elapsed_us = (t3 - t1) / (cpu_ghz * 1e3);
-        if (elapsed_us < min_time) min_time = elapsed_us;
-        if (elapsed_us > max_time) max_time = elapsed_us;
-        sum_time += elapsed_us;
-
         if (record) {
+            if (elapsed_us < min_time) min_time = elapsed_us;
+            if (elapsed_us > max_time) max_time = elapsed_us;
+            sum_time += elapsed_us;
             int idx = exclude_warmup ? (i - warmup_sends) : i;
             send_times[idx] = elapsed_us;
         }

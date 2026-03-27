@@ -134,7 +134,10 @@ bin_PROGRAMS = ib_write_lat$(EXEEXT) ib_write_bw$(EXEEXT) \
 	rvsocket_client_stream$(EXEEXT) \
 	rvsocket_server_stream$(EXEEXT) rvsocket_server_dgram$(EXEEXT) \
 	rvsocket_client_dgram$(EXEEXT) rsocket_server_dgram$(EXEEXT) \
-	rsocket_client_dgram$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2)
+	rsocket_client_dgram$(EXEEXT) \
+	rvsocket_server_stream_bw$(EXEEXT) \
+	rvsocket_client_stream_bw$(EXEEXT) $(am__EXEEXT_1) \
+	$(am__EXEEXT_2)
 @HAVE_RAW_ETH_TRUE@am__append_5 = src/raw_ethernet_resources.c
 @HAVE_RAW_ETH_TRUE@am__append_6 = src/raw_ethernet_resources.h
 @HAVE_RAW_ETH_TRUE@am__append_7 = raw_ethernet_bw raw_ethernet_lat raw_ethernet_burst_lat raw_ethernet_fs_rate
@@ -298,6 +301,13 @@ rvsocket_client_stream_OBJECTS = $(am_rvsocket_client_stream_OBJECTS)
 rvsocket_client_stream_DEPENDENCIES = libperftest.a \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_rvsocket_client_stream_bw_OBJECTS =  \
+	src/rvsocket_client_stream_bw.$(OBJEXT)
+rvsocket_client_stream_bw_OBJECTS =  \
+	$(am_rvsocket_client_stream_bw_OBJECTS)
+rvsocket_client_stream_bw_DEPENDENCIES = libperftest.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_rvsocket_server_dgram_OBJECTS =  \
 	src/rvsocket_server_dgram.$(OBJEXT)
 rvsocket_server_dgram_OBJECTS = $(am_rvsocket_server_dgram_OBJECTS)
@@ -308,6 +318,13 @@ am_rvsocket_server_stream_OBJECTS =  \
 	src/rvsocket_server_stream.$(OBJEXT)
 rvsocket_server_stream_OBJECTS = $(am_rvsocket_server_stream_OBJECTS)
 rvsocket_server_stream_DEPENDENCIES = libperftest.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_rvsocket_server_stream_bw_OBJECTS =  \
+	src/rvsocket_server_stream_bw.$(OBJEXT)
+rvsocket_server_stream_bw_OBJECTS =  \
+	$(am_rvsocket_server_stream_bw_OBJECTS)
+rvsocket_server_stream_bw_DEPENDENCIES = libperftest.a \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -381,8 +398,10 @@ am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/rvma_socket.Po src/$(DEPDIR)/rvma_write.Po \
 	src/$(DEPDIR)/rvsocket_client_dgram.Po \
 	src/$(DEPDIR)/rvsocket_client_stream.Po \
+	src/$(DEPDIR)/rvsocket_client_stream_bw.Po \
 	src/$(DEPDIR)/rvsocket_server_dgram.Po \
 	src/$(DEPDIR)/rvsocket_server_stream.Po \
+	src/$(DEPDIR)/rvsocket_server_stream_bw.Po \
 	src/$(DEPDIR)/write_bw.Po src/$(DEPDIR)/write_lat.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -413,8 +432,10 @@ SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
 	$(rvma_mailbox_server_SOURCES) \
 	$(rvsocket_client_dgram_SOURCES) \
 	$(rvsocket_client_stream_SOURCES) \
+	$(rvsocket_client_stream_bw_SOURCES) \
 	$(rvsocket_server_dgram_SOURCES) \
-	$(rvsocket_server_stream_SOURCES)
+	$(rvsocket_server_stream_SOURCES) \
+	$(rvsocket_server_stream_bw_SOURCES)
 DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(ib_write_bw_SOURCES) $(ib_write_lat_SOURCES) \
 	$(am__raw_ethernet_burst_lat_SOURCES_DIST) \
@@ -427,8 +448,10 @@ DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(rvma_mailbox_client_SOURCES) $(rvma_mailbox_server_SOURCES) \
 	$(rvsocket_client_dgram_SOURCES) \
 	$(rvsocket_client_stream_SOURCES) \
+	$(rvsocket_client_stream_bw_SOURCES) \
 	$(rvsocket_server_dgram_SOURCES) \
-	$(rvsocket_server_stream_SOURCES)
+	$(rvsocket_server_stream_SOURCES) \
+	$(rvsocket_server_stream_bw_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -654,6 +677,10 @@ rvsocket_client_stream_SOURCES = src/rvsocket_client_stream.c
 rvsocket_client_stream_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rvsocket_server_stream_SOURCES = src/rvsocket_server_stream.c
 rvsocket_server_stream_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rvsocket_client_stream_bw_SOURCES = src/rvsocket_client_stream_bw.c
+rvsocket_client_stream_bw_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+rvsocket_server_stream_bw_SOURCES = src/rvsocket_server_stream_bw.c
+rvsocket_server_stream_bw_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rvma_mailbox_server_SOURCES = src/rvma_mailbox_server.c
 rvma_mailbox_server_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rvma_mailbox_client_SOURCES = src/rvma_mailbox_client.c
@@ -934,6 +961,12 @@ src/rvsocket_client_stream.$(OBJEXT): src/$(am__dirstamp) \
 rvsocket_client_stream$(EXEEXT): $(rvsocket_client_stream_OBJECTS) $(rvsocket_client_stream_DEPENDENCIES) $(EXTRA_rvsocket_client_stream_DEPENDENCIES) 
 	@rm -f rvsocket_client_stream$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rvsocket_client_stream_OBJECTS) $(rvsocket_client_stream_LDADD) $(LIBS)
+src/rvsocket_client_stream_bw.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rvsocket_client_stream_bw$(EXEEXT): $(rvsocket_client_stream_bw_OBJECTS) $(rvsocket_client_stream_bw_DEPENDENCIES) $(EXTRA_rvsocket_client_stream_bw_DEPENDENCIES) 
+	@rm -f rvsocket_client_stream_bw$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rvsocket_client_stream_bw_OBJECTS) $(rvsocket_client_stream_bw_LDADD) $(LIBS)
 src/rvsocket_server_dgram.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
@@ -946,6 +979,12 @@ src/rvsocket_server_stream.$(OBJEXT): src/$(am__dirstamp) \
 rvsocket_server_stream$(EXEEXT): $(rvsocket_server_stream_OBJECTS) $(rvsocket_server_stream_DEPENDENCIES) $(EXTRA_rvsocket_server_stream_DEPENDENCIES) 
 	@rm -f rvsocket_server_stream$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rvsocket_server_stream_OBJECTS) $(rvsocket_server_stream_LDADD) $(LIBS)
+src/rvsocket_server_stream_bw.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+rvsocket_server_stream_bw$(EXEEXT): $(rvsocket_server_stream_bw_OBJECTS) $(rvsocket_server_stream_bw_DEPENDENCIES) $(EXTRA_rvsocket_server_stream_bw_DEPENDENCIES) 
+	@rm -f rvsocket_server_stream_bw$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(rvsocket_server_stream_bw_OBJECTS) $(rvsocket_server_stream_bw_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -1021,8 +1060,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_write.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_client_dgram.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_client_stream.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_client_stream_bw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_server_dgram.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_server_stream.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_server_stream_bw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/write_bw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/write_lat.Po@am__quote@ # am--include-marker
 
@@ -1374,8 +1415,10 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/rvma_write.Po
 	-rm -f src/$(DEPDIR)/rvsocket_client_dgram.Po
 	-rm -f src/$(DEPDIR)/rvsocket_client_stream.Po
+	-rm -f src/$(DEPDIR)/rvsocket_client_stream_bw.Po
 	-rm -f src/$(DEPDIR)/rvsocket_server_dgram.Po
 	-rm -f src/$(DEPDIR)/rvsocket_server_stream.Po
+	-rm -f src/$(DEPDIR)/rvsocket_server_stream_bw.Po
 	-rm -f src/$(DEPDIR)/write_bw.Po
 	-rm -f src/$(DEPDIR)/write_lat.Po
 	-rm -f Makefile
@@ -1457,8 +1500,10 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/rvma_write.Po
 	-rm -f src/$(DEPDIR)/rvsocket_client_dgram.Po
 	-rm -f src/$(DEPDIR)/rvsocket_client_stream.Po
+	-rm -f src/$(DEPDIR)/rvsocket_client_stream_bw.Po
 	-rm -f src/$(DEPDIR)/rvsocket_server_dgram.Po
 	-rm -f src/$(DEPDIR)/rvsocket_server_stream.Po
+	-rm -f src/$(DEPDIR)/rvsocket_server_stream_bw.Po
 	-rm -f src/$(DEPDIR)/write_bw.Po
 	-rm -f src/$(DEPDIR)/write_lat.Po
 	-rm -f Makefile

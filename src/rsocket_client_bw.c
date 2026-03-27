@@ -19,7 +19,7 @@ The client then disconnects from the server
 #include <arpa/inet.h>
 
 #define PORT 7471
-#define MSG_SIZE 4096 // Size of message buffer
+#define MSG_SIZE 1024*1024 // Size of message buffer
 #define TOTAL_BYTES (128 * 1024 * 1024) // Total bytes to send (128 MB)
 
 
@@ -79,10 +79,10 @@ int main(int argc, char **argv) {
     double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
 
     double bandwidth_MBps = (double)bytes_sent / (1024 * 1024) / elapsed;
-    double bandwidth_Gbps = bandwidth_MBps * 8 / 1000; // Convert to Gbps
+    double bandwidth_GBps = bandwidth_MBps / 1000; // Convert to Gbps
 
     printf("Elapsed time: %.2f microseconds\n", elapsed * 1e6);
-    printf("Bandwidth: %.2f MB/s (%.2f Gbps)\n", bandwidth_MBps, bandwidth_Gbps);
+    printf("Bandwidth: %.2f MB/s (%.2f GBps)\n", bandwidth_MBps, bandwidth_GBps);
 
     // Close the socket
     rclose(sockfd);

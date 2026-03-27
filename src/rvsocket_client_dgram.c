@@ -41,13 +41,14 @@ int main(int argc, char **argv) {
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
     
     sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
     }
+    
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
 
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET; // IPv4
