@@ -75,7 +75,7 @@ char * get_ip(char * interface_name)
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, interface_name, IFNAMSIZ - 1);
     ioctl(fd, SIOCGIFADDR, &ifr);
-    close(fd);
+    real_close(fd);
     return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 
@@ -89,6 +89,7 @@ int is_socket(int fd)
 
 int setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
 {
+    return 0;
     
     if (sockets_created < 2) return real_setsockopt(fd, level, optname, optval, optlen);
     return 0;
@@ -156,10 +157,10 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 
 int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 {
+    // Could the number of sockets be an issue? Seems that rvma socket is getting ENOTSOCK erro
     if (sockets_created < 2) return real_connect(socket, address, address_len);
-
-    if (address->sa_family != AF_INET) return real_connect(socket, address, address_len);
-
+    // the family is AF_UNIX
+    //if (address->sa_family != AF_INET) return real_connect(socket, address, address_len);
     uint16_t reserved = 0x0001;
     //struct sockaddr_in addr;
     //memset(&addr, 0, sizeof(addr));
@@ -177,12 +178,7 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
     char ip_str[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(in->sin_addr), ip_str, INET_ADDRSTRLEN);
     log_debug("Attempting connection with IP -> %s\n", ip_str);
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
-    if (windowPtr == NULL) {
-        log_error("RVMA_Win Init.");
-        perror("RVMA_Win Init:");
-        exit(EXIT_FAILURE);
-    }
+    generateWindowPtr(vaddr);
     int ret = rvconnect(socket, address, address_len, globalWindowPtr);
     log_debug("Socket connected successfully with ret = %d\n", ret);
     //int ret = rvconnect(socket, (const struct sockaddr *)in, sizeof(address_len), globalWindowPtr);

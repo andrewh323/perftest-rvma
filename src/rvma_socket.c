@@ -348,7 +348,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     end = rdtsc();
 
     double elapsed_us = (end - start) / (cpu_ghz * 1e3) - rdmaTime;
-    printf("rvsocket total setup time: %.3f µs\n", elapsed_us);
+    log_info("rvsocket total setup time: %.3f µs", elapsed_us);
     // return rvsocket index
     return rvs->index;
 }
@@ -373,10 +373,10 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
          * iperf or this code?
          */
         inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr, ip_str, sizeof(addr));
-        fprintf(stderr, "[rvsocket_shim] (bind) -> addr %s\n", ip_str);
-        fprintf(stderr, "[rvsocket_shim] (bind) -> rdma_cm_id %p\n", (void *)rvs->cm_id);
+        // fprintf(stderr, "[rvsocket_shim] (bind) -> addr %s\n", ip_str);
+        // fprintf(stderr, "[rvsocket_shim] (bind) -> rdma_cm_id %p\n", (void *)rvs->cm_id);
 	    ret = rdma_bind_addr(rvs->cm_id, (struct sockaddr *)addr);
-        fprintf(stderr, "[rvsocket_shim] (bind) -> ret %d\n", ret);
+        // fprintf(stderr, "[rvsocket_shim] (bind) -> ret %d\n", ret);
         if (!ret)
             rvs->state = rs_bound;
     } else { // Datagram
@@ -388,7 +388,7 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
     }
     end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("rvbind total time: %.3f µs\n", elapsed_us);
+    log_info("rvbind total time: %.3f µs", elapsed_us);
     return ret;
 }
 
@@ -420,7 +420,7 @@ int rvlisten(int socket, int backlog) {
     rvs->state = rs_listening;
     uint64_t end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("rvlisten total time: %.3f µs\n", elapsed_us);
+    log_info("rvlisten total time: %.3f µs", elapsed_us);
     return 0;
 }
 
@@ -430,6 +430,8 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     uint64_t start, end;
     struct rvsocket *rvs, *new_rvs;
     struct rdma_cm_event *event;
+
+    log_info("Entered rvaccept.\n");
 
     rvs = idm_lookup(&idm, socket);
     if (!rvs) {
@@ -498,7 +500,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     }
     uint64_t rdmaEnd = rdtsc();
     double rdmaTime = (rdmaEnd - rdmaStart) / (cpu_ghz * 1e3);
-    printf("Time to setup rdma resources in rvaccept: %.3f µs\n", rdmaTime);
+    log_info("Time to setup rdma resources in rvaccept: %.3f µs", rdmaTime);
     
     start = rdtsc();
 
@@ -560,7 +562,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         return -1;
     }
     
-    printf("Posting buffer pools\n");
+    log_info("Posting buffer pools");
     if (postRecvPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
         perror("postRecvPool failed");
         return -1;
@@ -573,7 +575,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         rgetpeername(new_rvs->index, addr, addrlen);
 
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("rvaccept time: %.3f µs\n", elapsed_us);
+    log_info("rvaccept time: %.3f µs", elapsed_us);
 
     return new_rvs->index;
 }
@@ -669,22 +671,20 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
 
 
     // Resolve address
-    //log_debug("(connect) rdma_cm_id %p\n", (void *)rvs->cm_id);
-    // log_debug("(connect) addr %s\n", ip_str);
+    // log_debug("(connect) rdma_cm_id %p", (void *)rvs->cm_id);
+    // log_debug("(connect) addr %s", ip_str);
     if (rdma_resolve_addr(rvs->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
-        // log_fatal("rdma_resolve_addr failed\n");
-        perror("rdma_resolve_addr");
+        log_error("rdma_resolve_addr failed");
         return -1;
     }
     // Wait for address resolved event
-    // log_debug("rdma_get_cm_event with %d\n", rvs->ec);
+    // log_debug("rdma_get_cm_event with %d", rvs->ec);
     if (rdma_get_cm_event(rvs->ec, &event)) {
-        // log_fatal("rdma_get_cm_failed");
-        perror("rdma_get_cm_event");
+        log_error("rdma_get_cm_failed");
         return -1;
     }
     if (event->event != RDMA_CM_EVENT_ADDR_RESOLVED) {
-        fprintf(stderr, "rdma_resolve_addr failed: %s\n", rdma_event_str(event->event));
+        log_error(stderr, "rdma_resolve_addr failed: %s", rdma_event_str(event->event));
         rdma_ack_cm_event(event);
         return -1;
     }
@@ -792,10 +792,10 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     double rdmaTime = (rdmaSetup - addrRouteResolved) / (cpu_ghz * 1e3);
     double postRecvTime = (end - beforePostRecv) / (cpu_ghz * 1e3);
     elapsed_us -= (rdmaTime + postRecvTime);
-    printf("postRecvPool time in rvconnect: %.3f µs\n", postRecvTime);
-    printf("rvconnect time for address and route resolution: %.3f µs\n", addrRouteTime);
-    printf("rvconnect time for RDMA resources setup: %.3f µs\n", rdmaTime);
-    printf("rvconnect total time: %.3f µs\n", elapsed_us);
+    log_info("postRecvPool time in rvconnect: %.3f µs", postRecvTime);
+    log_info("rvconnect time for address and route resolution: %.3f µs", addrRouteTime);
+    log_info("rvconnect time for RDMA resources setup: %.3f µs", rdmaTime);
+    log_info("rvconnect total time: %.3f µs", elapsed_us);
 
     return 0;
 }

@@ -1,0 +1,342 @@
+21:49:53 [36mDEBUG[0m [90msrc/rvma_shim_server.c:55:[0m Shim loaded.
+
+execve("/home/rysilve/iperf/install/bin/iperf3", ["iperf3", "-s", "10.82.83.8", "-p", "7471"], 0x7ffcebcf1460 /* 225 vars */) = 0
+brk(NULL)                               = 0x210a000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x15180eaa2000
+openat(AT_FDCWD, ".libs/librvma_server_shim.so", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0750, st_size=1229120, ...}, AT_EMPTY_PATH) = 0
+getcwd("/home/rysilve/perftest-rvma", 128) = 28
+mmap(NULL, 292792, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180ea5a000
+mmap(0x15180ea63000, 176128, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x9000) = 0x15180ea63000
+mmap(0x15180ea8e000, 69632, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x34000) = 0x15180ea8e000
+mmap(0x15180ea9f000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x45000) = 0x15180ea9f000
+close(3)                                = 0
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/glibc-hwcaps/x86-64-v3/libiperf.so.0", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/home/rysilve/iperf/install/lib/glibc-hwcaps/x86-64-v3", 0x7ffe054c7820, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/glibc-hwcaps/x86-64-v2/libiperf.so.0", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/home/rysilve/iperf/install/lib/glibc-hwcaps/x86-64-v2", 0x7ffe054c7820, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libiperf.so.0", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=677960, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 219392, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180ea24000
+mmap(0x15180ea2f000, 106496, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xb000) = 0x15180ea2f000
+mmap(0x15180ea49000, 53248, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x15180ea49000
+mmap(0x15180ea56000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x31000) = 0x15180ea56000
+mmap(0x15180ea59000, 2304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x15180ea59000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libssl.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+newfstatat(3, "", {st_mode=S_IFREG|0644, st_size=180758, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 180758, PROT_READ, MAP_PRIVATE, 3, 0) = 0x15180e9f7000
+close(3)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libssl.so.3", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=778440, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 673744, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e952000
+mmap(0x15180e971000, 364544, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1f000) = 0x15180e971000
+mmap(0x15180e9ca000, 126976, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x78000) = 0x15180e9ca000
+mmap(0x15180e9e9000, 57344, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x96000) = 0x15180e9e9000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libcrypto.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libcrypto.so.3", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=5055712, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 4401616, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e400000
+mmap(0x15180e4b0000, 2392064, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xb0000) = 0x15180e4b0000
+mmap(0x15180e6f8000, 892928, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2f8000) = 0x15180e6f8000
+mmap(0x15180e7d2000, 385024, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3d1000) = 0x15180e7d2000
+mmap(0x15180e830000, 10704, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x15180e830000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=878920, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 880880, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e87a000
+mmap(0x15180e888000, 454656, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xe000) = 0x15180e888000
+mmap(0x15180e8f7000, 364544, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x7d000) = 0x15180e8f7000
+mmap(0x15180e950000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xd5000) = 0x15180e950000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\20;\2\0\0\0\0\0"..., 832) = 832
+pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=1889216, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x15180e878000
+pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+mmap(NULL, 1920304, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e22b000
+mmap(0x15180e24d000, 1380352, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x22000) = 0x15180e24d000
+mmap(0x15180e39e000, 344064, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x173000) = 0x15180e39e000
+mmap(0x15180e3f2000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1c6000) = 0x15180e3f2000
+mmap(0x15180e3f8000, 32048, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x15180e3f8000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/glibc-hwcaps/x86-64-v3/libmlx5.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/glibc-hwcaps/x86-64-v3", 0x7ffe054c7730, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/glibc-hwcaps/x86-64-v2/libmlx5.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/glibc-hwcaps/x86-64-v2", 0x7ffe054c7730, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/libmlx5.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0750, st_size=4087192, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 462648, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e1ba000
+mmap(0x15180e1c2000, 335872, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x8000) = 0x15180e1c2000
+mmap(0x15180e214000, 73728, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x5a000) = 0x15180e214000
+mmap(0x15180e226000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x6b000) = 0x15180e226000
+mmap(0x15180e229000, 7992, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x15180e229000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/librdmacm.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0750, st_size=513400, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 111208, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e85c000
+mmap(0x15180e860000, 69632, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x4000) = 0x15180e860000
+mmap(0x15180e871000, 16384, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15000) = 0x15180e871000
+mmap(0x15180e875000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x18000) = 0x15180e875000
+mmap(0x15180e877000, 616, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x15180e877000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/libibverbs.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0750, st_size=947072, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 132000, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e83b000
+mmap(0x15180e842000, 73728, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x7000) = 0x15180e842000
+mmap(0x15180e854000, 24576, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x19000) = 0x15180e854000
+mmap(0x15180e85a000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1f000) = 0x15180e85a000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/libpci.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libpci.so.3", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=73352, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 75432, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e1a7000
+mmap(0x15180e1aa000, 40960, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3000) = 0x15180e1aa000
+mmap(0x15180e1b4000, 16384, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xd000) = 0x15180e1b4000
+mmap(0x15180e1b8000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x10000) = 0x15180e1b8000
+close(3)                                = 0
+openat(AT_FDCWD, "/home/rysilve/rdma-core/build/lib/libnl-3.so.200", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "glibc-hwcaps/x86-64-v3/libnl-3.so.200", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "glibc-hwcaps/x86-64-v2/libnl-3.so.200", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "libnl-3.so.200", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libnl-3.so.200", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=134992, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x15180e839000
+mmap(NULL, 137424, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e185000
+mmap(0x15180e18c000, 61440, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x7000) = 0x15180e18c000
+mmap(0x15180e19b000, 36864, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x16000) = 0x15180e19b000
+mmap(0x15180e1a4000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e000) = 0x15180e1a4000
+close(3)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libnl-route-3.so.200", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=552728, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 563648, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e0fb000
+mmap(0x15180e112000, 278528, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x17000) = 0x15180e112000
+mmap(0x15180e156000, 147456, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x5b000) = 0x15180e156000
+mmap(0x15180e17a000, 36864, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x7e000) = 0x15180e17a000
+mmap(0x15180e183000, 6592, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x15180e183000
+close(3)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libz.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=104840, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 106896, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e0e0000
+mmap(0x15180e0e3000, 61440, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3000) = 0x15180e0e3000
+mmap(0x15180e0f2000, 28672, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x12000) = 0x15180e0f2000
+mmap(0x15180e0f9000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x18000) = 0x15180e0f9000
+close(3)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libudev.so.1", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=248024, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 248080, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e0a3000
+mmap(0x15180e0a8000, 163840, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x5000) = 0x15180e0a8000
+mmap(0x15180e0d0000, 57344, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2d000) = 0x15180e0d0000
+mmap(0x15180e0de000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3b000) = 0x15180e0de000
+close(3)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libcap.so.2", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0000u\0\0\0\0\0\0"..., 832) = 832
+newfstatat(3, "", {st_mode=S_IFREG|0755, st_size=47072, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 45128, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x15180e097000
+mmap(0x15180e09a000, 20480, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3000) = 0x15180e09a000
+mmap(0x15180e09f000, 8192, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x8000) = 0x15180e09f000
+mmap(0x15180e0a1000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xa000) = 0x15180e0a1000
+close(3)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x15180e837000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x15180e835000
+arch_prctl(ARCH_SET_FS, 0x15180e835f40) = 0
+set_tid_address(0x15180e836210)         = 1251887
+set_robust_list(0x15180e836220, 24)     = 0
+rseq(0x15180e836860, 0x20, 0, 0x53053053) = 0
+mprotect(0x15180e3f2000, 16384, PROT_READ) = 0
+mprotect(0x15180e0a1000, 4096, PROT_READ) = 0
+mprotect(0x15180e0de000, 4096, PROT_READ) = 0
+mprotect(0x15180e0f9000, 4096, PROT_READ) = 0
+mprotect(0x15180e1a4000, 8192, PROT_READ) = 0
+mprotect(0x15180e17a000, 12288, PROT_READ) = 0
+mprotect(0x15180e1b8000, 4096, PROT_READ) = 0
+mprotect(0x15180e85a000, 4096, PROT_READ) = 0
+mprotect(0x15180e875000, 4096, PROT_READ) = 0
+mprotect(0x15180e226000, 8192, PROT_READ) = 0
+mprotect(0x15180e950000, 4096, PROT_READ) = 0
+mprotect(0x15180e7d2000, 372736, PROT_READ) = 0
+mprotect(0x15180e9e9000, 36864, PROT_READ) = 0
+mprotect(0x15180ea56000, 8192, PROT_READ) = 0
+mprotect(0x15180ea9f000, 8192, PROT_READ) = 0
+mprotect(0x403000, 4096, PROT_READ)     = 0
+mprotect(0x15180ead4000, 8192, PROT_READ) = 0
+prlimit64(0, RLIMIT_STACK, NULL, {rlim_cur=RLIM64_INFINITY, rlim_max=RLIM64_INFINITY}) = 0
+munmap(0x15180e9f7000, 180758)          = 0
+prctl(PR_CAPBSET_READ, CAP_MAC_OVERRIDE) = 1
+prctl(PR_CAPBSET_READ, 0x30 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+prctl(PR_CAPBSET_READ, CAP_CHECKPOINT_RESTORE) = 1
+prctl(PR_CAPBSET_READ, 0x2c /* CAP_??? */) = -1 EINVAL (Invalid argument)
+prctl(PR_CAPBSET_READ, 0x2a /* CAP_??? */) = -1 EINVAL (Invalid argument)
+prctl(PR_CAPBSET_READ, 0x29 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+getrandom("\x0f\x6f\xaa\x8f\x95\xee\x94\x86", 8, GRND_NONBLOCK) = 8
+brk(NULL)                               = 0x210a000
+brk(0x212b000)                          = 0x212b000
+newfstatat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/etc/libnl/classid", {st_mode=S_IFREG|0644, st_size=1130, ...}, 0) = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/etc/libnl/classid", O_RDONLY|O_CLOEXEC) = 3
+newfstatat(3, "", {st_mode=S_IFREG|0644, st_size=1130, ...}, AT_EMPTY_PATH) = 0
+read(3, "################################"..., 4096) = 1130
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/share/zoneinfo/EST5EDT", O_RDONLY|O_CLOEXEC) = 3
+newfstatat(3, "", {st_mode=S_IFREG|0644, st_size=3552, ...}, AT_EMPTY_PATH) = 0
+newfstatat(3, "", {st_mode=S_IFREG|0644, st_size=3552, ...}, AT_EMPTY_PATH) = 0
+read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\6\0\0\0\6\0\0\0\0"..., 4096) = 3552
+lseek(3, -2260, SEEK_CUR)               = 1292
+read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\6\0\0\0\6\0\0\0\0"..., 4096) = 2260
+close(3)                                = 0
+write(2, "21:49:53 \33[36mDEBUG\33[0m \33[90msrc"..., 6021:49:53 [36mDEBUG[0m [90msrc/rvma_shim_server.c:55:[0m ) = 60
+write(2, "Shim loaded.\n", 13Shim loaded.
+)          = 13
+write(2, "\n", 1
+)                       = 1
+rt_sigaction(SIGINT, {sa_handler=0x401560, sa_mask=[INT], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x15180e263790}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGTERM, {sa_handler=0x401560, sa_mask=[TERM], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x15180e263790}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGHUP, {sa_handler=0x401560, sa_mask=[HUP], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x15180e263790}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGPIPE, {sa_handler=SIG_IGN, sa_mask=[PIPE], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x15180e263790}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+write(2, "21:49:53 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:49:53 [36mDEBUG[0m [90msrc/rvma_shim_server.c:107:[0m ) = 61
+write(2, "Sockets created = 1\n", 20Sockets created = 1
+)   = 20
+write(2, "\n", 1
+)                       = 1
+write(2, "21:49:53 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:49:53 [36mDEBUG[0m [90msrc/rvma_shim_server.c:108:[0m ) = 61
+write(2, "Initial socket created.\n", 24Initial socket created.
+) = 24
+write(2, "\n", 1
+)                       = 1
+socket(AF_INET6, SOCK_STREAM, IPPROTO_IP) = 3
+setsockopt(3, SOL_SOCKET, SO_REUSEADDR, [1], 4) = 0
+setsockopt(3, SOL_IPV6, IPV6_V6ONLY, [0], 4) = 0
+bind(3, {sa_family=AF_INET6, sin6_port=htons(7471), sin6_flowinfo=htonl(0), inet_pton(AF_INET6, "::", &sin6_addr), sin6_scope_id=0}, 28) = 0
+listen(3, 2147483647)                   = 0
+newfstatat(1, "", {st_mode=S_IFREG|0640, st_size=19737, ...}, AT_EMPTY_PATH) = 0
+pselect6(4, [3], [], NULL, NULL, NULL)  = 1 (in [3])
+write(2, "21:50:07 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:07 [36mDEBUG[0m [90msrc/rvma_shim_server.c:143:[0m ) = 61
+write(2, "Sockets accepted -> 1\n", 22Sockets accepted -> 1
+) = 22
+write(2, "\n", 1
+)                       = 1
+write(2, "21:50:07 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:07 [36mDEBUG[0m [90msrc/rvma_shim_server.c:144:[0m ) = 61
+write(2, "Initial socket accepted.", 24Initial socket accepted.) = 24
+write(2, "\n", 1
+)                       = 1
+accept(3, {sa_family=AF_INET6, sin6_port=htons(48878), sin6_flowinfo=htonl(0), inet_pton(AF_INET6, "::ffff:10.82.83.26", &sin6_addr), sin6_scope_id=0}, [128 => 28]) = 4
+setsockopt(4, SOL_TCP, TCP_NODELAY, [1], 4) = 0
+pselect6(5, [4], NULL, NULL, {tv_sec=10, tv_nsec=0}, NULL) = 1 (in [4], left {tv_sec=9, tv_nsec=999998858})
+read(4, "yhicgyyl2lqlzs63fwhf62bcyz34w6wg"..., 37) = 37
+write(4, "\t", 1)                       = 1
+pselect6(5, [4], NULL, NULL, {tv_sec=10, tv_nsec=0}, NULL) = 1 (in [4], left {tv_sec=9, tv_nsec=999969854})
+read(4, "\0\0\0}", 4)                   = 4
+pselect6(5, [4], NULL, NULL, {tv_sec=10, tv_nsec=0}, NULL) = 1 (in [4], left {tv_sec=9, tv_nsec=999999348})
+read(4, "{\"tcp\":true,\"omit\":0,\"time\":10,\""..., 125) = 125
+getsockopt(3, SOL_SOCKET, SO_SNDBUF, [87380], [4]) = 0
+getsockopt(3, SOL_SOCKET, SO_RCVBUF, [87380], [4]) = 0
+write(4, "\n", 1)                       = 1
+getpeername(4, {sa_family=AF_INET6, sin6_port=htons(48878), sin6_flowinfo=htonl(0), inet_pton(AF_INET6, "::ffff:10.82.83.26", &sin6_addr), sin6_scope_id=0}, [128 => 28]) = 0
+getsockname(4, {sa_family=AF_INET6, sin6_port=htons(7471), sin6_flowinfo=htonl(0), inet_pton(AF_INET6, "::ffff:10.82.83.8", &sin6_addr), sin6_scope_id=0}, [128 => 28]) = 0
+pselect6(5, [3 4], [], NULL, {tv_sec=120, tv_nsec=0}, NULL) = 1 (in [4], left {tv_sec=116, tv_nsec=816763640})
+pselect6(5, [4], NULL, NULL, {tv_sec=10, tv_nsec=0}, NULL) = 1 (in [4], left {tv_sec=9, tv_nsec=999999219})
+read(4, "\f", 1)                        = 1
+clock_gettime(CLOCK_PROCESS_CPUTIME_ID, {tv_sec=0, tv_nsec=3787060}) = 0
+getrusage(RUSAGE_SELF, {ru_utime={tv_sec=0, tv_usec=949}, ru_stime={tv_sec=0, tv_usec=2841}, ...}) = 0
+write(2, "iperf3: the client has terminate"..., 34iperf3: the client has terminated
+) = 34
+write(1, "--------------------------------"..., 300-----------------------------------------------------------
+Server listening on 7471 (test #1)
+-----------------------------------------------------------
+Accepted connection from 10.82.83.26, port 48878
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate
+) = 300
+close(4)                                = 0
+close(3)                                = 0
+close(3)                                = -1 EBADF (Bad file descriptor)
+write(2, "21:50:10 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:10 [36mDEBUG[0m [90msrc/rvma_shim_server.c:107:[0m ) = 61
+write(2, "Sockets created = 2\n", 20Sockets created = 2
+)   = 20
+write(2, "\n", 1
+)                       = 1
+socket(AF_INET, SOCK_DGRAM, IPPROTO_IP) = 3
+ioctl(3, SIOCGIFADDR, {ifr_name="ib0", ifr_addr={sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("10.82.83.8")}}) = 0
+close(3)                                = 0
+write(2, "21:50:10 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:10 [36mDEBUG[0m [90msrc/rvma_shim_server.c:125:[0m ) = 61
+write(2, "ip_host_order -> 173167368\n", 27ip_host_order -> 173167368
+) = 27
+write(2, "\n", 1
+)                       = 1
+write(2, "21:50:10 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:10 [36mDEBUG[0m [90msrc/rvma_shim_server.c:126:[0m ) = 61
+write(2, "Port -> 7471\n", 13Port -> 7471
+)          = 13
+write(2, "\n", 1
+)                       = 1
+write(2, "21:50:10 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:10 [36mDEBUG[0m [90msrc/rvma_shim_server.c:127:[0m ) = 61
+write(2, "Vaddr -> 292823673347375\n", 25Vaddr -> 292823673347375
+) = 25
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 3
+newfstatat(3, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(3, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(3)                                = 0
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 3
+newfstatat(3, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(3, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(3)                                = 0
+write(2, "21:50:10 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:10 [36mDEBUG[0m [90msrc/rvma_shim_server.c:107:[0m ) = 61
+write(2, "Sockets created = 3\n", 20Sockets created = 3
+)   = 20
+write(2, "\n", 1
+)                       = 1
+socket(AF_INET, SOCK_DGRAM, IPPROTO_IP) = 3
+ioctl(3, SIOCGIFADDR, {ifr_name="ib0", ifr_addr={sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("10.82.83.8")}}) = 0
+close(3)                                = 0
+write(2, "21:50:10 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:10 [36mDEBUG[0m [90msrc/rvma_shim_server.c:125:[0m ) = 61
+write(2, "ip_host_order -> 173167368\n", 27ip_host_order -> 173167368
+) = 27
+write(2, "\n", 1
+)                       = 1
+write(2, "21:50:10 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:10 [36mDEBUG[0m [90msrc/rvma_shim_server.c:126:[0m ) = 61
+write(2, "Port -> 7471\n", 13Port -> 7471
+)          = 13
+write(2, "\n", 1
+)                       = 1
+write(2, "21:50:10 \33[36mDEBUG\33[0m \33[90msrc"..., 6121:50:10 [36mDEBUG[0m [90msrc/rvma_shim_server.c:127:[0m ) = 61
+write(2, "Vaddr -> 292823673347375\n", 25Vaddr -> 292823673347375
+) = 25
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 3
+newfstatat(3, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(3, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(3)                                = 0
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 3
+newfstatat(3, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(3, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(3)                                = 0
+futex(0x15180e876780, FUTEX_WAIT_PRIVATE, 2, NULL) = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+--- SIGWINCH {si_signo=SIGWINCH, si_code=SI_KERNEL} ---
+futex(0x15180e876780, FUTEX_WAIT_PRIVATE, 2, NULL) = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+--- SIGWINCH {si_signo=SIGWINCH, si_code=SI_KERNEL} ---
+futex(0x15180e876780, FUTEX_WAIT_PRIVATE, 2, NULLstrace: Process 1251887 detached
+ <detached ...>
+iperf3: interrupt - the server has terminated by signal Interrupt(2)
+Window init setup time: 0.611 µs
+Window init setup time: 0.441 µs

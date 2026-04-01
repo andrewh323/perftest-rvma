@@ -49,6 +49,7 @@
 
 
 
+
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -163,9 +164,38 @@ CONFIG_CLEAN_VPATH_FILES =
 @HAVE_RAW_ETH_TRUE@	raw_ethernet_burst_lat$(EXEEXT) \
 @HAVE_RAW_ETH_TRUE@	raw_ethernet_fs_rate$(EXEEXT)
 am__EXEEXT_2 =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" \
+	"$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 LIBRARIES = $(noinst_LIBRARIES)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+LTLIBRARIES = $(lib_LTLIBRARIES)
 ARFLAGS = cru
 AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
@@ -173,7 +203,7 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libperftest_a_AR = $(AR) $(ARFLAGS)
 libperftest_a_LIBADD =
-am__libperftest_a_SOURCES_DIST = src/get_clock.c \
+am__libperftest_a_SOURCES_DIST = src/log.c src/get_clock.c \
 	src/perftest_communication.c src/perftest_parameters.c \
 	src/perftest_resources.c src/perftest_counters.c \
 	src/host_memory.c src/mmap_memory.c src/rvma_write.c \
@@ -189,7 +219,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @HAVE_RAW_ETH_TRUE@am__objects_5 =  \
 @HAVE_RAW_ETH_TRUE@	src/raw_ethernet_resources.$(OBJEXT)
 am__objects_6 =
-am_libperftest_a_OBJECTS = src/get_clock.$(OBJEXT) \
+am_libperftest_a_OBJECTS = src/log.$(OBJEXT) src/get_clock.$(OBJEXT) \
 	src/perftest_communication.$(OBJEXT) \
 	src/perftest_parameters.$(OBJEXT) \
 	src/perftest_resources.$(OBJEXT) \
@@ -201,16 +231,42 @@ am_libperftest_a_OBJECTS = src/get_clock.$(OBJEXT) \
 	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	$(am__objects_4) $(am__objects_5) $(am__objects_6)
 libperftest_a_OBJECTS = $(am_libperftest_a_OBJECTS)
+librvma_client_shim_la_DEPENDENCIES = src/log.o src/rvma_socket.o \
+	src/rvma_write.o src/rvma_mailbox_hashmap.o src/rvma_common.o \
+	src/rvma_buffer_queue.o src/indexer.o \
+	src/perftest_parameters.o src/perftest_counters.o \
+	src/perftest_resources.o src/perftest_communication.o \
+	src/host_memory.o src/mmap_memory.o \
+	src/raw_ethernet_resources.o src/get_clock.o
+am_librvma_client_shim_la_OBJECTS = src/rvma_shim_client.lo
+librvma_client_shim_la_OBJECTS = $(am_librvma_client_shim_la_OBJECTS)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
+librvma_client_shim_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(librvma_client_shim_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
+librvma_server_shim_la_DEPENDENCIES = src/log.o src/rvma_socket.o \
+	src/rvma_write.o src/rvma_mailbox_hashmap.o src/rvma_common.o \
+	src/rvma_buffer_queue.o src/indexer.o \
+	src/perftest_parameters.o src/perftest_counters.o \
+	src/perftest_resources.o src/perftest_communication.o \
+	src/host_memory.o src/mmap_memory.o \
+	src/raw_ethernet_resources.o src/get_clock.o
+am_librvma_server_shim_la_OBJECTS = src/rvma_shim_server.lo
+librvma_server_shim_la_OBJECTS = $(am_librvma_server_shim_la_OBJECTS)
+librvma_server_shim_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(librvma_server_shim_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_ib_write_bw_OBJECTS = src/write_bw.$(OBJEXT)
 ib_write_bw_OBJECTS = $(am_ib_write_bw_OBJECTS)
 am__DEPENDENCIES_1 =
 ib_write_bw_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
 am_ib_write_lat_OBJECTS = src/write_lat.$(OBJEXT)
 ib_write_lat_OBJECTS = $(am_ib_write_lat_OBJECTS)
 ib_write_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
@@ -310,33 +366,6 @@ rvsocket_server_stream_OBJECTS = $(am_rvsocket_server_stream_OBJECTS)
 rvsocket_server_stream_DEPENDENCIES = libperftest.a \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__uninstall_files_from_dir = { \
-  test -z "$$files" \
-    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
-         $(am__cd) "$$dir" && rm -f $$files; }; \
-  }
 SCRIPTS = $(bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -356,7 +385,8 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/get_clock.Po src/$(DEPDIR)/hl_memory.Po \
 	src/$(DEPDIR)/host_memory.Po src/$(DEPDIR)/indexer.Po \
-	src/$(DEPDIR)/mmap_memory.Po src/$(DEPDIR)/neuron_memory.Po \
+	src/$(DEPDIR)/log.Po src/$(DEPDIR)/mmap_memory.Po \
+	src/$(DEPDIR)/neuron_memory.Po \
 	src/$(DEPDIR)/perftest_communication.Po \
 	src/$(DEPDIR)/perftest_counters.Po \
 	src/$(DEPDIR)/perftest_parameters.Po \
@@ -378,6 +408,8 @@ am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/rvma_mailbox_client.Po \
 	src/$(DEPDIR)/rvma_mailbox_hashmap.Po \
 	src/$(DEPDIR)/rvma_mailbox_server.Po \
+	src/$(DEPDIR)/rvma_shim_client.Plo \
+	src/$(DEPDIR)/rvma_shim_server.Plo \
 	src/$(DEPDIR)/rvma_socket.Po src/$(DEPDIR)/rvma_write.Po \
 	src/$(DEPDIR)/rvsocket_client_dgram.Po \
 	src/$(DEPDIR)/rvsocket_client_stream.Po \
@@ -403,7 +435,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
+SOURCES = $(libperftest_a_SOURCES) $(librvma_client_shim_la_SOURCES) \
+	$(librvma_server_shim_la_SOURCES) $(ib_write_bw_SOURCES) \
 	$(ib_write_lat_SOURCES) $(raw_ethernet_burst_lat_SOURCES) \
 	$(raw_ethernet_bw_SOURCES) $(raw_ethernet_fs_rate_SOURCES) \
 	$(raw_ethernet_lat_SOURCES) $(rsocket_client_bw_SOURCES) \
@@ -416,7 +449,9 @@ SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
 	$(rvsocket_server_dgram_SOURCES) \
 	$(rvsocket_server_stream_SOURCES)
 DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
-	$(ib_write_bw_SOURCES) $(ib_write_lat_SOURCES) \
+	$(librvma_client_shim_la_SOURCES) \
+	$(librvma_server_shim_la_SOURCES) $(ib_write_bw_SOURCES) \
+	$(ib_write_lat_SOURCES) \
 	$(am__raw_ethernet_burst_lat_SOURCES_DIST) \
 	$(am__raw_ethernet_bw_SOURCES_DIST) \
 	$(am__raw_ethernet_fs_rate_SOURCES_DIST) \
@@ -501,8 +536,8 @@ CCAS = @CCAS@
 CCASDEPMODE = @CCASDEPMODE@
 CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
-CFLAGS = @CFLAGS@
-CPPFLAGS = @CPPFLAGS@ -I$(HOME)/src/rdma-core/build/include
+CFLAGS = @CFLAGS@ -fPIC -DLOG_USE_COLOR
+CPPFLAGS = @CPPFLAGS@ -I$(HOME)/rdma-core/build/include
 CSCOPE = @CSCOPE@
 CTAGS = @CTAGS@
 CUDA_H_PATH = @CUDA_H_PATH@
@@ -533,8 +568,8 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 
 # Override to use custom rdma-core headers and libraries
-LDFLAGS = @LDFLAGS@ -L$(HOME)/src/rdma-core/build/lib \
-	-Wl,-rpath=$(HOME)/src/rdma-core/build/lib
+LDFLAGS = @LDFLAGS@ -L$(HOME)/rdma-core/build/lib \
+	-Wl,-rpath=$(HOME)/rdma-core/build/lib
 LIBEFA = @LIBEFA@
 LIBMATH = @LIBMATH@
 LIBMLX5 = @LIBMLX5@
@@ -628,12 +663,13 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = subdir-objects
 noinst_LIBRARIES = libperftest.a
-libperftest_a_SOURCES = src/get_clock.c src/perftest_communication.c \
-	src/perftest_parameters.c src/perftest_resources.c \
-	src/perftest_counters.c src/host_memory.c src/mmap_memory.c \
-	src/rvma_write.c src/rvma_mailbox_hashmap.c \
-	src/rvma_buffer_queue.c src/rvma_common.c src/rvma_socket.c \
-	src/indexer.c $(am__append_1) $(am__append_2) $(am__append_3) \
+libperftest_a_SOURCES = src/log.c src/get_clock.c \
+	src/perftest_communication.c src/perftest_parameters.c \
+	src/perftest_resources.c src/perftest_counters.c \
+	src/host_memory.c src/mmap_memory.c src/rvma_write.c \
+	src/rvma_mailbox_hashmap.c src/rvma_buffer_queue.c \
+	src/rvma_common.c src/rvma_socket.c src/indexer.c \
+	$(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_8)
 noinst_HEADERS = src/get_clock.h src/perftest_communication.h \
 	src/perftest_parameters.h src/perftest_resources.h \
@@ -686,6 +722,27 @@ ib_write_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LI
 @HAVE_RAW_ETH_TRUE@raw_ethernet_burst_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 @HAVE_RAW_ETH_TRUE@raw_ethernet_fs_rate_SOURCES = src/raw_ethernet_fs_rate.c
 @HAVE_RAW_ETH_TRUE@raw_ethernet_fs_rate_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+lib_LTLIBRARIES = librvma_client_shim.la librvma_server_shim.la
+librvma_client_shim_la_SOURCES = src/rvma_shim_client.c 
+librvma_client_shim_la_LIBADD = src/log.o src/rvma_socket.o \
+	src/rvma_write.o src/rvma_mailbox_hashmap.o src/rvma_common.o \
+	src/rvma_buffer_queue.o src/indexer.o \
+	src/perftest_parameters.o src/perftest_counters.o \
+	src/perftest_resources.o src/perftest_communication.o \
+	src/host_memory.o src/mmap_memory.o \
+	src/raw_ethernet_resources.o src/get_clock.o -libverbs \
+	-lrdmacm -lpci -lmlx5 -lm
+librvma_client_shim_la_LDFLAGS = -shared -fPIC
+librvma_server_shim_la_SOURCES = src/rvma_shim_server.c 
+librvma_server_shim_la_LIBADD = src/log.o src/rvma_socket.o \
+	src/rvma_write.o src/rvma_mailbox_hashmap.o src/rvma_common.o \
+	src/rvma_buffer_queue.o src/indexer.o \
+	src/perftest_parameters.o src/perftest_counters.o \
+	src/perftest_resources.o src/perftest_communication.o \
+	src/host_memory.o src/mmap_memory.o \
+	src/raw_ethernet_resources.o src/get_clock.o -libverbs \
+	-lrdmacm -lpci -lmlx5 -lm
+librvma_server_shim_la_LDFLAGS = -shared -fPIC
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -791,12 +848,48 @@ clean-binPROGRAMS:
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+
+install-libLTLIBRARIES: $(lib_LTLIBRARIES)
+	@$(NORMAL_INSTALL)
+	@list='$(lib_LTLIBRARIES)'; test -n "$(libdir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(libdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(libdir)" || exit 1; \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(libdir)'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(libdir)"; \
+	}
+
+uninstall-libLTLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(lib_LTLIBRARIES)'; test -n "$(libdir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(libdir)/$$f'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$f"; \
+	done
+
+clean-libLTLIBRARIES:
+	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
+	@list='$(lib_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	test -z "$$locs" || { \
+	  echo rm -f $${locs}; \
+	  rm -f $${locs}; \
+	}
 src/$(am__dirstamp):
 	@$(MKDIR_P) src
 	@: > src/$(am__dirstamp)
 src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
+src/log.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/get_clock.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/perftest_communication.$(OBJEXT): src/$(am__dirstamp) \
@@ -838,6 +931,16 @@ libperftest.a: $(libperftest_a_OBJECTS) $(libperftest_a_DEPENDENCIES) $(EXTRA_li
 	$(AM_V_at)-rm -f libperftest.a
 	$(AM_V_AR)$(libperftest_a_AR) libperftest.a $(libperftest_a_OBJECTS) $(libperftest_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libperftest.a
+src/rvma_shim_client.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+librvma_client_shim.la: $(librvma_client_shim_la_OBJECTS) $(librvma_client_shim_la_DEPENDENCIES) $(EXTRA_librvma_client_shim_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(librvma_client_shim_la_LINK) -rpath $(libdir) $(librvma_client_shim_la_OBJECTS) $(librvma_client_shim_la_LIBADD) $(LIBS)
+src/rvma_shim_server.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+librvma_server_shim.la: $(librvma_server_shim_la_OBJECTS) $(librvma_server_shim_la_DEPENDENCIES) $(EXTRA_librvma_server_shim_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(librvma_server_shim_la_LINK) -rpath $(libdir) $(librvma_server_shim_la_OBJECTS) $(librvma_server_shim_la_LIBADD) $(LIBS)
 src/write_bw.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
@@ -985,6 +1088,7 @@ uninstall-binSCRIPTS:
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f src/*.$(OBJEXT)
+	-rm -f src/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -994,6 +1098,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/hl_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/host_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/indexer.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/log.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/mmap_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/neuron_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/perftest_communication.Po@am__quote@ # am--include-marker
@@ -1017,6 +1122,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_mailbox_client.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_mailbox_hashmap.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_mailbox_server.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_shim_client.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_shim_server.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_socket.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvma_write.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_client_dgram.Po@am__quote@ # am--include-marker
@@ -1061,6 +1168,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf src/.libs src/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
@@ -1297,10 +1405,12 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS) $(LIBRARIES) $(SCRIPTS) $(HEADERS) \
-		config.h
+all-am: Makefile $(PROGRAMS) $(LIBRARIES) $(LTLIBRARIES) $(SCRIPTS) \
+		$(HEADERS) config.h
+install-binPROGRAMS: install-libLTLIBRARIES
+
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1337,8 +1447,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool \
-	clean-noinstLIBRARIES mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libLTLIBRARIES \
+	clean-libtool clean-noinstLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1347,6 +1457,7 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/hl_memory.Po
 	-rm -f src/$(DEPDIR)/host_memory.Po
 	-rm -f src/$(DEPDIR)/indexer.Po
+	-rm -f src/$(DEPDIR)/log.Po
 	-rm -f src/$(DEPDIR)/mmap_memory.Po
 	-rm -f src/$(DEPDIR)/neuron_memory.Po
 	-rm -f src/$(DEPDIR)/perftest_communication.Po
@@ -1370,6 +1481,8 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/rvma_mailbox_client.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_hashmap.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_server.Po
+	-rm -f src/$(DEPDIR)/rvma_shim_client.Plo
+	-rm -f src/$(DEPDIR)/rvma_shim_server.Plo
 	-rm -f src/$(DEPDIR)/rvma_socket.Po
 	-rm -f src/$(DEPDIR)/rvma_write.Po
 	-rm -f src/$(DEPDIR)/rvsocket_client_dgram.Po
@@ -1400,7 +1513,8 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-binSCRIPTS
+install-exec-am: install-binPROGRAMS install-binSCRIPTS \
+	install-libLTLIBRARIES
 
 install-html: install-html-am
 
@@ -1430,6 +1544,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/hl_memory.Po
 	-rm -f src/$(DEPDIR)/host_memory.Po
 	-rm -f src/$(DEPDIR)/indexer.Po
+	-rm -f src/$(DEPDIR)/log.Po
 	-rm -f src/$(DEPDIR)/mmap_memory.Po
 	-rm -f src/$(DEPDIR)/neuron_memory.Po
 	-rm -f src/$(DEPDIR)/perftest_communication.Po
@@ -1453,6 +1568,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/rvma_mailbox_client.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_hashmap.Po
 	-rm -f src/$(DEPDIR)/rvma_mailbox_server.Po
+	-rm -f src/$(DEPDIR)/rvma_shim_client.Plo
+	-rm -f src/$(DEPDIR)/rvma_shim_server.Plo
 	-rm -f src/$(DEPDIR)/rvma_socket.Po
 	-rm -f src/$(DEPDIR)/rvma_write.Po
 	-rm -f src/$(DEPDIR)/rvsocket_client_dgram.Po
@@ -1477,28 +1594,30 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS
+uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
+	uninstall-libLTLIBRARIES
 
 .MAKE: all install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles am--refresh check \
 	check-am clean clean-binPROGRAMS clean-cscope clean-generic \
-	clean-libtool clean-noinstLIBRARIES cscope cscopelist-am ctags \
-	ctags-am dist dist-all dist-bzip2 dist-gzip dist-lzip \
-	dist-shar dist-tarZ dist-xz dist-zip dist-zstd distcheck \
-	distclean distclean-compile distclean-generic distclean-hdr \
-	distclean-libtool distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-binPROGRAMS install-binSCRIPTS \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
+	clean-libLTLIBRARIES clean-libtool clean-noinstLIBRARIES \
+	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
+	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
+	dist-zstd distcheck distclean distclean-compile \
+	distclean-generic distclean-hdr distclean-libtool \
+	distclean-tags distcleancheck distdir distuninstallcheck dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-binSCRIPTS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-libLTLIBRARIES install-man install-pdf \
 	install-pdf-am install-ps install-ps-am install-strip \
 	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-binSCRIPTS
+	uninstall-binSCRIPTS uninstall-libLTLIBRARIES
 
 .PRECIOUS: Makefile
 

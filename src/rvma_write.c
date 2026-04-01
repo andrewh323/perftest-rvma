@@ -12,6 +12,7 @@
 #include "rvma_write.h"
 // #include "rvma_socket.c"
 
+#include "log.h"
 #include "rdtsc.h"
 
 #define RS_MAX_TRANSFER 4050
@@ -113,7 +114,7 @@ RVMA_Win *rvmaInitWindowMailbox(uint64_t virtualAddress) {
 
     end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("Window init setup time: %.3f µs\n", elapsed_us);
+    log_info("Window init setup time: %.3f µs", elapsed_us);
 
     return windowPtr;
 }
@@ -456,5 +457,6 @@ RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mail
         return RVMA_ERROR;
     }
     
+    log_trace("RVMA_SUCCESS");
     return RVMA_SUCCESS;
 }

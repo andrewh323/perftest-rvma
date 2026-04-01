@@ -28,6 +28,31 @@ How can I make it benchmark agnostic, what needs to be different and what calls 
 - TCP Control Socket is created with ephemeral port if that matters.
 - By forcing AF_INET it seems to remove an error and fix the rdma_resolve_addr error?
 
+# Epiphany 5 (2026-03-24)
+- Ok so I accidentally ran the automake thing and it reset my Makefile, I have the rules saved but then I tried getting it to work with Makefile.am, now the shared libaries hang... GREAT. and I cant even link in log.c properly...
+
+# Epiphany 6 (2026-03-24 @ 10:27 PM)
+Ok for some reason it is making a DGRAM socket? Also I see in connect it gets really mad at me and seems to be still going to generate a real socket when I pass the rvma fd, even though obviously its not a real socket.
+
+# Epiphany 7 (2026-04-01 @ 12:19 PM)
+After finishing my capstone report I realize that I suffer from brain damage and that this makes sense again for the next 5 minutes.
+
+# Epiphany 8 (2026-04-01 @ 1:45 PM)
+I have taken a step back to make a dumb pipe, i.e. basic client/server and get that to work first.
+For some reason it is creating 2 sockets now and dying over it.
+
+# Epiphany 9 (2026-04-01 @ 1:55 PM)
+I AM CREATING THE SOCKET USING THE NODE'S IB IP, RAHHH.
+
+# Epiphany 10 (2026-04-01 @ 2:05 PM)
+The buffer is not being received and I do not know where its being double called in terms of socket creation. rdma_resolve_addr is failing again.
+
+# Epiphany 11
+Now need to fix sending/recivng not working properly, I made a minor hotfix for the socket issue. Also remember to change the IPs in tcp_server, tcp_client, and rvma_pipe to ib0.
+
+# Epiphany 12 (2026-04-01 @ 5:20 PM)
+I give up for now. Send/recv for some reason no work even on the basic shim. I have to get this to work first for 497.
+
 # Debugging Tools
 - Ethtool
 - iplink/ifconfig

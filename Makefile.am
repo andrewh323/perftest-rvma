@@ -31,14 +31,17 @@
 #
 
 # Override to use custom rdma-core headers and libraries
-LDFLAGS += -L$(HOME)/src/rdma-core/build/lib -Wl,-rpath=$(HOME)/src/rdma-core/build/lib
-CPPFLAGS += -I$(HOME)/src/rdma-core/build/include
+LDFLAGS += -L$(HOME)/rdma-core/build/lib -Wl,-rpath=$(HOME)/rdma-core/build/lib
+CFLAGS += -fPIC -DLOG_USE_COLOR
+CPPFLAGS += -I$(HOME)/rdma-core/build/include
 
 ACLOCAL_AMFLAGS= -I m4
 AUTOMAKE_OPTIONS= subdir-objects
 
+
+
 noinst_LIBRARIES = libperftest.a
-libperftest_a_SOURCES = src/get_clock.c src/perftest_communication.c src/perftest_parameters.c src/perftest_resources.c src/perftest_counters.c src/host_memory.c src/mmap_memory.c src/rvma_write.c src/rvma_mailbox_hashmap.c src/rvma_buffer_queue.c src/rvma_common.c src/rvma_socket.c src/indexer.c
+libperftest_a_SOURCES = src/log.c src/get_clock.c src/perftest_communication.c src/perftest_parameters.c src/perftest_resources.c src/perftest_counters.c src/host_memory.c src/mmap_memory.c src/rvma_write.c src/rvma_mailbox_hashmap.c src/rvma_buffer_queue.c src/rvma_common.c src/rvma_socket.c src/indexer.c
 noinst_HEADERS = src/get_clock.h src/perftest_communication.h src/perftest_parameters.h src/perftest_resources.h src/perftest_counters.h src/memory.h src/host_memory.h src/mmap_memory.h src/cuda_memory.h src/rocm_memory.h src/neuron_memory.h src/hl_memory.h src/rvma_write.h src/rvma_mailbox_hashmap.h src/rvma_buffer_queue.h src/rvma_common.h src/rvma_socket.h src/indexer.h
 
 if CUDA
@@ -140,3 +143,16 @@ raw_ethernet_lat_SOURCES =
 raw_ethernet_lat_LDADD =
 
 endif
+
+lib_LTLIBRARIES = librvma_client_shim.la
+librvma_client_shim_la_SOURCES = src/rvma_shim_client.c 
+librvma_client_shim_la_LIBADD = src/log.o src/rvma_socket.o src/rvma_write.o src/rvma_mailbox_hashmap.o src/rvma_common.o src/rvma_buffer_queue.o src/indexer.o src/perftest_parameters.o src/perftest_counters.o src/perftest_resources.o src/perftest_communication.o src/host_memory.o src/mmap_memory.o src/raw_ethernet_resources.o src/get_clock.o 
+librvma_client_shim_la_LIBADD += -libverbs -lrdmacm -lpci -lmlx5 -lm
+librvma_client_shim_la_LDFLAGS = -shared -fPIC
+
+lib_LTLIBRARIES += librvma_server_shim.la
+librvma_server_shim_la_SOURCES = src/rvma_shim_server.c 
+librvma_server_shim_la_LIBADD = src/log.o src/rvma_socket.o src/rvma_write.o src/rvma_mailbox_hashmap.o src/rvma_common.o src/rvma_buffer_queue.o src/indexer.o src/perftest_parameters.o src/perftest_counters.o src/perftest_resources.o src/perftest_communication.o src/host_memory.o src/mmap_memory.o src/raw_ethernet_resources.o src/get_clock.o 
+librvma_server_shim_la_LIBADD += -libverbs -lrdmacm -lpci -lmlx5 -lm
+librvma_server_shim_la_LDFLAGS = -shared -fPIC
+
