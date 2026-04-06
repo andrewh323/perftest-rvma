@@ -1,0 +1,717 @@
+15:01:45 [36mDEBUG[0m [90msrc/rvma_pipe.c:57:[0m RVMA PIPE SHIM loaded.
+15:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 3
+15:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 5
+15:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 4
+15:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 0
+15:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 7
+15:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 1
+15:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 9
+execve("/home/rysilve/iperf/install/bin/iperf3", ["iperf3", "-c", "10.82.49.2", "-p", "7471", "-4"], 0x7fff9c0a5910 /* 167 vars */) = 0
+brk(NULL)                               = 0x1176000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fe28fc91000
+openat(AT_FDCWD, "./rvma_pipe.so", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0750, st_size=1219040, ...}, AT_EMPTY_PATH) = 0
+getcwd("/home/rysilve/perftest-rvma", 128) = 28
+mmap(NULL, 297048, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28fc48000
+mmap(0x7fe28fc51000, 176128, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x9000) = 0x7fe28fc51000
+mmap(0x7fe28fc7c000, 69632, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x34000) = 0x7fe28fc7c000
+mmap(0x7fe28fc8d000, 16384, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x44000) = 0x7fe28fc8d000
+close(4)                                = 0
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/glibc-hwcaps/x86-64-v3/libiperf.so.0", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/home/rysilve/iperf/install/lib/glibc-hwcaps/x86-64-v3", 0x7ffc58e6aea0, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/glibc-hwcaps/x86-64-v2/libiperf.so.0", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/home/rysilve/iperf/install/lib/glibc-hwcaps/x86-64-v2", 0x7ffc58e6aea0, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libiperf.so.0", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=677960, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 219392, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28fc12000
+mmap(0x7fe28fc1d000, 106496, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0xb000) = 0x7fe28fc1d000
+mmap(0x7fe28fc37000, 53248, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x25000) = 0x7fe28fc37000
+mmap(0x7fe28fc44000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x31000) = 0x7fe28fc44000
+mmap(0x7fe28fc47000, 2304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fe28fc47000
+close(4)                                = 0
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libssl.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 4
+newfstatat(4, "", {st_mode=S_IFREG|0644, st_size=180758, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 180758, PROT_READ, MAP_PRIVATE, 4, 0) = 0x7fe28fbe5000
+close(4)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libssl.so.3", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=778440, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 673744, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28fb40000
+mmap(0x7fe28fb5f000, 364544, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x1f000) = 0x7fe28fb5f000
+mmap(0x7fe28fbb8000, 126976, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x78000) = 0x7fe28fbb8000
+mmap(0x7fe28fbd7000, 57344, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x96000) = 0x7fe28fbd7000
+close(4)                                = 0
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libcrypto.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libcrypto.so.3", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=5055712, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 4401616, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28f600000
+mmap(0x7fe28f6b0000, 2392064, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0xb0000) = 0x7fe28f6b0000
+mmap(0x7fe28f8f8000, 892928, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x2f8000) = 0x7fe28f8f8000
+mmap(0x7fe28f9d2000, 385024, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x3d1000) = 0x7fe28f9d2000
+mmap(0x7fe28fa30000, 10704, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fe28fa30000
+close(4)                                = 0
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libm.so.6", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=878920, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 880880, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28fa68000
+mmap(0x7fe28fa76000, 454656, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0xe000) = 0x7fe28fa76000
+mmap(0x7fe28fae5000, 364544, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x7d000) = 0x7fe28fae5000
+mmap(0x7fe28fb3e000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0xd5000) = 0x7fe28fb3e000
+close(4)                                = 0
+openat(AT_FDCWD, "/home/rysilve/iperf/install/lib/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libc.so.6", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\20;\2\0\0\0\0\0"..., 832) = 832
+pread64(4, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=1889216, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fe28fa66000
+pread64(4, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+mmap(NULL, 1920304, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28f42b000
+mmap(0x7fe28f44d000, 1380352, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x22000) = 0x7fe28f44d000
+mmap(0x7fe28f59e000, 344064, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x173000) = 0x7fe28f59e000
+mmap(0x7fe28f5f2000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x1c6000) = 0x7fe28f5f2000
+mmap(0x7fe28f5f8000, 32048, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fe28f5f8000
+close(4)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libibverbs.so.1", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=118112, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 120384, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28fa48000
+mmap(0x7fe28fa4d000, 69632, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x5000) = 0x7fe28fa4d000
+mmap(0x7fe28fa5e000, 24576, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x16000) = 0x7fe28fa5e000
+mmap(0x7fe28fa64000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x1b000) = 0x7fe28fa64000
+close(4)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/librdmacm.so.1", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=106392, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 112104, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28f40f000
+mmap(0x7fe28f413000, 69632, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x4000) = 0x7fe28f413000
+mmap(0x7fe28f424000, 16384, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x15000) = 0x7fe28f424000
+mmap(0x7fe28f428000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x18000) = 0x7fe28f428000
+mmap(0x7fe28f42a000, 1512, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fe28f42a000
+close(4)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libpci.so.3", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=73352, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 75432, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28fa35000
+mmap(0x7fe28fa38000, 40960, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x3000) = 0x7fe28fa38000
+mmap(0x7fe28fa42000, 16384, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0xd000) = 0x7fe28fa42000
+mmap(0x7fe28fa46000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x10000) = 0x7fe28fa46000
+close(4)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libmlx5.so.1", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=468776, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 475624, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28f39a000
+mmap(0x7fe28f3a0000, 356352, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x6000) = 0x7fe28f3a0000
+mmap(0x7fe28f3f7000, 77824, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x5d000) = 0x7fe28f3f7000
+mmap(0x7fe28f40a000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x70000) = 0x7fe28f40a000
+mmap(0x7fe28f40c000, 8680, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fe28f40c000
+close(4)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libz.so.1", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=104840, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fe28fa33000
+mmap(NULL, 106896, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28f37f000
+mmap(0x7fe28f382000, 61440, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x3000) = 0x7fe28f382000
+mmap(0x7fe28f391000, 28672, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x12000) = 0x7fe28f391000
+mmap(0x7fe28f398000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x18000) = 0x7fe28f398000
+close(4)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libudev.so.1", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=248024, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 248080, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28f342000
+mmap(0x7fe28f347000, 163840, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x5000) = 0x7fe28f347000
+mmap(0x7fe28f36f000, 57344, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x2d000) = 0x7fe28f36f000
+mmap(0x7fe28f37d000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x3b000) = 0x7fe28f37d000
+close(4)                                = 0
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib64/libcap.so.2", O_RDONLY|O_CLOEXEC) = 4
+read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0000u\0\0\0\0\0\0"..., 832) = 832
+newfstatat(4, "", {st_mode=S_IFREG|0755, st_size=47072, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 45128, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0x7fe28f336000
+mmap(0x7fe28f339000, 20480, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x3000) = 0x7fe28f339000
+mmap(0x7fe28f33e000, 8192, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0x8000) = 0x7fe28f33e000
+mmap(0x7fe28f340000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0xa000) = 0x7fe28f340000
+close(4)                                = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fe28f334000
+mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fe28f331000
+arch_prctl(ARCH_SET_FS, 0x7fe28f331780) = 0
+set_tid_address(0x7fe28f331a50)         = 823884
+set_robust_list(0x7fe28f331a60, 24)     = 0
+rseq(0x7fe28f3320a0, 0x20, 0, 0x53053053) = 0
+mprotect(0x7fe28f5f2000, 16384, PROT_READ) = 0
+mprotect(0x7fe28f340000, 4096, PROT_READ) = 0
+mprotect(0x7fe28f37d000, 4096, PROT_READ) = 0
+mprotect(0x7fe28f398000, 4096, PROT_READ) = 0
+mprotect(0x7fe28fa64000, 4096, PROT_READ) = 0
+mprotect(0x7fe28f40a000, 4096, PROT_READ) = 0
+mprotect(0x7fe28fa46000, 4096, PROT_READ) = 0
+mprotect(0x7fe28f428000, 4096, PROT_READ) = 0
+mprotect(0x7fe28fb3e000, 4096, PROT_READ) = 0
+mprotect(0x7fe28f9d2000, 372736, PROT_READ) = 0
+mprotect(0x7fe28fbd7000, 36864, PROT_READ) = 0
+mprotect(0x7fe28fc44000, 8192, PROT_READ) = 0
+mprotect(0x7fe28fc8d000, 12288, PROT_READ) = 0
+mprotect(0x403000, 4096, PROT_READ)     = 0
+mprotect(0x7fe28fcc3000, 8192, PROT_READ) = 0
+prlimit64(0, RLIMIT_STACK, NULL, {rlim_cur=8192*1024, rlim_max=RLIM64_INFINITY}) = 0
+munmap(0x7fe28fbe5000, 180758)          = 0
+prctl(PR_CAPBSET_READ, CAP_MAC_OVERRIDE) = 1
+prctl(PR_CAPBSET_READ, 0x30 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+prctl(PR_CAPBSET_READ, CAP_CHECKPOINT_RESTORE) = 1
+prctl(PR_CAPBSET_READ, 0x2c /* CAP_??? */) = -1 EINVAL (Invalid argument)
+prctl(PR_CAPBSET_READ, 0x2a /* CAP_??? */) = -1 EINVAL (Invalid argument)
+prctl(PR_CAPBSET_READ, 0x29 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+getrandom("\xab\x5b\xde\x57\xa3\x16\xbd\xb7", 8, GRND_NONBLOCK) = 8
+brk(NULL)                               = 0x1176000
+brk(0x1197000)                          = 0x1197000
+openat(AT_FDCWD, "/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/share/zoneinfo/EST5EDT", O_RDONLY|O_CLOEXEC) = 4
+newfstatat(4, "", {st_mode=S_IFREG|0644, st_size=3552, ...}, AT_EMPTY_PATH) = 0
+newfstatat(4, "", {st_mode=S_IFREG|0644, st_size=3552, ...}, AT_EMPTY_PATH) = 0
+read(4, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\6\0\0\0\6\0\0\0\0"..., 4096) = 3552
+lseek(4, -2260, SEEK_CUR)               = 1292
+read(4, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\6\0\0\0\6\0\0\0\0"..., 4096) = 2260
+close(4)                                = 0
+write(2, "15:01:45 \33[36mDEBUG\33[0m \33[90msrc"..., 5315:01:45 [36mDEBUG[0m [90msrc/rvma_pipe.c:57:[0m ) = 53
+write(2, "RVMA PIPE SHIM loaded.", 22RVMA PIPE SHIM loaded.)  = 22
+write(2, "\n", 1
+)                       = 1
+rt_sigaction(SIGINT, {sa_handler=0x401560, sa_mask=[INT], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7fe28f463790}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGTERM, {sa_handler=0x401560, sa_mask=[TERM], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7fe28f463790}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGHUP, {sa_handler=0x401560, sa_mask=[HUP], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7fe28f463790}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGPIPE, {sa_handler=SIG_IGN, sa_mask=[PIPE], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7fe28f463790}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+openat(AT_FDCWD, "/dev/urandom", O_RDONLY) = 4
+read(4, "UU\314I\231\210\276r\270\33d\231\243\263b<\20;\233\314\0\227\0105\375\6\316\304Oj\330\227"..., 37) = 37
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:136:[0m ) = 54
+write(2, "Socket domain = 2", 17Socket domain = 2)       = 17
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:137:[0m ) = 54
+write(2, "Socket type = 1", 15Socket type = 1)         = 15
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:138:[0m ) = 54
+write(2, "Socket protocol = 0", 19Socket protocol = 0)     = 19
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:139:[0m ) = 54
+write(2, "Entering socket generation 0", 28Entering socket generation 0) = 28
+write(2, "\n", 1
+)                       = 1
+socket(AF_INET, SOCK_DGRAM, IPPROTO_IP) = 6
+ioctl(6, SIOCGIFADDR, {ifr_name="ib0", ifr_addr={sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("10.82.49.2")}}) = 0
+close(6)                                = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:152:[0m ) = 54
+write(2, "CHANGING TO SERVER IP 10.82.49.2", 32CHANGING TO SERVER IP 10.82.49.2) = 32
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 6
+newfstatat(6, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(6, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(6)                                = 0
+write(2, "15:01:45 \33[32mINFO \33[0m \33[90msrc"..., 5515:01:45 [32mINFO [0m [90msrc/rvma_write.c:117:[0m ) = 55
+write(2, "Window init setup time: 2.224 \302\265"..., 33Window init setup time: 2.224 µs) = 33
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 6
+newfstatat(6, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(6, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(6)                                = 0
+getuid()                                = 3156678
+geteuid()                               = 3156678
+openat(AT_FDCWD, "/sys/class/misc/rdma_cm/abi_version", O_RDONLY|O_CLOEXEC) = 6
+read(6, "4\n", 8)                       = 2
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 6", 9Closing 6)                = 9
+write(2, "\n", 1
+)                       = 1
+geteuid()                               = 3156678
+prlimit64(0, RLIMIT_MEMLOCK, NULL, {rlim_cur=RLIM64_INFINITY, rlim_max=RLIM64_INFINITY}) = 0
+openat(AT_FDCWD, "/sys/class/infiniband_verbs", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 7
+newfstatat(7, "", {st_mode=S_IFDIR|0755, st_size=0, ...}, AT_EMPTY_PATH) = 0
+getdents64(7, 0x117dfc0 /* 6 entries */, 32768) = 176
+openat(7, "abi_version", O_RDONLY|O_CLOEXEC|O_DIRECTORY) = -1 ENOTDIR (Not a directory)
+openat(7, "uverbs2", O_RDONLY|O_CLOEXEC|O_DIRECTORY) = 8
+openat(8, "ibdev", O_RDONLY|O_CLOEXEC)  = 9
+read(9, "mlx5_2\n", 64)                 = 7
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 9", 9Closing 9)                = 9
+write(2, "\n", 1
+)                       = 1
+newfstatat(AT_FDCWD, "/sys/class/infiniband/mlx5_2", {st_mode=S_IFDIR|0755, st_size=0, ...}, 0) = 0
+openat(8, "dev", O_RDONLY|O_CLOEXEC)    = 10
+read(10, "231:194\n", 32)               = 8
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 10", 10Closing 10)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(8, "abi_version", O_RDONLY|O_CLOEXEC) = 11
+read(11, "1\n", 32)                     = 2
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 11", 10Closing 11)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_2/node_type", O_RDONLY|O_CLOEXEC) = 12
+read(12, "1: CA\n", 32)                 = 6
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 12", 10Closing 12)              = 10
+write(2, "\n", 1
+)                       = 1
+newfstatat(AT_FDCWD, "/dev/infiniband/uverbs2", {st_mode=S_IFCHR|0666, st_rdev=makedev(0xe7, 0xc2), ...}, 0) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 8", 9Closing 8)                = 9
+write(2, "\n", 1
+)                       = 1
+openat(7, "uverbs0", O_RDONLY|O_CLOEXEC|O_DIRECTORY) = 13
+openat(13, "ibdev", O_RDONLY|O_CLOEXEC) = 14
+read(14, "mlx5_0\n", 64)                = 7
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 14", 10Closing 14)              = 10
+write(2, "\n", 1
+)                       = 1
+newfstatat(AT_FDCWD, "/sys/class/infiniband/mlx5_0", {st_mode=S_IFDIR|0755, st_size=0, ...}, 0) = 0
+openat(13, "dev", O_RDONLY|O_CLOEXEC)   = 15
+read(15, "231:192\n", 32)               = 8
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 15", 10Closing 15)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(13, "abi_version", O_RDONLY|O_CLOEXEC) = 16
+read(16, "1\n", 32)                     = 2
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 16", 10Closing 16)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_0/node_type", O_RDONLY|O_CLOEXEC) = 17
+read(17, "1: CA\n", 32)                 = 6
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 17", 10Closing 17)              = 10
+write(2, "\n", 1
+)                       = 1
+newfstatat(AT_FDCWD, "/dev/infiniband/uverbs0", {st_mode=S_IFCHR|0666, st_rdev=makedev(0xe7, 0xc0), ...}, 0) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 13", 10Closing 13)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(7, "uverbs1", O_RDONLY|O_CLOEXEC|O_DIRECTORY) = 18
+openat(18, "ibdev", O_RDONLY|O_CLOEXEC) = 19
+read(19, "mlx5_1\n", 64)                = 7
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 19", 10Closing 19)              = 10
+write(2, "\n", 1
+)                       = 1
+newfstatat(AT_FDCWD, "/sys/class/infiniband/mlx5_1", {st_mode=S_IFDIR|0755, st_size=0, ...}, 0) = 0
+openat(18, "dev", O_RDONLY|O_CLOEXEC)   = 20
+read(20, "231:193\n", 32)               = 8
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 20", 10Closing 20)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(18, "abi_version", O_RDONLY|O_CLOEXEC) = 21
+read(21, "1\n", 32)                     = 2
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 21", 10Closing 21)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_1/node_type", O_RDONLY|O_CLOEXEC) = 22
+read(22, "1: CA\n", 32)                 = 6
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 22", 10Closing 22)              = 10
+write(2, "\n", 1
+)                       = 1
+newfstatat(AT_FDCWD, "/dev/infiniband/uverbs1", {st_mode=S_IFCHR|0666, st_rdev=makedev(0xe7, 0xc1), ...}, 0) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 18", 10Closing 18)              = 10
+write(2, "\n", 1
+)                       = 1
+getdents64(7, 0x117dfc0 /* 0 entries */, 32768) = 0
+close(7)                                = 0
+openat(AT_FDCWD, "/sys/class/infiniband_verbs/abi_version", O_RDONLY|O_CLOEXEC) = 7
+read(7, "6\n", 8)                       = 2
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 7", 9Closing 7)                = 9
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_1/device/modalias", O_RDONLY|O_CLOEXEC) = 23
+read(23, "pci:v000015B3d00001017sv000015B3"..., 512) = 54
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 23", 10Closing 23)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_0/device/modalias", O_RDONLY|O_CLOEXEC) = 24
+read(24, "pci:v000015B3d00001017sv000015B3"..., 512) = 54
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 24", 10Closing 24)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_2/device/modalias", O_RDONLY|O_CLOEXEC) = 25
+read(25, "pci:v000015B3d0000101Bsv000015B3"..., 512) = 54
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 25", 10Closing 25)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_1/node_guid", O_RDONLY|O_CLOEXEC) = 26
+read(26, "b8ce:f603:0013:1b25\n", 24)   = 20
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 26", 10Closing 26)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_0/node_guid", O_RDONLY|O_CLOEXEC) = 27
+read(27, "b8ce:f603:0013:1b24\n", 24)   = 20
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 27", 10Closing 27)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/sys/class/infiniband/mlx5_2/node_guid", O_RDONLY|O_CLOEXEC) = 28
+read(28, "b8ce:f603:0004:a624\n", 24)   = 20
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 28", 10Closing 28)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/dev/infiniband/rdma_cm", O_RDWR|O_CLOEXEC) = 29
+newfstatat(29, "", {st_mode=S_IFCHR|0666, st_rdev=makedev(0xa, 0x79), ...}, AT_EMPTY_PATH) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 29", 18Writing to fd = 29)      = 18
+write(2, "\n", 1
+)                       = 1
+write(29, "\0\0\0\0\30\0\4\0\200\351\27\1\0\0\0\0\374\264\346X\374\177\0\0?\1\2\0\0\0\0\0", 32) = 32
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 29", 18Writing to fd = 29)      = 18
+write(2, "\n", 1
+)                       = 1
+write(29, "\24\0\0\0\210\0\0\0\1\0\0\0000\0\0\0\33\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 144) = 144
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 29", 18Writing to fd = 29)      = 18
+write(2, "\n", 1
+)                       = 1
+write(29, "\23\0\0\0\20\0\30\1p\263\346X\374\177\0\0\1\0\0\0\0\0\0\0", 24) = 24
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 29", 18Writing to fd = 29)      = 18
+write(2, "\n", 1
+)                       = 1
+write(29, "\23\0\0\0\20\0\30\1p\263\346X\374\177\0\0\1\0\0\0\2\0\0\0", 24) = 24
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 29", 18Writing to fd = 29)      = 18
+write(2, "\n", 1
+)                       = 1
+write(29, "\1\0\0\0\20\0\4\0\374\264\346X\374\177\0\0\1\0\0\0\0\0\0\0", 24) = 24
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 29", 10Closing 29)              = 10
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/dev/infiniband/rdma_cm", O_RDWR|O_CLOEXEC) = 30
+newfstatat(30, "", {st_mode=S_IFCHR|0666, st_rdev=makedev(0xa, 0x79), ...}, AT_EMPTY_PATH) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\0\0\0\0\30\0\4\0\20\f\30\1\0\0\0\0\214\265\346X\374\177\0\0\6\1\2\0\0\0\0\0", 32) = 32
+eventfd2(0, 0)                          = 31
+write(2, "15:01:45 \33[32mINFO \33[0m \33[90msrc"..., 5615:01:45 [32mINFO [0m [90msrc/rvma_socket.c:351:[0m ) = 56
+write(2, "rvsocket total setup time: 5028."..., 39rvsocket total setup time: 5028.009 µs) = 39
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[36mDEBUG\33[0m \33[90msrc"..., 5415:01:45 [36mDEBUG[0m [90msrc/rvma_pipe.c:167:[0m ) = 54
+write(2, "RVMA FD -> 31", 13RVMA FD -> 31)           = 13
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:191:[0m ) = 54
+write(2, "Entering connect with FD = 31", 29Entering connect with FD = 31) = 29
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5315:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:75:[0m ) = 53
+write(2, "getConnPtr: vaddr found = 10a523"..., 39getConnPtr: vaddr found = 10a5231021d2f) = 39
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5315:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:76:[0m ) = 53
+write(2, "getConnPtr: ptr found = 0x1176d4"..., 33getConnPtr: ptr found = 0x1176d40) = 33
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 32
+newfstatat(32, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(32, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(32)                               = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\25\0\0\0\20\1\0\0\1\0\0\0\320\7\0\0\0\0\20\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 280) = 280
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\f\0\0\0\10\0P\0010\267\346X\374\177\0\0", 16) = 16
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\23\0\0\0\20\0\30\0010\265\346X\374\177\0\0\1\0\0\0\0\0\0\0", 24) = 24
+openat(AT_FDCWD, "/dev/infiniband/uverbs2", O_RDWR|O_CLOEXEC) = 32
+newfstatat(32, "", {st_mode=S_IFCHR|0666, st_rdev=makedev(0xe7, 0xc2), ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 270336, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fe28f2ef000
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b180) = -1 ENOSPC (No space left on device)
+uname({sysname="Linux", nodename="narval2", ...}) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b100) = 0
+mmap(NULL, 4096, PROT_READ, MAP_SHARED, 32, 0x500000) = 0x7fe28fc11000
+mmap(NULL, 4096, PROT_READ, MAP_SHARED, 32, 0x700000) = 0x7fe28fc10000
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 33
+newfstatat(33, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(33, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+read(33, "total cqm_mbm_local clzero irper"..., 1024) = 1024
+read(33, "yscall nx mmxext fxsr_opt pdpe1g"..., 1024) = 1024
+read(33, "ache_alignment\t: 64\naddress size"..., 1024) = 1024
+read(33, "ase bmi1 avx2 smep bmi2 cqm rdt_"..., 1024) = 1024
+read(33, "d level\t: 16\nwp\t\t: yes\nflags\t\t: "..., 1024) = 1024
+read(33, "store_bypass retbleed smt_rsb sr"..., 1024) = 1024
+read(33, "it wdt tce topoext perfctr_core "..., 1024) = 1024
+read(33, "\t: 512 KB\nphysical id\t: 0\nsiblin"..., 1024) = 1024
+read(33, " v_vmsave_vmload vgif v_spec_ctr"..., 1024) = 1024
+read(33, "4_2 x2apic movbe popcnt aes xsav"..., 1024) = 1024
+read(33, "pu family\t: 23\nmodel\t\t: 49\nmodel"..., 1024) = 1024
+read(33, "veerptr rdpru wbnoinvd amd_ppin "..., 1024) = 1024
+read(33, "rdtscp lm constant_tsc rep_good "..., 1024) = 1024
+read(33, ": 43 bits physical, 48 bits virt"..., 1024) = 1024
+read(33, "_a rdseed adx smap clflushopt cl"..., 1024) = 1024
+read(33, "s\t\t: fpu vme de pse tsc msr pae "..., 1024) = 1024
+read(33, "sb srso ibpb_no_ret spectre_v2_u"..., 1024) = 1024
+read(33, "ctr_core perfctr_nb bpext perfct"..., 1024) = 1024
+read(33, ": 0\nsiblings\t: 32\ncore id\t\t: 24\n"..., 1024) = 1024
+read(33, "if v_spec_ctrl umip rdpid overfl"..., 1024) = 1024
+read(33, "opcnt aes xsave avx f16c rdrand "..., 1024) = 1024
+read(33, "del\t\t: 49\nmodel name\t: AMD EPYC "..., 1024) = 1024
+read(33, "oinvd amd_ppin arat npt lbrv svm"..., 1024) = 1024
+read(33, "nt_tsc rep_good nopl xtopology n"..., 1024) = 1024
+read(33, "al, 48 bits virtual\npower manage"..., 1024) = 1024
+read(33, "map clflushopt clwb sha_ni xsave"..., 1024) = 1024
+read(33, " pse tsc msr pae mce cx8 apic se"..., 1024) = 1024
+read(33, "_ret spectre_v2_user vmscape\nbog"..., 1024) = 1024
+read(33, "r_nb bpext perfctr_llc mwaitx cp"..., 1024) = 1024
+read(33, "32\ncore id\t\t: 37\ncpu cores\t: 32\n"..., 1024) = 1024
+read(33, "umip rdpid overflow_recov succor"..., 1024) = 1024
+read(33, " avx f16c rdrand lahf_lm cmp_leg"..., 1024) = 1024
+read(33, " name\t: AMD EPYC 7532 32-Core Pr"..., 1024) = 1024
+read(33, "arat npt lbrv svm_lock nrip_save"..., 1024) = 1024
+read(33, " nopl xtopology nonstop_tsc cpui"..., 1024) = 1024
+read(33, "tual\npower management: ts ttp tm"..., 1024) = 1024
+read(33, "clwb sha_ni xsaveopt xsavec xget"..., 1024) = 1024
+read(33, "e mce cx8 apic sep mtrr pge mca "..., 1024) = 1024
+read(33, "_user vmscape\nbogomips\t: 4791.04"..., 1024) = 1024
+read(33, "ctr_llc mwaitx cpb cat_l3 cdp_l3"..., 1024) = 1024
+read(33, "2\ncpu cores\t: 32\napicid\t\t: 52\nin"..., 1024) = 1024
+read(33, "flow_recov succor smca sev sev_e"..., 1024) = 1024
+read(33, "d lahf_lm cmp_legacy extapic cr8"..., 1024) = 1024
+read(33, "C 7532 32-Core Processor\nsteppin"..., 1024) = 1024
+read(33, "vm_lock nrip_save tsc_scale vmcb"..., 1024) = 1024
+read(33, " nonstop_tsc cpuid extd_apicid a"..., 1024) = 1024
+read(33, "gement: ts ttp tm hwpstate cpb e"..., 1024) = 1024
+read(33, "veopt xsavec xgetbv1 xsaves cqm_"..., 1024) = 1024
+read(33, "sep mtrr pge mca cmov pat pse36 "..., 1024) = 1024
+read(33, "ogomips\t: 4791.04\nTLB size\t: 307"..., 1024) = 1024
+read(33, "pb cat_l3 cdp_l3 hw_pstate ssbd "..., 1024) = 1024
+read(33, "apicid\t\t: 65\ninitial apicid\t: 65"..., 1024) = 1024
+read(33, " smca sev sev_es\nbugs\t\t: sysret_"..., 1024) = 1024
+read(33, "cy extapic cr8_legacy abm sse4a "..., 1024) = 1024
+read(33, "cessor\nstepping\t: 0\nmicrocode\t: "..., 1024) = 1024
+read(33, "sc_scale vmcb_clean flushbyasid "..., 1024) = 1024
+read(33, "xtd_apicid aperfmperf rapl pni p"..., 1024) = 1024
+read(33, "pstate cpb eff_freq_ro [13] [14]"..., 1024) = 1024
+read(33, "xsaves cqm_llc cqm_occup_llc cqm"..., 1024) = 1024
+read(33, " pat pse36 clflush mmx fxsr sse "..., 1024) = 1024
+read(33, " size\t: 3072 4K pages\nclflush si"..., 1024) = 1024
+read(33, "pstate ssbd mba ibrs ibpb stibp "..., 1024) = 1024
+read(33, "l apicid\t: 80\nfpu\t\t: yes\nfpu_exc"..., 1024) = 1024
+read(33, "gs\t\t: sysret_ss_attrs spectre_v1"..., 1024) = 1024
+read(33, "acy abm sse4a misalignsse 3dnowp"..., 1024) = 1024
+read(33, "0\nmicrocode\t: 0x830107d\ncpu MHz\t"..., 1024) = 1024
+read(33, "an flushbyasid decodeassists pau"..., 1024) = 1024
+read(33, "mperf rapl pni pclmulqdq monitor"..., 1024) = 1024
+read(33, "req_ro [13] [14]\n\nprocessor\t: 44"..., 1024) = 1024
+read(33, "cqm_occup_llc cqm_mbm_total cqm_"..., 1024) = 1024
+read(33, "ush mmx fxsr sse sse2 ht syscall"..., 1024) = 1024
+read(33, " pages\nclflush size\t: 64\ncache_a"..., 1024) = 1024
+read(33, " ibrs ibpb stibp vmmcall fsgsbas"..., 1024) = 1024
+read(33, "pu\t\t: yes\nfpu_exception\t: yes\ncp"..., 1024) = 1024
+read(33, "_attrs spectre_v1 spectre_v2 spe"..., 1024) = 1024
+read(33, "isalignsse 3dnowprefetch osvw ib"..., 1024) = 1024
+read(33, "x830107d\ncpu MHz\t\t: 3273.356\ncac"..., 1024) = 1024
+read(33, "decodeassists pausefilter pfthre"..., 1024) = 1024
+read(33, "i pclmulqdq monitor ssse3 fma cx"..., 1024) = 1024
+read(33, "14]\n\nprocessor\t: 51\nvendor_id\t: "..., 1024) = 1024
+read(33, "lc cqm_mbm_total cqm_mbm_local c"..., 1024) = 1024
+read(33, "xsr sse sse2 ht syscall nx mmxex"..., 1024) = 1024
+read(33, "flush size\t: 64\ncache_alignment\t"..., 1024) = 1024
+read(33, "bpb stibp vmmcall fsgsbase bmi1 "..., 1024) = 1024
+read(33, " yes\nfpu_exception\t: yes\ncpuid l"..., 1024) = 1024
+read(33, "s spectre_v1 spectre_v2 spec_sto"..., 1024) = 1024
+read(33, "lignsse 3dnowprefetch osvw ibs s"..., 1024) = 1024
+read(33, "0107d\ncpu MHz\t\t: 3270.170\ncache "..., 1024) = 1024
+read(33, "ecodeassists pausefilter pfthres"..., 1024) = 1024
+read(33, " pclmulqdq monitor ssse3 fma cx1"..., 1024) = 1024
+read(33, "4]\n\nprocessor\t: 58\nvendor_id\t: A"..., 1024) = 1024
+read(33, "c cqm_mbm_total cqm_mbm_local cl"..., 1024) = 1024
+read(33, "sr sse sse2 ht syscall nx mmxext"..., 1024) = 1024
+read(33, "lush size\t: 64\ncache_alignment\t:"..., 1024) = 1024
+read(33, "pb stibp vmmcall fsgsbase bmi1 a"..., 1024) = 1024
+read(33, "yes\nfpu_exception\t: yes\ncpuid le"..., 1024) = 1024
+read(33, " spectre_v1 spectre_v2 spec_stor"..., 1024) = 1024
+read(33, "ignsse 3dnowprefetch osvw ibs sk"..., 1024) = 1024
+read(33, "107d\ncpu MHz\t\t: 3275.067\ncache s"..., 1024) = 1024
+read(33, "codeassists pausefilter pfthresh"..., 1024) = 442
+read(33, "", 1024)                      = 0
+close(33)                               = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e67c70) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e67c70) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e69ce0) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e69ac0) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6aec0) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6aeb0) = 0
+mmap(NULL, 4096, PROT_WRITE, MAP_SHARED, 32, 0x900000) = 0x7fe28fc0f000
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b2d0) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e69ea0) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b2b0) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b370) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\23\0\0\0\20\0\30\0010\265\346X\374\177\0\0\1\0\0\0\2\0\0\0", 24) = 24
+openat(AT_FDCWD, "/run/ibacm.port", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:136:[0m ) = 54
+write(2, "Socket domain = 1", 17Socket domain = 1)       = 17
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:137:[0m ) = 54
+write(2, "Socket type = 524289", 20Socket type = 524289)    = 20
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:138:[0m ) = 54
+write(2, "Socket protocol = 0", 19Socket protocol = 0)     = 19
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:139:[0m ) = 54
+write(2, "Entering socket generation 1", 28Entering socket generation 1) = 28
+write(2, "\n", 1
+)                       = 1
+socket(AF_INET, SOCK_DGRAM, IPPROTO_IP) = 34
+ioctl(34, SIOCGIFADDR, {ifr_name="ib0", ifr_addr={sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("10.82.49.2")}}) = 0
+close(34)                               = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:152:[0m ) = 54
+write(2, "CHANGING TO SERVER IP 10.82.49.2", 32CHANGING TO SERVER IP 10.82.49.2) = 32
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 34
+newfstatat(34, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(34, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(34)                               = 0
+write(2, "15:01:45 \33[32mINFO \33[0m \33[90msrc"..., 5515:01:45 [32mINFO [0m [90msrc/rvma_write.c:117:[0m ) = 55
+write(2, "Window init setup time: 0.571 \302\265"..., 33Window init setup time: 0.571 µs) = 33
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 34
+newfstatat(34, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(34, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(34)                               = 0
+openat(AT_FDCWD, "/dev/infiniband/rdma_cm", O_RDWR|O_CLOEXEC) = 34
+newfstatat(34, "", {st_mode=S_IFCHR|0666, st_rdev=makedev(0xa, 0x79), ...}, AT_EMPTY_PATH) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 34", 18Writing to fd = 34)      = 18
+write(2, "\n", 1
+)                       = 1
+write(34, "\0\0\0\0\30\0\4\0\3605\30\1\0\0\0\0\374\260\346X\374\177\0\0\6\1\2\0\0\0\0\0", 32) = 32
+eventfd2(0, 0)                          = 35
+write(2, "15:01:45 \33[32mINFO \33[0m \33[90msrc"..., 5615:01:45 [32mINFO [0m [90msrc/rvma_socket.c:351:[0m ) = 56
+write(2, "rvsocket total setup time: 199.1"..., 38rvsocket total setup time: 199.192 µs) = 38
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[36mDEBUG\33[0m \33[90msrc"..., 5415:01:45 [36mDEBUG[0m [90msrc/rvma_pipe.c:167:[0m ) = 54
+write(2, "RVMA FD -> 35", 13RVMA FD -> 35)           = 13
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:191:[0m ) = 54
+write(2, "Entering connect with FD = 35", 29Entering connect with FD = 35) = 29
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5315:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:75:[0m ) = 53
+write(2, "getConnPtr: vaddr found = 10a523"..., 39getConnPtr: vaddr found = 10a5231021d2f) = 39
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5315:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:76:[0m ) = 53
+write(2, "getConnPtr: ptr found = 0x118339"..., 33getConnPtr: ptr found = 0x1183390) = 33
+write(2, "\n", 1
+)                       = 1
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY) = 36
+newfstatat(36, "", {st_mode=S_IFREG|0444, st_size=0, ...}, AT_EMPTY_PATH) = 0
+read(36, "processor\t: 0\nvendor_id\t: Authen"..., 1024) = 1024
+close(36)                               = 0
+write(2, "15:01:45 \33[31mERROR\33[0m \33[90msrc"..., 5615:01:45 [31mERROR[0m [90msrc/rvma_socket.c:677:[0m ) = 56
+write(2, "rdma_resolve_addr failed", 24rdma_resolve_addr failed) = 24
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:194:[0m ) = 54
+write(2, "rvconnect outcome: -1", 21rvconnect outcome: -1)   = 21
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 35", 10Closing 35)              = 10
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\4\0\0\0\10\0\0\0\1\0\0\0\320\7\0\0", 16) = 16
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\f\0\0\0\10\0P\0010\267\346X\374\177\0\0", 16) = 16
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\23\0\0\0\20\0\270\1@\264\346X\374\177\0\0\1\0\0\0\1\0\0\0", 24) = 24
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b770) = 0
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b4c0) = 0
+brk(0x11b8000)                          = 0x11b8000
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b310) = 0
+mmap(NULL, 4096, PROT_WRITE, MAP_SHARED, 32, 0x901000) = 0x7fe28fc0e000
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b070) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\v\0\0\0\20\0\220\0P\266\346X\374\177\0\0\1\0\0\0\1\0\0\0", 24) = 24
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b270) = 0
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\6\0\0\0 \1\0\0\216`\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 296) = 296
+write(2, "15:01:45 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:45 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m ) = 54
+write(2, "Writing to fd = 30", 18Writing to fd = 30)      = 18
+write(2, "\n", 1
+)                       = 1
+write(30, "\f\0\0\0\10\0P\0010\267\346X\374\177\0\0", 16) = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+--- SIGWINCH {si_signo=SIGWINCH, si_code=SI_KERNEL} ---
+write(30, "\f\0\0\0\10\0P\0010\267\346X\374\177\0\0", 16) = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+--- SIGWINCH {si_signo=SIGWINCH, si_code=SI_KERNEL} ---
+write(30, "\f\0\0\0\10\0P\0010\267\346X\374\177\0\0", 16) = 16
+ioctl(32, RDMA_VERBS_IOCTL, 0x7ffc58e6b1c0) = 0
+write(2, "rdma_connect failed: RDMA_CM_EVE"..., 44rdma_connect failed: RDMA_CM_EVENT_REJECTED
+) = 44
+write(2, "15:01:50 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:50 [94mTRACE[0m [90msrc/rvma_pipe.c:194:[0m ) = 54
+write(2, "rvconnect outcome: -1", 21rvconnect outcome: -1)   = 21
+write(2, "\n", 1
+)                       = 1
+write(2, "15:01:50 \33[94mTRACE\33[0m \33[90msrc"..., 5415:01:50 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m ) = 54
+write(2, "Closing 31", 10Closing 31)              = 10
+write(2, "\n", 1
+)                       = 1
+write(2, "iperf3: error - unable to connec"..., 128iperf3: error - unable to connect to server - server may have stopped running or use a different port, firewall issue, etc.: Inv) = 128
+write(2, "alid argument\n", 14alid argument
+)         = 14
+exit_group(1)                           = ?
++++ exited with 1 +++

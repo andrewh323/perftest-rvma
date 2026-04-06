@@ -1668,7 +1668,7 @@ rvma_shim5:
 	-libverbs -lrdmacm -lpci -lmlx5
 
 rvma_pipe:
-	gcc -fPIC -shared -DLOG_USE_COLOR -D_GNU_SOURCE \
+	gcc -fPIC -shared -ggdb -DLOG_USE_COLOR -D_GNU_SOURCE \
 	-I. -I/home/rysilve/rdma-core/build/include \
 	src/rvma_pipe.c \
 	src/log.c \

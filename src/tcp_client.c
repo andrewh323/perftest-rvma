@@ -20,17 +20,30 @@ int main(int argc, char** argv) {
     log_info("Attempting connection with FD = %d", sock);
     int ret = connect(sock, (struct sockaddr*)&server, sizeof(server));
     log_info("Successfully connected with FD = %d", sock);
-    char *msg = malloc(strlen("hello")+1);
-    strcpy(msg, "hello");
-    send(sock, msg, sizeof(msg), 0);
-    log_info("Sent %s to sock %d with ret %d", msg, sock, ret);
+    
+    int to_send = 5;
+    int *msg = &to_send;
+    if (msg == NULL) {
+        log_error("msg is null.");
+        close(sock);
+        exit(1);
+    }
+    
+    send(sock, msg, sizeof(*msg), 0);
+    log_info("Sent %d to sock %d with ret %d", *msg, sock, ret);
         
-    char *buf = malloc(strlen("gaming")+1);
-    ssize_t n = recv(sock, buf, sizeof(buf), 0);
-    log_info("Received: %s", buf);
+    int *buf = malloc(sizeof(int)*1);
+    if (buf == NULL) {
+        log_error("buf is null.");
+        close(sock);
+        exit(1);
+    }
+    log_info("sizeof(buf) %d", sizeof(*buf));
+    ssize_t n = recv(sock, buf, sizeof(*buf), 0);
+    log_info("Received: %d", *buf);
     
     close(sock);
     free(buf);
-    free(msg);
+    // free(msg);
     return 0;
 }

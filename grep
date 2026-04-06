@@ -1,0 +1,378 @@
+src/rvma_pipe.c:1: warning: "_GNU_SOURCE" redefined
+    1 | #define _GNU_SOURCE
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from src/rvma_pipe.c:6:
+/home/rysilve/rdma-core/build/include/sys/stat.h:4:2: warning: #include_next is a GCC extension
+    4 | #include_next <sys/stat.h>
+      |  ^~~~~~~~~~~~
+In file included from /home/rysilve/rdma-core/build/include/infiniband/ib_user_ioctl_verbs.h:38,
+                 from /home/rysilve/rdma-core/build/include/infiniband/verbs_api.h:66,
+                 from /home/rysilve/rdma-core/build/include/infiniband/verbs.h:48,
+                 from /home/rysilve/rdma-core/build/include/rdma/rsocket.h:36,
+                 from src/rvma_pipe.c:14:
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:460:23: warning: ISO C forbids zero-size array ‘driver_data’ [-Wpedantic]
+  460 |         __aligned_u64 driver_data[0];
+      |                       ^~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:670:15: warning: ISO C forbids zero-size array ‘driver_data’ [-Wpedantic]
+  670 |         __u32 driver_data[0];
+      |               ^~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:766:23: warning: ISO C forbids zero-size array ‘driver_data’ [-Wpedantic]
+  766 |         __aligned_u64 driver_data[0];
+      |                       ^~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:937:23: warning: ISO C forbids zero-size array ‘flow_spec_data’ [-Wpedantic]
+  937 |         __aligned_u64 flow_spec_data[0];
+      |                       ^~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:1176:36: warning: invalid use of structure with flexible array member [-Wpedantic]
+ 1176 |         struct ib_uverbs_flow_attr flow_attr;
+      |                                    ^~~~~~~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:1364:44: warning: ISO C restricts enumerator values to range of ‘int’ [-Wpedantic]
+ 1364 |         IB_UVERBS_DEVICE_RAW_SCATTER_FCS = 1ULL << 34,
+      |                                            ^~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:1365:50: warning: ISO C restricts enumerator values to range of ‘int’ [-Wpedantic]
+ 1365 |         IB_UVERBS_DEVICE_PCI_WRITE_END_PADDING = 1ULL << 36,
+      |                                                  ^~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:1367:41: warning: ISO C restricts enumerator values to range of ‘int’ [-Wpedantic]
+ 1367 |         IB_UVERBS_DEVICE_FLUSH_GLOBAL = 1ULL << 38,
+      |                                         ^~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:1368:45: warning: ISO C restricts enumerator values to range of ‘int’ [-Wpedantic]
+ 1368 |         IB_UVERBS_DEVICE_FLUSH_PERSISTENT = 1ULL << 39,
+      |                                             ^~~~
+/home/rysilve/rdma-core/build/include/rdma/ib_user_verbs.h:1370:41: warning: ISO C restricts enumerator values to range of ‘int’ [-Wpedantic]
+ 1370 |         IB_UVERBS_DEVICE_ATOMIC_WRITE = 1ULL << 40,
+      |                                         ^~~~
+/home/rysilve/rdma-core/build/include/infiniband/ib_user_ioctl_verbs.h:136:44: warning: ISO C restricts enumerator values to range of ‘int’ [-Wpedantic]
+  136 |         IB_UVERBS_PCF_HIERARCHY_INFO_SUP = 1ULL << 31,
+      |                                            ^~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:284:43: warning: ISO C restricts enumerator values to range of ‘int’ [-Wpedantic]
+  284 |         IBV_RX_HASH_INNER               = (1UL << 31),
+      |                                           ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘___ibv_query_port’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2469:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2469 |         struct verbs_context *vctx = verbs_get_ctx_op(context, query_port);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_create_flow’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2549:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2549 |         struct verbs_context *vctx = verbs_get_ctx_op(qp->context,
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_destroy_flow’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2561:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2561 |         struct verbs_context *vctx = verbs_get_ctx_op(flow_id->context,
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_create_flow_action_esp’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2572:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2572 |         struct verbs_context *vctx = verbs_get_ctx_op(ctx,
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_modify_flow_action_esp’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2587:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2587 |         struct verbs_context *vctx = verbs_get_ctx_op(action->context,
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_destroy_flow_action’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2598:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2598 |         struct verbs_context *vctx = verbs_get_ctx_op(action->context,
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_open_xrcd’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2613:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2613 |         struct verbs_context *vctx = verbs_get_ctx_op(context, open_xrcd);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_advise_mr’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2799:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2799 |         vctx = verbs_get_ctx_op(pd->context, advise_mr);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_alloc_dm’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2815:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2815 |         struct verbs_context *vctx = verbs_get_ctx_op(context, alloc_dm);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_free_dm’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2832:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2832 |         struct verbs_context *vctx = verbs_get_ctx_op(dm->context, free_dm);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_alloc_null_mr’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2870:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2870 |         vctx = verbs_get_ctx_op(pd->context, alloc_null_mr);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_reg_dm_mr’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2892:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2892 |         struct verbs_context *vctx = verbs_get_ctx_op(pd->context, reg_dm_mr);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_create_cq_ex’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2926:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 2926 |         struct verbs_context *vctx = verbs_get_ctx_op(context, create_cq_ex);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_modify_cq’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3011:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3011 |         struct verbs_context *vctx = verbs_get_ctx_op(cq->context, modify_cq);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_create_srq_ex’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3046:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3046 |         vctx = verbs_get_ctx_op(context, create_srq_ex);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_get_srq_num’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3080:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3080 |         struct verbs_context *vctx = verbs_get_ctx_op(srq->context, get_srq_num);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_post_srq_ops’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3114:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3114 |         vctx = verbs_get_ctx_op(srq->context, post_srq_ops);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_create_qp_ex’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3138:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3138 |         vctx = verbs_get_ctx_op(context, create_qp_ex);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_alloc_td’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3154:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3154 |         vctx = verbs_get_ctx_op(context, alloc_td);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_dealloc_td’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3170:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3170 |         vctx = verbs_get_ctx_op(td->context, dealloc_td);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_alloc_parent_domain’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3186:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3186 |         vctx = verbs_get_ctx_op(context, alloc_parent_domain);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_query_rt_values_ex’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3217:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3217 |         vctx = verbs_get_ctx_op(context, query_rt_values);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_query_device_ex’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3238:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3238 |         vctx = verbs_get_ctx_op(context, query_device_ex);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_open_qp’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3261:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3261 |         struct verbs_context *vctx = verbs_get_ctx_op(context, open_qp);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_modify_qp_rate_limit’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3286:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3286 |         vctx = verbs_get_ctx_op(qp->context, modify_qp_rate_limit);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_create_wq’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3352:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3352 |         struct verbs_context *vctx = verbs_get_ctx_op(context, create_wq);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_modify_wq’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3386:38: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3386 |         struct verbs_context *vctx = verbs_get_ctx_op(wq->context, modify_wq);
+      |                                      ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_destroy_wq’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3405:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3405 |         vctx = verbs_get_ctx_op(wq->context, destroy_wq);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_create_rwq_ind_table’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3425:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3425 |         vctx = verbs_get_ctx_op(context, create_rwq_ind_table);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_destroy_rwq_ind_table’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3445:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3445 |         vctx = verbs_get_ctx_op(rwq_ind_table->context, destroy_rwq_ind_table);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_create_counters’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3578:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3578 |         vctx = verbs_get_ctx_op(context, create_counters);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_destroy_counters’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3591:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3591 |         vctx = verbs_get_ctx_op(counters->context, destroy_counters);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_attach_counters_point_flow’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3604:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3604 |         vctx = verbs_get_ctx_op(counters->context, attach_counters_point_flow);
+      |                ^~~~~~~~~~~~~~~~
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h: In function ‘ibv_read_counters’:
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:2278:35: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+ 2278 | #define verbs_get_ctx_op(ctx, op) ({ \
+      |                                   ^
+/home/rysilve/rdma-core/build/include/infiniband/verbs.h:3618:16: note: in expansion of macro ‘verbs_get_ctx_op’
+ 3618 |         vctx = verbs_get_ctx_op(counters->context, read_counters);
+      |                ^~~~~~~~~~~~~~~~
+In file included from src/rvma_common.h:15,
+                 from src/rvma_write.h:8,
+                 from src/perftest_resources.h:56,
+                 from src/rvma_socket.h:12,
+                 from src/rvma_pipe.c:23:
+src/perftest_parameters.h: At top level:
+src/perftest_parameters.h:714:1: warning: type qualifiers ignored on function return type [-Wignored-qualifiers]
+  714 | const int str_link_layer(const char *str);
+      | ^~~~~
+src/perftest_resources.h: In function ‘ctx_notify_send_recv_events’:
+src/perftest_resources.h:140:9: warning: ISO C forbids braced-groups within expressions [-Wpedantic]
+  140 |         ({ \
+      |         ^
+src/perftest_resources.h:805:20: note: in expansion of macro ‘MAX’
+  805 |         if (select(MAX(ctx->recv_channel->fd,
+      |                    ^~~
+src/perftest_resources.h: In function ‘increase_loc_addr’:
+src/perftest_resources.h:841:105: warning: unused parameter ‘server_is_ud’ [-Wunused-parameter]
+  841 | static __inline void increase_loc_addr(struct ibv_sge *sg,int size,uint64_t rcnt,uint64_t prim_addr,int server_is_ud, int cache_line_size, int cycle_buffer)
+      |                                                                                                     ~~~~^~~~~~~~~~~~
+src/rvma_pipe.c: In function ‘init’:
+src/rvma_pipe.c:44:17: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   44 |     real_socket = dlsym(RTLD_NEXT, "socket");
+      |                 ^
+src/rvma_pipe.c:45:18: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   45 |     real_connect = dlsym(RTLD_NEXT, "connect");
+      |                  ^
+src/rvma_pipe.c:46:15: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   46 |     real_bind = dlsym(RTLD_NEXT, "bind");
+      |               ^
+src/rvma_pipe.c:47:17: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   47 |     real_listen = dlsym(RTLD_NEXT, "listen");
+      |                 ^
+src/rvma_pipe.c:48:17: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   48 |     real_accept = dlsym(RTLD_NEXT, "accept");
+      |                 ^
+src/rvma_pipe.c:49:15: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   49 |     real_send = dlsym(RTLD_NEXT, "send");
+      |               ^
+src/rvma_pipe.c:50:15: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   50 |     real_recv = dlsym(RTLD_NEXT, "recv");
+      |               ^
+src/rvma_pipe.c:51:16: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   51 |     real_write = dlsym(RTLD_NEXT, "write");
+      |                ^
+src/rvma_pipe.c:52:15: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   52 |     real_read = dlsym(RTLD_NEXT, "read");
+      |               ^
+src/rvma_pipe.c:53:16: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   53 |     real_close = dlsym(RTLD_NEXT, "close");
+      |                ^
+src/rvma_pipe.c:54:21: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   54 |     real_setsockopt = dlsym(RTLD_NEXT, "setsockopt");
+      |                     ^
+src/rvma_pipe.c:55:21: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   55 |     real_getsockopt = dlsym(RTLD_NEXT, "getsockopt");
+      |                     ^
+src/rvma_pipe.c:56:17: warning: ISO C forbids assignment between function pointer and ‘void *’ [-Wpedantic]
+   56 |     real_Nwrite = dlsym(RTLD_NEXT, "Nwrite");
+      |                 ^
+src/rvma_pipe.c: At top level:
+src/rvma_pipe.c:177:1: warning: function types not truly compatible in ISO C [-Wpedantic]
+  177 | {
+      | ^
+src/rvma_pipe.c:177:1: warning: function types not truly compatible in ISO C [-Wpedantic]
+src/rvma_pipe.c:190:1: warning: function types not truly compatible in ISO C [-Wpedantic]
+  190 | {
+      | ^
+src/rvma_pipe.c:190:1: warning: function types not truly compatible in ISO C [-Wpedantic]
+src/rvma_pipe.c:199:1: warning: function types not truly compatible in ISO C [-Wpedantic]
+  199 | {
+      | ^
+src/rvma_pipe.c:199:1: warning: function types not truly compatible in ISO C [-Wpedantic]
+src/rvma_pipe.c: In function ‘send’:
+src/rvma_pipe.c:213:28: warning: passing argument 2 of ‘rvsend’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  213 |     int r = rvsend(socket, buf, len);
+      |                            ^~~
+src/rvma_socket.h:39:30: note: expected ‘void *’ but argument is of type ‘const void *’
+   39 | int rvsend(int socket, void *buf, int64_t len);
+      |                        ~~~~~~^~~
+src/rvma_pipe.c:211:59: warning: unused parameter ‘flags’ [-Wunused-parameter]
+  211 | ssize_t send(int socket, const void *buf, size_t len, int flags)
+      |                                                       ~~~~^~~~~
+src/rvma_pipe.c: In function ‘Nwrite’:
+src/rvma_pipe.c:246:55: warning: unused parameter ‘prot’ [-Wunused-parameter]
+  246 | int Nwrite(int fd, const char *buf, size_t count, int prot) {
+      |                                                   ~~~~^~~~
+src/rvma_socket.h: At top level:
+src/rvma_socket.h:21:24: warning: ‘rdtsc’ declared ‘static’ but never defined [-Wunused-function]
+   21 | static inline uint64_t rdtsc();
+      |                        ^~~~~

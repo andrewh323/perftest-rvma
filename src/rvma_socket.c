@@ -373,10 +373,7 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
          * iperf or this code?
          */
         inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr, ip_str, sizeof(addr));
-        // fprintf(stderr, "[rvsocket_shim] (bind) -> addr %s\n", ip_str);
-        // fprintf(stderr, "[rvsocket_shim] (bind) -> rdma_cm_id %p\n", (void *)rvs->cm_id);
 	    ret = rdma_bind_addr(rvs->cm_id, (struct sockaddr *)addr);
-        // fprintf(stderr, "[rvsocket_shim] (bind) -> ret %d\n", ret);
         if (!ret)
             rvs->state = rs_bound;
     } else { // Datagram
@@ -387,6 +384,10 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         }
     }
     end = rdtsc();
+
+    if (!ret) {
+        log_error("rvbind: Failed to bind successfully.");
+    }
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
     log_info("rvbind total time: %.3f µs", elapsed_us);
     return ret;
@@ -661,46 +662,58 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
 
     rvs = idm_lookup(&idm, socket);
     if (!rvs) {
-        fprintf(stderr, "rvconnect: rvs is NULL\n");
+        log_error("rvconnect: rvs is NULL");
         return -1;
     }
 
     struct sockaddr_in *in = (struct sockaddr_in *)addr;
     char ip_str[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(in->sin_addr), ip_str, INET_ADDRSTRLEN);
+    
+    /*
+    struct rdma_addrinfo hints = {}, *res;
+
+    hints.ai_flags = RAI_PASSIVE;
+
+    rdma_getaddrinfo(NULL, "7471", &hints, &res);
+
+    for (struct rdma_addrinfo *ai = res; ai; ai = ai->ai_next) {
+        // ai->ai_src_addr contains usable local addr
+    }
+    */
 
 
     // Resolve address
-    // log_debug("(connect) rdma_cm_id %p", (void *)rvs->cm_id);
-    // log_debug("(connect) addr %s", ip_str);
+    log_debug("rvconnect: connecting with windowPtr = %p", window);
+    log_debug("rvconnect: connecting to address %s", ip_str);
     if (rdma_resolve_addr(rvs->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
-        log_error("rdma_resolve_addr failed");
+        log_error("rvconnect: rdma_resolve_addr failed");
         return -1;
     }
     // Wait for address resolved event
     // log_debug("rdma_get_cm_event with %d", rvs->ec);
     if (rdma_get_cm_event(rvs->ec, &event)) {
-        log_error("rdma_get_cm_failed");
+        log_error("rvconnect: rdma_get_cm_failed");
         return -1;
     }
     if (event->event != RDMA_CM_EVENT_ADDR_RESOLVED) {
-        log_error(stderr, "rdma_resolve_addr failed: %s", rdma_event_str(event->event));
+        log_error("rvconnect: rdma_resolve_addr failed: %s", rdma_event_str(event->event));
         rdma_ack_cm_event(event);
         return -1;
     }
 
     // Resolve route
     if (rdma_resolve_route(rvs->cm_id, 2000)) {
-        perror("rdma_resolve_route");
+        log_error("rvconnect: rdma_resolve_route");
         return -1;
     }
     // Wait for route resolved event
     if (rdma_get_cm_event(rvs->ec, &event)) {
-        perror("rdma_get_cm_event");
+        log_error("rvconnect: rdma_get_cm_event");
         return -1;
     }
     if(event->event != RDMA_CM_EVENT_ROUTE_RESOLVED) {
-        fprintf(stderr, "rdma_resolve_route failed: %s\n", rdma_event_str(event->event));
+        log_error("rdma_resolve_route failed: %s", rdma_event_str(event->event));
         rdma_ack_cm_event(event);
         return -1;
     }
@@ -710,20 +723,20 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
 
     RVMA_Status status = newMailboxIntoHashmap(window->hashMapPtr, rvs->vaddr);
     if (status != RVMA_SUCCESS) {
-        perror("Failed to allocate new rvs");
+        log_error("rvconnect: Failed to allocate new rvs");
         return -1;
     }
 
     rvs->mailboxPtr = searchHashmap(window->hashMapPtr, rvs->vaddr);
     if (!rvs->mailboxPtr) {
-        perror("rvconnect: searchHashmap failed");
+        log_error("rvconnect: searchHashmap failed");
         return -1;
     }
 
     // Allocate PD
     struct ibv_pd *pd = ibv_alloc_pd(rvs->cm_id->verbs);
     if (!pd) {
-        perror("ibv_alloc_pd failed");
+        log_error("ibv_alloc_pd failed");
         ibv_dealloc_pd(pd);
         return -1;
     }
@@ -889,6 +902,7 @@ int rvsend(int socket, void *buf, int64_t len) {
     struct rvsocket *rvs;
     uint64_t vaddr;
 
+    log_info("buf -> %d", *(int *)buf);
     rvs = idm_at(&idm, socket);
     vaddr = rvs->vaddr;
     if (rvs->type == SOCK_STREAM) {
@@ -1150,14 +1164,15 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
 
     if (rvs->type == SOCK_DGRAM) {
         if (rvrecvfrom(mailbox) != RVMA_SUCCESS) {
-            fprintf(stderr, "rvmaRecvfrom failed\n");
+            log_error("rvmaRecvfrom failed");
             return -1;
         }
     } else {
         if (rvmaRecv(vaddr, buf, len, 0, mailbox) != RVMA_SUCCESS) {
-            fprintf(stderr, "rvmaRecv failed\n");
+            log_error("rvmaRecv failed");
             return -1;
         }
+        log_info("rvrecv: Received %d", *(int *)buf);
     }
     return 0;
 }

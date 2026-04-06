@@ -53,6 +53,9 @@ Now need to fix sending/recivng not working properly, I made a minor hotfix for 
 # Epiphany 12 (2026-04-01 @ 5:20 PM)
 I give up for now. Send/recv for some reason no work even on the basic shim. I have to get this to work first for 497.
 
+# Epiphany 13 (2026-04-06 @ 6:15 PM)
+I changed something, I ran, it broke. I changed it back. STILL BROKEN? HOW? GOD HATES ME.
+
 # Debugging Tools
 - Ethtool
 - iplink/ifconfig

@@ -1,0 +1,53 @@
+15:11:22 [36mDEBUG[0m [90msrc/rvma_pipe.c:57:[0m RVMA PIPE SHIM loaded.
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:136:[0m Socket domain = 2
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:137:[0m Socket type = 1
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:138:[0m Socket protocol = 0
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:139:[0m Entering socket generation 0
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:152:[0m CHANGING TO SERVER IP 10.82.49.2
+15:11:22 [32mINFO [0m [90msrc/rvma_write.c:117:[0m Window init setup time: 1.377 µs
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 3
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 6
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 7
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 8
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 9
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 5
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 11
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 12
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 13
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 14
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 10
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 16
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 17
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 18
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 19
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 15
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 4
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 20
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 21
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 22
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 23
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 24
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 25
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 26
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 26
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 26
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 26
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 26
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:253:[0m Closing 26
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 27
+15:11:22 [32mINFO [0m [90msrc/rvma_socket.c:351:[0m rvsocket total setup time: 336.577 µs
+15:11:22 [36mDEBUG[0m [90msrc/rvma_pipe.c:167:[0m RVMA FD -> 28
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:121:[0m Returned from setsockopt FD = 28
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 27
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 27
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 27
+15:11:22 [32mINFO [0m [90msrc/rvma_socket.c:391:[0m rvbind total time: 9.846 µs
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:201:[0m Bind status = 0
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 27
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:231:[0m Writing to fd = 27
+15:11:22 [32mINFO [0m [90msrc/rvma_socket.c:423:[0m rvlisten total time: 13.395 µs
+15:11:22 [94mTRACE[0m [90msrc/rvma_pipe.c:207:[0m Listen status = 0
+iperf3: interrupt - the server has terminated by signal Interrupt(2)
+-----------------------------------------------------------
+Server listening on 7471 (test #1)
+-----------------------------------------------------------
