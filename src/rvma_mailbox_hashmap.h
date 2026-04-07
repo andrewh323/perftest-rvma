@@ -22,6 +22,7 @@ typedef struct {
     struct rdma_event_channel *ec; // Event channel
     struct ibv_context *ctx; // Device context
     int type;
+    int sendCount;
 
     RVMA_Buffer_Queue *sendBufferQueue;
     RVMA_Buffer_Queue *recvBufferQueue;

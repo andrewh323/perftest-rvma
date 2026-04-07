@@ -356,7 +356,10 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
     void *data = entry->realBuff;
     int64_t dataSize = size;
 
-    struct ibv_send_wr *bad_wr = NULL;
+    unsigned int flags = 0;
+    if (mailbox->sendCount % SIGNAL_INTERVAL == 0) {
+        flags |= IBV_SEND_SIGNALED;
+    }
 
     // Build sge
     struct ibv_sge sge = {
@@ -371,16 +374,20 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         .sg_list = &sge,
         .num_sge = 1,
         .opcode = IBV_WR_SEND,
-        .send_flags = IBV_SEND_SIGNALED // Signaled for completion
+        .send_flags = flags // Signal only every N sends
     };
 
-    // Send function
+    struct ibv_send_wr *bad_wr = NULL;
+
+    // Post send
     if (ibv_post_send(mailbox->qp, &send_wr, &bad_wr)) {
         perror("rvmaSend: ibv_post_send failed");
         return RVMA_ERROR;
     }
+    
+    mailbox->sendCount++;
 
-    // Increment hardware counter after posting (by bytes)
+    // RVMA hardware counter check after posting (by bytes)
     int64_t hardware_counter = dataSize;
     if (hardware_counter == entry->epochThreshold) {
         // Write address of head of buffer to notification pointer
@@ -389,30 +396,10 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         entry->notifLenPtrAddr = dataSize;
     }
 
-    // Poll cq
-    struct ibv_wc wc;
-    int res;
-    do {
-        res = ibv_poll_cq(mailbox->cq, 1, &wc);
-    } while (res == 0);
-    if (res < 0) {
-        perror("rvmaSend: ibv_poll_cq failed");
-        return RVMA_ERROR;
-    }
-    if (wc.status!= IBV_WC_SUCCESS) {
-        perror("rvmaSend: ibv_poll_cq failed");
-        return RVMA_ERROR;
-    }
-
-    // Maybe TODO: Add in buffer status field to track in-flight buffers
-    // Repost the buffer back to the send queue
-    RVMA_Buffer_Entry *completed_entry = (RVMA_Buffer_Entry *)wc.wr_id;
-    enqueue(mailbox->sendBufferQueue, completed_entry);
-
     return RVMA_SUCCESS;
 }
 
-
+// Redundant now with rvmaProgress
 // Recv buffer pool should be preposted, so just poll cq for completions
 RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mailbox *mailbox) {
     struct ibv_wc wc;
@@ -453,4 +440,48 @@ RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mail
     }
     
     return RVMA_SUCCESS;
+}
+
+// Check on completions with a progress engine
+void rvmaProgress(RVMA_Mailbox *mailbox) {
+    struct ibv_wc wc[16];
+    int n;
+
+    do {
+        n = ibv_poll_cq(mailbox->cq, 16, wc);
+
+        // Progress through each entry (up to 16) in completion queue
+        for (int i = 0; i < n; i++) {
+            RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc[i].wr_id;
+
+            // Check opcode and handle completion
+            if (wc[i].opcode == IBV_WC_SEND) {
+                // This means a send on this side was completed, so repost buffer
+                enqueue(mailbox->sendBufferQueue, entry);
+                // printf("Send completion received! Reposted a buffer\n");
+            }
+            else if (wc[i].opcode == IBV_WC_RECV) {
+                // A recv was completed, so we can process message here
+                void *buf = entry->realBuff;
+                int len = wc[i].byte_len;
+                printf("Received Message: %.*s\n", wc[i].byte_len, buf);
+
+                // Repost recv here
+                struct ibv_sge sge = {
+                    .addr = (uintptr_t)buf,
+                    .length = MAX_RECV_SIZE,
+                    .lkey = entry->mr->lkey
+                };
+                struct ibv_recv_wr recv_wr = {
+                    .wr_id = (uintptr_t)entry,
+                    .sg_list = &sge,
+                    .num_sge = 1,
+                    .next = NULL
+                };
+
+                struct ibv_recv_wr *bad_wr = NULL;
+                ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr);
+            }
+        }
+    } while (n > 0);
 }

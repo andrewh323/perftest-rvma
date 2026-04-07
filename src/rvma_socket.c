@@ -38,7 +38,7 @@
 #define RS_SGL_SIZE 2
 #define MAX_POOL_BUFS 16
 #define MAX_RECV_SIZE 1024*1024 // 1MB
-#define SIGNAL_INTERVAL 32
+#define SIGNAL_INTERVAL 1
 
 enum {
 	RS_OP_DATA,
@@ -1073,9 +1073,10 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
         int payload_len = data_len - sizeof(header);
 
         /* REMOVE PRINT WHEN COLLECTING RESULTS */
-/*         printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
+/*         
+        printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
             header.frag_num, header.total_frags, payload_len, payload);
- */
+*/
         if (header.frag_num == 1) {
             total_frags = header.total_frags;
             num_recvs = total_frags;
@@ -1133,10 +1134,7 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
             return -1;
         }
     } else {
-        if (rvmaRecv(rvs->vaddr, buf, len, 0, mailbox) != RVMA_SUCCESS) {
-            fprintf(stderr, "rvmaRecv failed\n");
-            return -1;
-        }
+        rvmaProgress(mailbox);
     }
     return 0;
 }

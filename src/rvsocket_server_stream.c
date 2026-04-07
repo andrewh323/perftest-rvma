@@ -99,14 +99,14 @@ int main(int argc, char **argv) {
 		}
 		printf("Client %d successfully connected!\n", i+1);
 	}
-	 uint64_t t1, t2, t3;
+	uint64_t t1, t2, t3;
 
 	// While server is running, poll all clients and recv messages
 	// Currently rvrecv is blocking but maintains flow control
-	for (int i = 0; i < num_sends; i++) {
+
+	while(1) {
 		for (int c = 0; c < num_clients; c++) {
 			rvrecv(conn_fd[c], recv_buf, size, 0);
-			rvsend(conn_fd[c], messages[i], size);
 		}
 	}
 	

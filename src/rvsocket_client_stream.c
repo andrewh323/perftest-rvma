@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 1000;
+    int num_sends = 100;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
@@ -100,60 +100,25 @@ int main(int argc, char **argv) {
     }
 
     void *recv_buf = malloc(size);
-    
+    uint64_t t1, t2;
+    int completed = 0, sent = 0;
+
     // Send messages to server
-    for (int i = 0; i < num_sends; i++) {
+    while (completed < num_sends) {
         // Perform rvma send
-        uint64_t t2;
-        uint64_t t1 = rdtsc();
-        int res = rvsend(sockfd, messages[i], size);
-        if (res < 0) {
-            fprintf(stderr, "Failed to send message %d\n", i);
+        t1 = rdtsc();
+        while (sent < num_sends) {
+            int res = rvsend(sockfd, messages[sent], size);
+            if (res < 0) {
+                printf("No more buffers available for send, sent %d messages so far\n", sent);
+                break;
+            }
+            sent++;
         }
 
-        res = rvrecv(sockfd, recv_buf, size, 0);
-        if (res < 0) {
-            fprintf(stderr, "Failed to receive message %d\n", i);
-        }
-        uint64_t t3 = rdtsc();
-        int record = 1;
-        elapsed_us = (t3 - t1) / (cpu_ghz * 1e3);
-
-        // Exclude warm-ups if configured
-        if (exclude_warmup && i < warmup_sends)
-            record = 0;
-
-        if (record) {
-            if (elapsed_us < min_time) min_time = elapsed_us;
-            if (elapsed_us > max_time) max_time = elapsed_us;
-            sum_time += elapsed_us;
-            int idx = exclude_warmup ? (i - warmup_sends) : i;
-            send_times[idx] = elapsed_us;
-        }
-        free(messages[i]);
+        rvrecv(sockfd, recv_buf, size, 0);
+        completed++;
     }
-
-    // Compute averages
-    double avg_time = sum_time / measured_sends;
-
-    // Compute standard deviation
-    double variance = 0.0;
-    for (int i = 0; i < measured_sends; i++) {
-        double diff = send_times[i] - avg_time;
-        variance += diff * diff;
-    }
-    variance /= (measured_sends - 1);
-    double stddev = sqrt(variance);
-
-    // Print results
-    printf("\n===== RVMA Send Timing Results =====\n");
-    printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
-    printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
-    printf("Min send time:            %.3f µs\n", min_time);
-    printf("Max send time:            %.3f µs\n", max_time);
-    printf("Avg send time:            %.3f µs\n", avg_time);
-    printf("Send time stddev:         %.3f µs\n", stddev);
-    printf("====================================\n");
 
     free(send_times);
     rclose(sockfd);

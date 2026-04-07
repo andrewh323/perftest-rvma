@@ -14,15 +14,6 @@
 #define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 
-static inline uint64_t rdtsc(){
-    unsigned int lo, hi;
-    // Serialize to prevent out-of-order execution affecting timing
-    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
-    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)hi << 32) | lo;
-}
-
-
 int main(int argc, char **argv) {
     double cpu_ghz = get_cpu_ghz();
     uint16_t reserved = 0x0001;

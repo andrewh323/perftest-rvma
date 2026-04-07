@@ -13,14 +13,6 @@
 #define PORT 7471
 #define MSG_SIZE 1024*1024
 
-static inline uint64_t rdtsc(){
-    unsigned int lo, hi;
-    // Serialize to prevent out-of-order execution affecting timing
-    asm volatile ("cpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
-    asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)hi << 32) | lo;
-}
-
 uint32_t get_host_addr(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;
     uint32_t ip = 0;
