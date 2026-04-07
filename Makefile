@@ -1673,6 +1673,7 @@ rvma_pipe:
 	src/rvma_pipe.c \
 	src/log.c \
 	src/log.h \
+	src/tcp_strings.h \
 	src/rvma_socket.o \
 	src/rvma_write.o \
 	src/rvma_mailbox_hashmap.o \

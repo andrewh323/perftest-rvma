@@ -62,6 +62,8 @@ int main(int argc, char **argv) {
 
     // RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
+    int test_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    close(test_sockfd);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         perror("rsocket");

@@ -66,8 +66,7 @@ int main(int argc, char **argv) {
 	addr.sin_addr.s_addr = INADDR_ANY; // Bind to all interfaces
 
 	// RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
-    // int test_fd = socket(AF_INET, SOCK_STREAM, 0);
-    // close(test_fd);
+    int test_fd = socket(AF_INET, SOCK_STREAM, 0);
     listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
 	// Bind address to socket
@@ -117,5 +116,6 @@ int main(int argc, char **argv) {
 		close(conn_fd[i]);
 	}
 	close(listen_fd);
+    close(test_fd);
 	return 0;
 }

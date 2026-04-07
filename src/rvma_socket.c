@@ -124,6 +124,13 @@ struct rvsocket {
     struct rv_dest *dest;
 };
 
+void log_rvsocket(struct rvsocket* rvs) {
+    log_trace("rvsocket: index %d", rvs->index);
+    log_trace("rvsocket: vaddr %lx", rvs->vaddr);
+    log_trace("rvsocket: QP Num %d", rvs->qp_port);
+    log_trace("rvsocket: mailboxPtr %p", rvs->mailboxPtr);
+}
+
 
 static int rs_insert(struct rvsocket *rvs, int index)
 {
@@ -349,6 +356,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
     double elapsed_us = (end - start) / (cpu_ghz * 1e3) - rdmaTime;
     log_info("rvsocket total setup time: %.3f µs", elapsed_us);
+    log_rvsocket(rvs);
     // return rvsocket index
     return rvs->index;
 }
@@ -384,8 +392,8 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         }
     }
     end = rdtsc();
-
-    if (!ret) {
+    log_trace("rvbind: ret = %d", ret);
+    if (ret < 0) {
         log_error("rvbind: Failed to bind successfully.");
     }
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
@@ -668,24 +676,13 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
 
     struct sockaddr_in *in = (struct sockaddr_in *)addr;
     char ip_str[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(in->sin_addr), ip_str, INET_ADDRSTRLEN);
+    inet_ntop(AF_INET, &in->sin_addr, ip_str, INET_ADDRSTRLEN);
     
-    /*
-    struct rdma_addrinfo hints = {}, *res;
-
-    hints.ai_flags = RAI_PASSIVE;
-
-    rdma_getaddrinfo(NULL, "7471", &hints, &res);
-
-    for (struct rdma_addrinfo *ai = res; ai; ai = ai->ai_next) {
-        // ai->ai_src_addr contains usable local addr
-    }
-    */
-
-
-    // Resolve address
     log_debug("rvconnect: connecting with windowPtr = %p", window);
     log_debug("rvconnect: connecting to address %s", ip_str);
+    log_rvsocket(rvs);
+
+    // resolve address
     if (rdma_resolve_addr(rvs->cm_id, NULL, (struct sockaddr *)addr, 2000)) {
         log_error("rvconnect: rdma_resolve_addr failed");
         return -1;
