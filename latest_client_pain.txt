@@ -1,0 +1,33 @@
+16:57:37 [36mDEBUG[0m [90msrc/rvma_pipe.c:62:[0m init: IPERF compatibility loaded successfully.
+16:57:37 [36mDEBUG[0m [90msrc/rvma_pipe.c:64:[0m init: shared library loaded successfully.
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:193:[0m socket: domain = 2
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:194:[0m socket: type = 1
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:195:[0m socket: protocol = 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:196:[0m socket: generation 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:201:[0m socket: IPERF Control FD = 4
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:208:[0m socket: IPERF fd=4 prt=7471 type=0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:289:[0m connect: IPERF with fd = 4
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:291:[0m connect: IPERF status = 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:157:[0m setsockopt: FD = 4, opt = 1
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:163:[0m getsockopt: IPERF status = 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:412:[0m printConns: id=0 fd=4 type=0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:421:[0m Nwrite: Attempting to write (4), buf = 160e91c, type = 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:423:[0m Nwrite: IPERF writing to FD = 4
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:173:[0m getsockopt: FD = 4, optname = 2
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:179:[0m getsockopt: IPERF status = 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:412:[0m printConns: id=0 fd=4 type=0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:421:[0m Nwrite: Attempting to write (4), buf = 7ffe813bf5bc, type = 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:423:[0m Nwrite: IPERF writing to FD = 4
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:412:[0m printConns: id=0 fd=4 type=0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:421:[0m Nwrite: Attempting to write (4), buf = 160f1a0, type = 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:423:[0m Nwrite: IPERF writing to FD = 4
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:193:[0m socket: domain = 2
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:194:[0m socket: type = 1
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:195:[0m socket: protocol = 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:196:[0m socket: generation 1
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:223:[0m socket: CHANGING TO SERVER IP 10.82.49.1
+16:57:37 [32mINFO [0m [90msrc/rvma_write.c:116:[0m Window init setup time: 1.461 µs
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:434:[0m close: Closing 5
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:448:[0m close: Freeing connections
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:455:[0m close: status 0
+16:57:37 [94mTRACE[0m [90msrc/rvma_pipe.c:434:[0m close: Closing 8

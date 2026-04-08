@@ -59,6 +59,7 @@ __attribute__((constructor)) void init()
     real_getsockopt = dlsym(RTLD_NEXT, "getsockopt");
     #ifdef IPERF
     real_Nwrite = dlsym(RTLD_NEXT, "Nwrite");
+    log_debug("init: IPERF compatibility loaded successfully.");
     #endif /* ifdef IPERF */
     log_debug("init: shared library loaded successfully.");
     
@@ -67,6 +68,7 @@ __attribute__((constructor)) void init()
 static int port_num = PORT;
 static int sockets_created = 0;
 static int active_sockets = 0;
+static int sockets_closed = 0;
 RVMA_Win *globalWindowPtr = NULL;
 
 #ifdef IPERF
@@ -78,18 +80,21 @@ typedef enum socketType {
     RVMA_SOCKET
 }socketType;
 
+static int enum_ctrl = 0;
+static int enum_rvma = 1;
+
 struct conn_state {
     int fd;
     int port;
     uint64_t vaddr;
     RVMA_Win* windowPtr;
-    socketType type;
+    int type;
 };
 
 static struct conn_state *conns = NULL;
 
 RVMA_Win* getConnPtr(int fd) {
-    for(int i = 0; i < sockets_created; i++) {
+    for(int i = 0; i < NUM_SCK; i++) {
         if (fd == conns[i].fd) {
             log_trace("getConnPtr: vaddr found = %lx", conns[i].vaddr);
             log_trace("getConnPtr: ptr found = %p", conns[i].windowPtr);
@@ -99,8 +104,16 @@ RVMA_Win* getConnPtr(int fd) {
     return NULL;
 }
 
+struct conn_state getConn(int fd) {
+    for (int i = 0; i < NUM_SCK; i++) {
+        if(fd == conns[i].fd) {
+            return conns[i];
+        }
+    }
+}
+
 void init_conns() {
-    conns = malloc(sizeof(struct conn_state) * NUM_SCK);
+    conns = calloc(NUM_SCK, sizeof(struct conn_state));
     if (!conns) {
         log_error("init_conns: malloc failed");
         exit(1);
@@ -111,6 +124,10 @@ void generateWindowPtr(uint64_t vaddr)
 {
     log_info("generateWindowPtr: vaddr -> %d", vaddr);
     globalWindowPtr = rvmaInitWindowMailbox(vaddr);
+    if (globalWindowPtr == NULL) {
+        log_error("generateWindowPtr: NULL parameter");
+        return;
+    }
     log_info("generateWindowPtr: globalWindowPtr -> %p", globalWindowPtr);
 }
 
@@ -139,11 +156,12 @@ int setsockopt(int fd, int level, int optname, const void *optval, socklen_t opt
 {
     log_trace("setsockopt: FD = %d, opt = %d", fd, optname);
     int status = 0;
-    // char *opt = sockopt_to_str(level, optname);
-    // log_trace("setsockopt: opt = %s", opt);
+    struct conn_state conn = getConn(fd);
     #ifdef IPERF
-    if (sockets_created == 1 && control_created && optname != 7 && optname != 8) {
+    if (conn.type == enum_ctrl) {
         status = real_setsockopt(fd, level, optname, optval, optlen);
+        log_trace("getsockopt: IPERF status = %d", status);
+        return status;
     }
     #endif /* ifdef IPERF */
     log_trace("setsockopt: status = %d", status);
@@ -154,15 +172,19 @@ int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t* optl
 {
     log_trace("getsockopt: FD = %d, optname = %d", sockfd, optname);
     int status = 0;
+    struct conn_state conn = getConn(sockfd);
     #ifdef IPERF
-    if (sockets_created == 1 && control_created && optname != 7 && optname != 8) {
-        status = real_setsockopt(sockfd, level, optname, optval, optlen);
+    if (conn.type == enum_ctrl) {
+        status = real_getsockopt(sockfd, level, optname, optval, optlen);
+        log_trace("getsockopt: IPERF status = %d", status);
+        return status;
     }
     #endif /* ifdef IPERF */
     log_trace("getsockopt: status = %d", status);
     return status;
 }
 
+char *ip = "10.82.49.1";
 int socket(int domain, int type, int protocol)
 {
 
@@ -181,23 +203,23 @@ int socket(int domain, int type, int protocol)
         conns[sockets_created].port = PORT; // probably needs to be changed
         conns[sockets_created].vaddr = 0x00000000;
         conns[sockets_created].windowPtr = NULL;
-        conns[sockets_created].type = CONTROL_SOCKET;
-        sockets_created++;
+        conns[sockets_created].type = enum_ctrl;
         control_created = 1;
+        log_trace("socket: IPERF fd=%d prt=%d type=%d", conns[sockets_created].fd, conns[sockets_created].port, conns[sockets_created].type);
+        sockets_created++;
         return ctrl_fd;
     }
     #endif /* ifdef IPERF */
 
-    char* ip = NULL;
     uint16_t reserved = 0x0001;
-    ip = get_ip("ib0");
+    // ip = get_ip("ib0");
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = domain;
     addr.sin_port = htons(port_num);
 
     // THIS IS VERY TEMP
-    ip = "10.82.49.1";
+    // ip = "10.82.85.3";
     log_trace("socket: CHANGING TO SERVER IP %s", ip);
 
     if (inet_pton(AF_INET, ip, &addr.sin_addr) != 1) {
@@ -208,6 +230,10 @@ int socket(int domain, int type, int protocol)
     uint64_t vaddr = 0x00000000;
     vaddr = constructVaddr(reserved, ip_host_order, PORT);
     RVMA_Win* windowPtr = rvmaInitWindowMailbox(vaddr);
+    if (windowPtr == NULL) {
+        log_error("socket: NULL pointer");
+        return -1;
+    }
     int rvma_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     log_debug("socket: PORT -> %d", port_num);
     log_debug("socket: RVMA FD -> %d", rvma_fd);
@@ -216,7 +242,7 @@ int socket(int domain, int type, int protocol)
     conns[sockets_created].windowPtr = windowPtr;
     conns[sockets_created].vaddr = vaddr;
     conns[sockets_created].port = port_num;
-    conns[sockets_created].type = RVMA_SOCKET;
+    conns[sockets_created].type = enum_rvma;
 
     // port_num++;
     sockets_created++;
@@ -227,11 +253,17 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
     int r = -1;
     log_trace("accept: accepted over fd  = %d", sockfd);
+    struct conn_state conn = getConn(sockfd);
 
     #ifdef IPERF
-    if (sockets_created == 1) {
+    if (conn.type == enum_ctrl) {
         r = real_accept(sockfd, addr, addrlen);
+        conns[sockets_created].fd = r;
+        conns[sockets_created].port = PORT;
+        conns[sockets_created].type = enum_ctrl;
+        log_trace("accept: IPERF added conn fd=%d type=%d", conns[sockets_created].fd, conns[sockets_created].type);
         log_trace("accept: IPERF over r = %d", r);
+        sockets_created++;
         return r;
     }
     
@@ -243,6 +275,7 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
         exit(-1);
     }
     r = rvaccept(sockfd, addr, addrlen, acceptPtr);
+    // DO I need to add to conn list here?
     log_trace("accept: over r = %d", r);
     return r;
 }
@@ -250,8 +283,9 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 {
     int ret = -1;
+    struct conn_state conn = getConn(socket);
     #ifdef IPERF
-    if (sockets_created == 1) {
+    if (conn.type == enum_ctrl) {
         log_trace("connect: IPERF with fd = %d", socket);
         ret = real_connect(socket, address, address_len);
         log_trace("connect: IPERF status = %d", ret);
@@ -259,18 +293,39 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
     }
     #endif /* ifdef IPERF */
 
+    struct sockaddr_in *in = (struct sockaddr_in *)address;
+    char ip_str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &in->sin_addr, ip_str, INET_ADDRSTRLEN);
+    log_debug("connect: connecting with IP = %s", ip_str);
     log_trace("connect: rvconnect with FD = %d", socket);
     RVMA_Win* connectPtr = getConnPtr(socket);
-    ret = rvconnect(socket, address, address_len, connectPtr);
+
+    uint16_t port = ntohs(in->sin_port);
+    if(port == 0) {
+        ret = real_connect(socket, address, address_len);
+        return ret;
+    }
+
+    if (strcmp(ip_str, "117.110.47.105") == 0) {
+        log_warn("connect: caught bad destination %s, overriding", ip_str);
+        struct sockaddr_in corrected = *in;
+        inet_pton(AF_INET, ip, &corrected.sin_addr);
+        corrected.sin_port = htons(PORT);
+        corrected.sin_family = AF_INET;
+        ret = rvconnect(socket, (struct sockaddr *)&corrected, address_len, connectPtr);
+    } else {
+        ret = rvconnect(socket, address, address_len, connectPtr);
+    }
     log_trace("connect: status = %d", ret);
     return ret;
 }
 
  int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
-    int status = -1;    
+    int status = -1;
+    struct conn_state conn = getConn(sockfd);
     #ifdef IPERF
-    if (sockets_created == 1) {
+    if (conn.type == enum_ctrl) {
         log_trace("bind: IPERF on sockfd = %d", sockfd);
         status = real_bind(sockfd, addr, addrlen);
         log_trace("bind: IPERF status = %d", status);
@@ -285,8 +340,9 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 
 int listen(int sockfd, int backlog) {
     int ret = -1; 
+    struct conn_state conn = getConn(sockfd);
     #ifdef IPERF
-    if (sockets_created == 1) {
+    if (conn.type == enum_ctrl) {
         ret = real_listen(sockfd, backlog);
         log_trace("listen: IPERF status = %d", ret);
         return ret;
@@ -303,8 +359,9 @@ ssize_t send(int socket, const void *buf, size_t len, int flags)
     log_trace("send: Sending over socket %d", socket);
     int r = -1;
 
+    struct conn_state conn = getConn(socket);
     #ifdef IPERF
-    if (sockets_created == 1) {
+    if (conn.type == enum_ctrl) {
         r = real_send(socket, buf, len, flags);
         log_trace("send: IPERF send ret = %d", r);
         return (ssize_t) r;
@@ -320,8 +377,9 @@ ssize_t send(int socket, const void *buf, size_t len, int flags)
 ssize_t recv(int socket, void *buf, size_t len, int flags)
 {
     int r = -1;
+    struct conn_state conn = getConn(socket);
     #ifdef IPERF
-    if (sockets_created == 1) {
+    if (conn.type == enum_ctrl) {
         r = real_recv(socket, buf, len, flags);
         log_trace("recv: IPERF ret = %d", r);
         return (ssize_t) r;
@@ -337,40 +395,63 @@ ssize_t recv(int socket, void *buf, size_t len, int flags)
 
 ssize_t write(int fd, const void *buf, size_t count)
 {
-    log_trace("write: Writing to fd = %d", fd);
+    // log_trace("write: Writing to fd = %d", fd);
     return real_write(fd, buf, count);
 }
 
 ssize_t read(int fd, void *buf, size_t count)
 {
     ssize_t r;
-    log_trace("read: Reading from fd = %d", fd);
+    // log_trace("read: Reading from fd = %d", fd);
     r = real_read(fd, buf, count);
     return r;
 }
 
+void printConns() {
+    for (int i = 0; i < sockets_created; i++) {
+        log_trace("printConns: id=%d fd=%d type=%d", i, conns[i].fd, conns[i].type);
+    }
+}
+
 #ifdef IPERF
-int Nwrite(int fd, const char *buf, size_t count, int prot) {
-    log_trace("Nwrite: Attempting to write (%d), buf = %lx", fd, buf);
-    if (sockets_created == 1) {
+int Nwrite(int fd, const char *buf, size_t count, int prot)
+{
+    printConns();
+    struct conn_state conn = getConn(fd);
+    log_trace("Nwrite: Attempting to write (%d), buf = %lx, type = %d", fd, buf, conn.type);
+    if (conn.type == enum_ctrl) {
         log_trace("Nwrite: IPERF writing to FD = %d", fd);
         return real_Nwrite(fd, buf, count, prot);  
     }
-    return send(fd, buf, count, 0);
+    return rvsend(fd, buf, count);
 }
 #endif /* ifdef IPERF */
 
 int close(int fd)
 {
+    int status = 0;
     active_sockets--;
-    log_trace("close: Closing %d", fd);
-    return rclose(fd);
-    if (active_sockets == 0) {
-        log_trace("close: Freeing connections");
+    struct conn_state conn = getConn(fd);
+    #ifdef IPERF
+    if (conn.type == enum_ctrl && sockets_created == 1) {
         control_created = 0;
-        close(fd);
-        free(conns);
+        status = real_close(fd);
+        log_trace("close: control status %d", status);
+    } else if (conn.type == enum_rvma) {
+        status = rclose(fd);
+        log_trace("close: rvma status %d", status);
     }
+    #endif /* ifdef IPERF */
+    sockets_closed++; 
+    if(sockets_closed >= 9999) {
+        log_trace("close: Freeing connections");
+        free(conns);
+        conns = NULL;
+        sockets_closed = 0;
+        sockets_created = 0;
+    }
+
+    return status;
 }
 
 

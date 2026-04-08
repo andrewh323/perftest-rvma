@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include <math.h>
 #include "rvma_write.h"
-// #include "rvma_socket.c"
 
 #include "log.h"
 #include "rdtsc.h"

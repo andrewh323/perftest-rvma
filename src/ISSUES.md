@@ -56,6 +56,9 @@ I give up for now. Send/recv for some reason no work even on the basic shim. I h
 # Epiphany 13 (2026-04-06 @ 6:15 PM)
 I changed something, I ran, it broke. I changed it back. STILL BROKEN? HOW? GOD HATES ME.
 
+# Epiphany 14 (2026-04-08 @ 4:52 PM)
+How in gods good country do I make my code MORE robust and then it performs WORSE and cant even open a socket????
+
 # Debugging Tools
 - Ethtool
 - iplink/ifconfig
