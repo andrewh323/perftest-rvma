@@ -22,7 +22,8 @@ typedef enum {
     RVMA_ERROR,
     RVMA_TRUE,
     RVMA_FALSE,
-    RVMA_QUEUE_FULL
+    RVMA_QUEUE_FULL,
+    RVMA_RETRY
 } RVMA_Status;
 
 char* get_errorMsg();

@@ -122,16 +122,16 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    mailboxPtr->cq = ibv_create_cq(client_cm_id->verbs, 16, NULL, NULL, 0);
-    if (!mailboxPtr->cq) {
+    mailboxPtr->send_cq = ibv_create_cq(client_cm_id->verbs, 16, NULL, NULL, 0);
+    if (!mailboxPtr->send_cq) {
         perror("ibv_create_cq failed");
         return -1;
     }
 
     // Create QP
     struct ibv_qp_init_attr qp_attr = {
-        .send_cq = mailboxPtr->cq,
-        .recv_cq = mailboxPtr->cq,
+        .send_cq = mailboxPtr->send_cq,
+        .recv_cq = mailboxPtr->send_cq,
         .qp_type = IBV_QPT_RC,
         .cap = {
             .max_send_wr = 16,

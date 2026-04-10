@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 100;
+    int num_sends = 1000;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
@@ -84,13 +84,6 @@ int main(int argc, char **argv) {
     double *send_times = malloc(measured_sends * sizeof(double));
 
     double elapsed_us = 0;
-    double min_time = 1e9;
-    double max_time = 0;
-    double sum_time = 0;
-    double buffer_setup_time = 0;
-    double wr_setup_time = 0;
-    double poll_time = 0;
-    double regmr_time = 0;
 
     char *messages[num_sends];
     for (int i = 0; i < num_sends; i++) {
@@ -104,21 +97,19 @@ int main(int argc, char **argv) {
     int completed = 0, sent = 0;
 
     // Send messages to server
+    t1 = rdtsc();
     while (completed < num_sends) {
-        // Perform rvma send
-        t1 = rdtsc();
-        while (sent < num_sends) {
-            int res = rvsend(sockfd, messages[sent], size);
-            if (res < 0) {
-                printf("No more buffers available for send, sent %d messages so far\n", sent);
-                break;
-            }
-            sent++;
+        if (rvsend(sockfd, messages[completed], size) < 0) {
+            fprintf(stderr, "send failed at %d\n", completed);
+            break;
         }
-
-        rvrecv(sockfd, recv_buf, size, 0);
+        // rvrecv(sockfd, recv_buf, size, 0);  // drain the CQ after each send
         completed++;
     }
+    t2 = rdtsc();
+    elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
+    printf("Total time for sending %d messages: %.3f µs\n", completed, elapsed_us);
+    printf("Average time per message: %.3f µs\n", elapsed_us / completed);
 
     free(send_times);
     rclose(sockfd);

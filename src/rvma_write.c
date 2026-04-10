@@ -330,25 +330,15 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
             return RVMA_ERROR;
         }
     }
+    mailbox->posted_recvs += num_bufs;
     return RVMA_SUCCESS;
 }
 
-/*
-RVMA PUT STEPS
-    1. Post receive buffer to target mailbox
-    2. Address translation
-    3. Prepare payload to be written into memory
-    4. Perform completion check
-        - Increment counter and check it against threshold (Counter is hardware only)
-        - If buffer is complete, write address of buffer to completion pointer address
-    5. Post send
-*/
 RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mailbox) {
     // Pull a buffer from the mailbox's buffer queue
     RVMA_Buffer_Entry *entry = dequeue(mailbox->sendBufferQueue);
     if (!entry) {
-        print_error("rvmaSend: No available send buffers in mailbox queue");
-        return RVMA_FAILURE;
+        return RVMA_RETRY;
     }
 
     // Fill the buffer with data to send
@@ -377,9 +367,10 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         .send_flags = flags // Signal only every N sends
     };
 
+    if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends) {
+        return RVMA_RETRY;
+    }
     struct ibv_send_wr *bad_wr = NULL;
-
-    // Post send
     if (ibv_post_send(mailbox->qp, &send_wr, &bad_wr)) {
         perror("rvmaSend: ibv_post_send failed");
         return RVMA_ERROR;
@@ -396,16 +387,16 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         entry->notifLenPtrAddr = dataSize;
     }
 
+    mailbox->outstanding_sends++;
     return RVMA_SUCCESS;
 }
 
 // Redundant now with rvmaProgress
-// Recv buffer pool should be preposted, so just poll cq for completions
 RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mailbox *mailbox) {
     struct ibv_wc wc;
     int num_wc;
     do {
-        num_wc = ibv_poll_cq(mailbox->cq, 1, &wc);
+        num_wc = ibv_poll_cq(mailbox->recv_cq, 1, &wc);
     } while (num_wc == 0);
 
     if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
@@ -444,44 +435,71 @@ RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mail
 
 // Check on completions with a progress engine
 void rvmaProgress(RVMA_Mailbox *mailbox) {
-    struct ibv_wc wc[16];
-    int n;
+    struct ibv_wc send_wc[16];
+    int sn = ibv_poll_cq(mailbox->send_cq, 16, send_wc);
+    if (sn < 0) {
+        fprintf(stderr, "Send CQ error: %s (%d)\n", ibv_wc_status_str(send_wc[0].status), send_wc[0].status);
+        return;
+    }
 
-    do {
-        n = ibv_poll_cq(mailbox->cq, 16, wc);
-
-        // Progress through each entry (up to 16) in completion queue
-        for (int i = 0; i < n; i++) {
-            RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc[i].wr_id;
-
-            // Check opcode and handle completion
-            if (wc[i].opcode == IBV_WC_SEND) {
-                // This means a send on this side was completed, so repost buffer
-                enqueue(mailbox->sendBufferQueue, entry);
-                // printf("Send completion received! Reposted a buffer\n");
-            }
-            else if (wc[i].opcode == IBV_WC_RECV) {
-                // A recv was completed, so we can process message here
-                void *buf = entry->realBuff;
-                int len = wc[i].byte_len;
-                printf("Received Message: %.*s\n", wc[i].byte_len, buf);
-
-                // Repost recv here
-                struct ibv_sge sge = {
-                    .addr = (uintptr_t)buf,
-                    .length = MAX_RECV_SIZE,
-                    .lkey = entry->mr->lkey
-                };
-                struct ibv_recv_wr recv_wr = {
-                    .wr_id = (uintptr_t)entry,
-                    .sg_list = &sge,
-                    .num_sge = 1,
-                    .next = NULL
-                };
-
-                struct ibv_recv_wr *bad_wr = NULL;
-                ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr);
-            }
+    for (int i = 0; i < sn; i++) {
+        if (send_wc[i].status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "Completion error: %s (%d)\n", ibv_wc_status_str(send_wc[i].status), send_wc[i].status);
+            continue;
         }
-    } while (n > 0);
+        // Check opcode and handle completion
+        if (send_wc[i].opcode != IBV_WC_SEND) {
+            fprintf(stderr, "Unexpected completion opcode: %d\n", send_wc[i].opcode);
+            continue;
+        }
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)send_wc[i].wr_id;
+        enqueue(mailbox->sendBufferQueue, entry);
+        mailbox->outstanding_sends--;
+    }
+
+    struct ibv_wc recv_wc[16];
+    int rn = ibv_poll_cq(mailbox->recv_cq, 16, recv_wc);
+    if (rn < 0) {
+        fprintf(stderr, "Recv CQ error: %s (%d)\n", ibv_wc_status_str(recv_wc[0].status), recv_wc[0].status);
+        return;
+    }
+
+    for (int i = 0; i < rn; i++) {
+        if (recv_wc[i].status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "Recv CQ error: %s (%d)\n",
+                    ibv_wc_status_str(recv_wc[i].status), recv_wc[i].status);
+            continue;
+        }
+        if (recv_wc[i].opcode != IBV_WC_RECV) {
+            fprintf(stderr, "Unexpected completion opcode: %d\n", recv_wc[i].opcode);
+            continue;
+        }
+
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)recv_wc[i].wr_id;
+        int len = recv_wc[i].byte_len;
+        mailbox->posted_recvs--;
+        // printf("Received message: %.*s\n", len, (char *)entry->realBuff);
+        enqueue(mailbox->recvBufferQueue, entry);
+    }
+
+    while (mailbox->posted_recvs < mailbox->max_recvs) {
+        RVMA_Buffer_Entry *entry = dequeue(mailbox->recvBufferQueue);
+        if (!entry) break;
+
+        struct ibv_sge sge = {
+            .addr = (uintptr_t)entry->realBuff,
+            .length = MAX_RECV_SIZE,
+            .lkey = entry->mr->lkey
+        };
+
+        struct ibv_recv_wr wr = {
+            .wr_id = (uintptr_t)entry,
+            .sg_list = &sge,
+            .num_sge = 1
+        };
+
+        ibv_post_recv(mailbox->qp, &wr, NULL);
+
+        mailbox->posted_recvs++;
+    }
 }

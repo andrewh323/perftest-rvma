@@ -46,8 +46,13 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     }
 
     mailboxPtr->pd = NULL;
-    mailboxPtr->cq = NULL;
+    mailboxPtr->send_cq = NULL;
+    mailboxPtr->recv_cq = NULL;
     mailboxPtr->qp = NULL;
+    mailboxPtr->max_outstanding_sends = 128;
+    mailboxPtr->outstanding_sends = 0;
+    mailboxPtr->max_recvs = 128;
+    mailboxPtr->posted_recvs = 0;
     mailboxPtr->sendBufferQueue = sendBufferQueue;
     mailboxPtr->recvBufferQueue = recvBufferQueue;
     mailboxPtr->retiredBufferQueue = retiredBufferQueue;
@@ -223,16 +228,22 @@ int establishMailboxConnection(RVMA_Mailbox *mailboxPtr, struct sockaddr_in *rem
     }
 
     // Define completion queue
-    mailboxPtr->cq = ibv_create_cq(mailboxPtr->cm_id->verbs, 16, NULL, NULL, 0);
-    if (!mailboxPtr->cq) {
+    mailboxPtr->send_cq = ibv_create_cq(mailboxPtr->cm_id->verbs, 16, NULL, NULL, 0);
+    if (!mailboxPtr->send_cq) {
+        perror("ibv_create_cq failed");
+        return -1;
+    }
+    mailboxPtr->recv_cq = ibv_create_cq(mailboxPtr->cm_id->verbs, 16, NULL, NULL, 0);
+    if (!mailboxPtr->recv_cq) {
         perror("ibv_create_cq failed");
         return -1;
     }
 
+
     // Create QP
     struct ibv_qp_init_attr qp_attr = {
-        .send_cq = mailboxPtr->cq,
-        .recv_cq = mailboxPtr->cq,
+        .send_cq = mailboxPtr->send_cq,
+        .recv_cq = mailboxPtr->recv_cq,
         .qp_type = IBV_QPT_RC, // Reliable connection
         .sq_sig_all = 1,
         .cap = {

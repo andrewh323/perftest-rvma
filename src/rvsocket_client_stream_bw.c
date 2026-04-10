@@ -10,7 +10,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024*1024 // 1 MB
+#define MSG_SIZE 1024*4
 #define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 

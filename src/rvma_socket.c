@@ -36,7 +36,7 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_POOL_BUFS 16
+#define MAX_POOL_BUFS 128
 #define MAX_RECV_SIZE 1024*1024 // 1MB
 #define SIGNAL_INTERVAL 1
 
@@ -95,11 +95,6 @@ enum rs_state {
 	rs_disconnected	   =		    0x1000,
 	rs_error	   =		    0x2000,
 };
-
-// Global completion queue for all rvsockets
-// When completion is detected, need a way to check which socket it belongs to
-// Maybe check the rs_state of each rvsocket in the idm? "if rs_readable...", etc.
-struct ibv_cq *shared_cq;
 
 struct rvsocket {
     int type; // SOCK_STREAM or SOCK_DGRAM
@@ -256,17 +251,23 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         }
         rvs->mailboxPtr->pd = pd;
 
-        struct ibv_cq *cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
-        if (!cq) {
+        struct ibv_cq *send_cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
+        if (!send_cq) {
             fprintf(stderr, "rvsocket: Failed to create cq\n");
             return -1;
         }
-        rvs->mailboxPtr->cq = cq;
+        struct ibv_cq *recv_cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
+        if (!recv_cq) {
+            fprintf(stderr, "rvsocket: Failed to create cq\n");
+            return -1;
+        }
+        rvs->mailboxPtr->send_cq = send_cq;
+        rvs->mailboxPtr->recv_cq = recv_cq;
 
         // Define QP
         struct ibv_qp_init_attr qp_attr = {
-            .send_cq = cq,
-            .recv_cq = cq,
+            .send_cq = send_cq,
+            .recv_cq = recv_cq,
             .qp_type = IBV_QPT_UD,
             .cap = {
                 .max_send_wr = 128,
@@ -457,17 +458,22 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     }
 
     // Create completion queue
-    struct ibv_cq *cq = ibv_create_cq(client_cm_id->verbs, 1024, NULL, NULL, 0);
-    if (!cq) {
+    struct ibv_cq *send_cq = ibv_create_cq(client_cm_id->verbs, 128, NULL, NULL, 0);
+    if (!send_cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
         return -1;
     }
-
+    struct ibv_cq *recv_cq = ibv_create_cq(client_cm_id->verbs, 128, NULL, NULL, 0);
+    if (!recv_cq) {
+        perror("ibv_create_cq failed");
+        ibv_dealloc_pd(pd);
+        return -1;
+    }
     // Create QP
     struct ibv_qp_init_attr qp_attr = {
-        .send_cq = cq,
-        .recv_cq = cq,
+        .send_cq = send_cq,
+        .recv_cq = recv_cq,
         .qp_type = IBV_QPT_RC,
         .cap = {
             .max_send_wr = 128,
@@ -530,7 +536,8 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     new_rvs->cm_id = client_cm_id;
     new_rvs->ec = client_cm_id->channel;
     new_rvs->mailboxPtr->pd = pd;
-    new_rvs->mailboxPtr->cq = cq;
+    new_rvs->mailboxPtr->send_cq = send_cq;
+    new_rvs->mailboxPtr->recv_cq = recv_cq;
     new_rvs->mailboxPtr->qp = client_cm_id->qp;
 
     new_rvs->index = next_fd++;
@@ -704,18 +711,25 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     rvs->mailboxPtr->pd = pd;
 
     // Create CQ
-    struct ibv_cq *cq = ibv_create_cq(rvs->cm_id->verbs, 16, NULL, NULL, 0);
-    if (!cq) {
+    struct ibv_cq *send_cq = ibv_create_cq(rvs->cm_id->verbs, 16, NULL, NULL, 0);
+    if (!send_cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
         return -1;
     }
-    rvs->mailboxPtr->cq = cq;
+    struct ibv_cq *recv_cq = ibv_create_cq(rvs->cm_id->verbs, 16, NULL, NULL, 0);
+    if (!recv_cq) {
+        perror("ibv_create_cq failed");
+        ibv_dealloc_pd(pd);
+        return -1;
+    }
+    rvs->mailboxPtr->recv_cq = recv_cq;
+    rvs->mailboxPtr->send_cq = send_cq;
 
     // Create QP
     struct ibv_qp_init_attr qp_attr = {
-        .send_cq = cq,
-        .recv_cq = cq,
+        .send_cq = send_cq,
+        .recv_cq = recv_cq,
         .qp_type = IBV_QPT_RC,
         .cap = {
             .max_send_wr = 128,
@@ -861,20 +875,28 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
 
 // Send for stream sockets
 int rvsend(int socket, void *buf, int64_t len) {
-    struct rvsocket *rvs;
-    uint64_t vaddr;
+    struct rvsocket *rvs = idm_at(&idm, socket);
+    uint64_t vaddr = rvs->vaddr;
+    RVMA_Status status;
 
-    rvs = idm_at(&idm, socket);
-    vaddr = rvs->vaddr;
-    if (rvs->type == SOCK_STREAM) {
-        if (rvmaSend(buf, len, vaddr, rvs->mailboxPtr) != RVMA_SUCCESS) {
+    if (rvs->type != SOCK_STREAM) {
+        fprintf(stderr, "rvsend: Socket type is not stream\n");
+        return -1;
+    }
+
+    do {
+        status = rvmaSend(buf, len, vaddr, rvs->mailboxPtr);
+        if (status == RVMA_RETRY) {
+            rvmaProgress(rvs->mailboxPtr);
+        }
+    } while (status == RVMA_RETRY);
+
+    if (status != RVMA_SUCCESS) {
         fprintf(stderr, "rvmaSend failed\n");
         return -1;
-        }
     }
-    else {
-        fprintf(stderr, "rvsend: Socket type is not stream\n");
-    }
+    rvmaProgress(rvs->mailboxPtr);
+
     return 0;
 }
 
@@ -996,13 +1018,9 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
         struct ibv_wc wc;
         int res;
         do {
-            res = ibv_poll_cq(mailbox->cq, 1, &wc);
+            res = ibv_poll_cq(mailbox->send_cq, 1, &wc);
         } while (res == 0);
-        if (res < 0) {
-            perror("rvmaSend: ibv_poll_cq failed");
-            return RVMA_ERROR;
-        }
-        if (wc.status!= IBV_WC_SUCCESS) {
+        if (res < 0 || wc.status != IBV_WC_SUCCESS) {
             perror("rvmaSend: ibv_poll_cq failed");
             return RVMA_ERROR;
         }
@@ -1041,7 +1059,7 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
     for (int i = 0; i < num_recvs; i++) {
         // Poll for a completed receive
         while (1) {
-            do { num_wc = ibv_poll_cq(mailbox->cq, 1, &wc); } while (num_wc == 0);
+            do { num_wc = ibv_poll_cq(mailbox->recv_cq, 1, &wc); } while (num_wc == 0);
             if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) return -1;
             if (wc.opcode == IBV_WC_RECV) break;
         }

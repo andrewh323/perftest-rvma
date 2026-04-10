@@ -16,7 +16,8 @@ typedef struct {
     int key;
     uint64_t vaddr;
     struct ibv_pd *pd; // Protection domain
-    struct ibv_cq *cq; // Completion queue
+    struct ibv_cq *send_cq;
+    struct ibv_cq *recv_cq;
     struct ibv_qp *qp; // Queue pair
     struct rdma_cm_id *cm_id; // RDMA connection manager
     struct rdma_event_channel *ec; // Event channel
@@ -24,8 +25,14 @@ typedef struct {
     int type;
     int sendCount;
 
+    int max_outstanding_sends;
+    int outstanding_sends;
+    int posted_recvs;
+    int max_recvs;
+
     RVMA_Buffer_Queue *sendBufferQueue;
     RVMA_Buffer_Queue *recvBufferQueue;
+    RVMA_Buffer_Queue *pendingRecvQueue;
     RVMA_Buffer_Queue *retiredBufferQueue;
 } RVMA_Mailbox;
 
