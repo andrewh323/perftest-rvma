@@ -1128,7 +1128,7 @@ int alloc_ctx(struct pingpong_context *ctx,struct perftest_parameters *user_para
 
         /* RVMA: Post the buffer */
         RVMA_Buffer_Entry *entry = rvmaPostBuffer(buffer, rvma_buffer_size, ctx->rvma_notifBuffPtrAddr, ctx->rvma_notifLenPtrAddr,
-                                            ctx->rvma_vaddr, ctx->mailboxPtr, rvma_buffer_size, EPOCH_BYTES, 0);
+                                            ctx->rvma_vaddr, ctx->mailboxPtr, rvma_buffer_size, EPOCH_BYTES);
 
         /* Point the ctx buff var to our RVMA buffer instead */
         ctx->buf = buffer;

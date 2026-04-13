@@ -36,9 +36,9 @@
 #define RS_QP_CTRL_SIZE 4	/* must be power of 2 */
 #define RS_CONN_RETRIES 6
 #define RS_SGL_SIZE 2
-#define MAX_POOL_BUFS 128
+#define MAX_POOL_BUFS 128 // Find hardware limit
 #define MAX_RECV_SIZE 1024*1024 // 1MB
-#define SIGNAL_INTERVAL 1
+#define SIGNAL_INTERVAL 16
 
 enum {
 	RS_OP_DATA,
@@ -885,10 +885,8 @@ int rvsend(int socket, void *buf, int64_t len) {
     }
 
     do {
+        rvmaProgress(rvs->mailboxPtr);
         status = rvmaSend(buf, len, vaddr, rvs->mailboxPtr);
-        if (status == RVMA_RETRY) {
-            rvmaProgress(rvs->mailboxPtr);
-        }
     } while (status == RVMA_RETRY);
 
     if (status != RVMA_SUCCESS) {
@@ -962,7 +960,7 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
 
         RVMA_Buffer_Entry *entry = dequeue(mailbox->sendBufferQueue);
         if (!entry) {
-            fprintf(stderr, "rvsendto: rvmaPostBuffer failed\n");
+            fprintf(stderr, "rvsendto: dequeue failed\n");
             return -1;
         }
         

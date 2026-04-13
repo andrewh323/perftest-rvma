@@ -86,10 +86,10 @@ int main(int argc, char **argv) {
     double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
 
     double bandwidth_MBps = (double)bytes_sent / (1024 * 1024) / elapsed;
-    double bandwidth_GBps = bandwidth_MBps / 1000; // Convert to Gbps
+    double bandwidth_GBps = bandwidth_MBps / 1024; // Convert to GiB/s
 
     printf("Elapsed time: %.2f microseconds\n", elapsed * 1e6);
-    printf("Bandwidth: %.2f MB/s (%.2f GBps)\n", bandwidth_MBps, bandwidth_GBps);
+    printf("Bandwidth: %.2f MB/s (%.2f GiB/s)\n", bandwidth_MBps, bandwidth_GBps);
     
     rclose(sockfd);
     return 0;

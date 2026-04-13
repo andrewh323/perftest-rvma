@@ -14,23 +14,29 @@
 
 typedef struct {
     int key;
-    uint64_t vaddr;
-    struct ibv_pd *pd; // Protection domain
-    struct ibv_cq *send_cq;
-    struct ibv_cq *recv_cq;
-    struct ibv_qp *qp; // Queue pair
-    struct rdma_cm_id *cm_id; // RDMA connection manager
-    struct rdma_event_channel *ec; // Event channel
-    struct ibv_context *ctx; // Device context
     int type;
     int sendCount;
-
     int max_outstanding_sends;
     int outstanding_sends;
     int posted_recvs;
     int max_recvs;
 
+    void *send_pool;
+    void *recv_pool;
+    
+    uint64_t vaddr;
+    struct ibv_pd *pd; // Protection domain
+    struct ibv_cq *send_cq;
+    struct ibv_cq *recv_cq;
+    struct ibv_qp *qp; // Queue pair
+    struct ibv_mr *send_mr;
+    struct ibv_mr *recv_mr;
+    struct rdma_cm_id *cm_id; // RDMA connection manager
+    struct rdma_event_channel *ec; // Event channel
+    struct ibv_context *ctx; // Device context
+
     RVMA_Buffer_Queue *sendBufferQueue;
+    RVMA_Buffer_Queue *inflightSendQueue;
     RVMA_Buffer_Queue *recvBufferQueue;
     RVMA_Buffer_Queue *pendingRecvQueue;
     RVMA_Buffer_Queue *retiredBufferQueue;

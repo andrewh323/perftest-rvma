@@ -196,60 +196,36 @@ RVMA_Status rvmaCloseWin(RVMA_Win *window) {
 
 // Buffer type 0 for send buffer, 1 for recv buffer
 RVMA_Buffer_Entry* rvmaPostBuffer(void *buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, uint64_t virtualAddress,
-               RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType, int bufferType) {
+               RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType) {
 
     RVMA_Buffer_Entry *entry = createBufferEntry(buffer, size, notificationPtr, notificationLenPtr, epochThreshold, epochType);
     if (entry == NULL) {
         print_error("rvmaPostBuffer: error while malloc new buffer entry");
         return NULL;
     }
-
-    uint64_t start = rdtsc();
-    // Define memory region for buffer
-    struct ibv_mr *mr = ibv_reg_mr(mailbox->pd, buffer, size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
-    if(!mr) {
-        fprintf(stderr, "ibv_reg_mr failed: %s (%d)\n", strerror(errno), errno);
-        free(entry);
-        return NULL;
-    }
-    entry->mr = mr;
-
-    // send buffer
-    if (bufferType == 0) {
-        RVMA_Status res = enqueue(mailbox->sendBufferQueue, entry);
-        if (res != RVMA_SUCCESS) {
-            print_error("rvmaPostBuffer: buffer entry failed to be added to mailbox send queue");
-            free(entry);
-            ibv_dereg_mr(mr);
-            return NULL;
-        }
-    }
-    // recv buffer
-    else if (bufferType == 1) {
-        RVMA_Status res = enqueue(mailbox->recvBufferQueue, entry);
-        if (res != RVMA_SUCCESS) {
-            print_error("rvmaPostBuffer: buffer entry failed to be added to mailbox recv queue");
-            free(entry);
-            ibv_dereg_mr(mr);
-            return NULL;
-        }
-    }
-    else {
-        print_error("rvmaPostBuffer: invalid buffer type");
-        free(entry);
-        ibv_dereg_mr(mr);
-        return NULL;
-    }
     return entry;
 }
 
 RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
+    
+    size_t total_size = num_bufs * MAX_SEND_SIZE;
+
+    mailbox->send_pool = malloc(total_size);
+    if (!mailbox->send_pool) {
+        print_error("postSendPool: malloc failed");
+        return RVMA_ERROR;
+    }
+
+    // Register memory region as one large chunk
+    mailbox->send_mr = ibv_reg_mr(mailbox->pd, mailbox->send_pool, total_size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
+    if (!mailbox->send_mr) {
+        perror("ibv_reg_mr send_pool failed");
+        return RVMA_ERROR;
+    }
+
     for (int i = 0; i < num_bufs; i++) {
-        char *send_buf = malloc(MAX_SEND_SIZE);
-        if (!send_buf) {
-            print_error("postSendPool: malloc failed");
-            return RVMA_ERROR;
-        }
+        // Define buffer address for specific entry
+        char *send_buf = (char *)mailbox->send_pool + i * MAX_SEND_SIZE;
         void *send_ptr = send_buf;
 
         void **notifBuffPtr = malloc(sizeof(void *));
@@ -267,11 +243,14 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
             return RVMA_ERROR;
         }
 
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer(send_ptr, MAX_SEND_SIZE, notifBuffPtr, (void *)notifLenPtr, vaddr, mailbox, threshold, epochType, 0);
+        RVMA_Buffer_Entry *entry = rvmaPostBuffer(send_ptr, MAX_SEND_SIZE, notifBuffPtr, (void *)notifLenPtr, vaddr, mailbox, threshold, epochType);
         if (!entry) {
             print_error("postSendPool: rvmaPostBuffer failed");
             return RVMA_ERROR;
         }
+
+        entry->mr = mailbox->send_mr;
+        enqueue(mailbox->sendBufferQueue, entry);
     }
     return RVMA_SUCCESS;
 }
@@ -279,12 +258,22 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
 RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
     uint64_t start, end;
     start = rdtsc();
+    size_t total_size = num_bufs * MAX_RECV_SIZE;
+
+    mailbox->recv_pool = malloc(total_size);
+    if (!mailbox->recv_pool) {
+        print_error("postRecvPool: malloc failed");
+        return RVMA_ERROR;
+    }
+    
+    mailbox->recv_mr = ibv_reg_mr(mailbox->pd, mailbox->recv_pool, total_size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
+    if (!mailbox->recv_mr) {
+        perror("ibv_reg_mr recv_pool failed");
+        return RVMA_ERROR;
+    }
+
     for (int i = 0; i < num_bufs; i++) {
-        char *recv_buf = malloc(MAX_RECV_SIZE);
-        if (!recv_buf) {
-            print_error("postRecvPool: malloc failed");
-            return RVMA_ERROR;
-        }
+        char *recv_buf = (char *)mailbox->recv_pool + i * MAX_RECV_SIZE;
         void *recv_ptr = recv_buf;
 
         // Setup notification pointers (per-buffer notification)
@@ -304,11 +293,15 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
         }
 
         RVMA_Buffer_Entry *entry = rvmaPostBuffer(recv_ptr, MAX_RECV_SIZE, notifBuffPtr, (void *)notifLenPtr,
-                                    vaddr, mailbox, threshold, epochType, 1);
+                                    vaddr, mailbox, threshold, epochType);
         if (!entry) {
             print_error("postRecvPool: rvmaPostBuffer failed");
             return RVMA_ERROR;
         }
+
+        entry->mr = mailbox->recv_mr;
+
+        enqueue(mailbox->recvBufferQueue, entry);
 
         // Build sge and wr, then post recv
         struct ibv_sge sge = {
@@ -364,10 +357,11 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         .sg_list = &sge,
         .num_sge = 1,
         .opcode = IBV_WR_SEND,
-        .send_flags = flags // Signal only every N sends
+        .send_flags = IBV_SEND_SIGNALED // TODO: signal every N sends
     };
+    // printf("Posting send: buffer addr=%p, size=%ld\n", data, dataSize);
 
-    if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends) {
+    if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends - 1) {
         return RVMA_RETRY;
     }
     struct ibv_send_wr *bad_wr = NULL;
@@ -389,6 +383,84 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
 
     mailbox->outstanding_sends++;
     return RVMA_SUCCESS;
+}
+
+// Check on completions with a progress engine
+void rvmaProgress(RVMA_Mailbox *mailbox) {
+    int num_wc = 128;
+    struct ibv_wc send_wc[num_wc];
+    int sn = ibv_poll_cq(mailbox->send_cq, num_wc, send_wc);
+    if (sn < 0) {
+        fprintf(stderr, "Send CQ error: %s (%d)\n", ibv_wc_status_str(send_wc[0].status), send_wc[0].status);
+        return;
+    }
+
+    for (int i = 0; i < sn; i++) {
+        if (send_wc[i].status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "Completion error: %s (%d)\n", ibv_wc_status_str(send_wc[i].status), send_wc[i].status);
+            continue;
+        }
+        // Check opcode and handle completion
+        if (send_wc[i].opcode != IBV_WC_SEND) {
+            fprintf(stderr, "Unexpected completion opcode: %d\n", send_wc[i].opcode);
+            continue;
+        }
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)send_wc[i].wr_id;
+        enqueue(mailbox->sendBufferQueue, entry);
+        mailbox->outstanding_sends--;
+    }
+
+    struct ibv_wc recv_wc[num_wc];
+    int rn = ibv_poll_cq(mailbox->recv_cq, num_wc, recv_wc);
+    if (rn < 0) {
+        fprintf(stderr, "Recv CQ error: %s (%d)\n", ibv_wc_status_str(recv_wc[0].status), recv_wc[0].status);
+        return;
+    }
+
+    for (int i = 0; i < rn; i++) {
+        if (recv_wc[i].status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "Recv CQ error: %s (%d)\n",
+                    ibv_wc_status_str(recv_wc[i].status), recv_wc[i].status);
+            continue;
+        }
+        if (recv_wc[i].opcode != IBV_WC_RECV) {
+            fprintf(stderr, "Unexpected completion opcode: %d\n", recv_wc[i].opcode);
+            continue;
+        }
+
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)recv_wc[i].wr_id;
+        int len = recv_wc[i].byte_len;
+        mailbox->posted_recvs--;
+        // printf("Received message: %.*s\n", len, (char *)entry->realBuff);
+        enqueue(mailbox->recvBufferQueue, entry);
+    }
+
+
+    while (mailbox->posted_recvs < mailbox->max_recvs) {
+        RVMA_Buffer_Entry *entry = dequeue(mailbox->recvBufferQueue);
+        if (!entry) break;
+
+        struct ibv_sge sge = {
+            .addr = (uintptr_t)entry->realBuff,
+            .length = MAX_RECV_SIZE,
+            .lkey = entry->mr->lkey
+        };
+
+        struct ibv_recv_wr wr = {
+            .wr_id = (uintptr_t)entry,
+            .sg_list = &sge,
+            .num_sge = 1
+        };
+
+        // printf("Posting recv with buffer addr=%p, size=%d\n", entry->realBuff, MAX_RECV_SIZE);
+        if(ibv_post_recv(mailbox->qp, &wr, NULL)) {
+            // If posting fails, put entry back and break
+            enqueue(mailbox->recvBufferQueue, entry);
+            break;
+        }
+
+        mailbox->posted_recvs++;
+    }
 }
 
 // Redundant now with rvmaProgress
@@ -431,75 +503,4 @@ RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mail
     }
     
     return RVMA_SUCCESS;
-}
-
-// Check on completions with a progress engine
-void rvmaProgress(RVMA_Mailbox *mailbox) {
-    struct ibv_wc send_wc[16];
-    int sn = ibv_poll_cq(mailbox->send_cq, 16, send_wc);
-    if (sn < 0) {
-        fprintf(stderr, "Send CQ error: %s (%d)\n", ibv_wc_status_str(send_wc[0].status), send_wc[0].status);
-        return;
-    }
-
-    for (int i = 0; i < sn; i++) {
-        if (send_wc[i].status != IBV_WC_SUCCESS) {
-            fprintf(stderr, "Completion error: %s (%d)\n", ibv_wc_status_str(send_wc[i].status), send_wc[i].status);
-            continue;
-        }
-        // Check opcode and handle completion
-        if (send_wc[i].opcode != IBV_WC_SEND) {
-            fprintf(stderr, "Unexpected completion opcode: %d\n", send_wc[i].opcode);
-            continue;
-        }
-        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)send_wc[i].wr_id;
-        enqueue(mailbox->sendBufferQueue, entry);
-        mailbox->outstanding_sends--;
-    }
-
-    struct ibv_wc recv_wc[16];
-    int rn = ibv_poll_cq(mailbox->recv_cq, 16, recv_wc);
-    if (rn < 0) {
-        fprintf(stderr, "Recv CQ error: %s (%d)\n", ibv_wc_status_str(recv_wc[0].status), recv_wc[0].status);
-        return;
-    }
-
-    for (int i = 0; i < rn; i++) {
-        if (recv_wc[i].status != IBV_WC_SUCCESS) {
-            fprintf(stderr, "Recv CQ error: %s (%d)\n",
-                    ibv_wc_status_str(recv_wc[i].status), recv_wc[i].status);
-            continue;
-        }
-        if (recv_wc[i].opcode != IBV_WC_RECV) {
-            fprintf(stderr, "Unexpected completion opcode: %d\n", recv_wc[i].opcode);
-            continue;
-        }
-
-        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)recv_wc[i].wr_id;
-        int len = recv_wc[i].byte_len;
-        mailbox->posted_recvs--;
-        // printf("Received message: %.*s\n", len, (char *)entry->realBuff);
-        enqueue(mailbox->recvBufferQueue, entry);
-    }
-
-    while (mailbox->posted_recvs < mailbox->max_recvs) {
-        RVMA_Buffer_Entry *entry = dequeue(mailbox->recvBufferQueue);
-        if (!entry) break;
-
-        struct ibv_sge sge = {
-            .addr = (uintptr_t)entry->realBuff,
-            .length = MAX_RECV_SIZE,
-            .lkey = entry->mr->lkey
-        };
-
-        struct ibv_recv_wr wr = {
-            .wr_id = (uintptr_t)entry,
-            .sg_list = &sge,
-            .num_sge = 1
-        };
-
-        ibv_post_recv(mailbox->qp, &wr, NULL);
-
-        mailbox->posted_recvs++;
-    }
 }

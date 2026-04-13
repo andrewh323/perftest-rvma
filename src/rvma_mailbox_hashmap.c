@@ -25,6 +25,14 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
         free(mailboxPtr);
         return NULL;
     }
+    
+    RVMA_Buffer_Queue *inflightSendQueue;
+    inflightSendQueue = createBufferQueue(QUEUE_CAPACITY);
+    if(!inflightSendQueue) {
+        print_error("setupMailbox: Inflight Send Buffer Queue failed to be created");
+        free(mailboxPtr);
+        return NULL;
+    }
 
     RVMA_Buffer_Queue *recvBufferQueue;
     recvBufferQueue = createBufferQueue(QUEUE_CAPACITY);
@@ -54,6 +62,7 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     mailboxPtr->max_recvs = 128;
     mailboxPtr->posted_recvs = 0;
     mailboxPtr->sendBufferQueue = sendBufferQueue;
+    mailboxPtr->inflightSendQueue = inflightSendQueue;
     mailboxPtr->recvBufferQueue = recvBufferQueue;
     mailboxPtr->retiredBufferQueue = retiredBufferQueue;
     mailboxPtr->vaddr = vaddr;

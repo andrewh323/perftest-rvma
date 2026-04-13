@@ -32,7 +32,7 @@ RVMA_Status rvmaCloseWin(RVMA_Win*);
 
 int64_t rvmaWinGetEpoch(RVMA_Win*);
 
-RVMA_Buffer_Entry* rvmaPostBuffer(void *buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, uint64_t virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType, int bufferType);
+RVMA_Buffer_Entry* rvmaPostBuffer(void *buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, uint64_t virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType);
 
 RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType);
 
