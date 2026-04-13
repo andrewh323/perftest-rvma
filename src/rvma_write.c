@@ -194,22 +194,9 @@ RVMA_Status rvmaCloseWin(RVMA_Win *window) {
     return RVMA_SUCCESS;
 }
 
-// Buffer type 0 for send buffer, 1 for recv buffer
-RVMA_Buffer_Entry* rvmaPostBuffer(void *buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, uint64_t virtualAddress,
-               RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType) {
-
-    RVMA_Buffer_Entry *entry = createBufferEntry(buffer, size, notificationPtr, notificationLenPtr, epochThreshold, epochType);
-    if (entry == NULL) {
-        print_error("rvmaPostBuffer: error while malloc new buffer entry");
-        return NULL;
-    }
-    return entry;
-}
-
 RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
-    
     size_t total_size = num_bufs * MAX_SEND_SIZE;
-
+    
     mailbox->send_pool = malloc(total_size);
     if (!mailbox->send_pool) {
         print_error("postSendPool: malloc failed");
@@ -243,7 +230,7 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
             return RVMA_ERROR;
         }
 
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer(send_ptr, MAX_SEND_SIZE, notifBuffPtr, (void *)notifLenPtr, vaddr, mailbox, threshold, epochType);
+        RVMA_Buffer_Entry *entry = createBufferEntry(send_ptr, MAX_SEND_SIZE, notifBuffPtr, (void *)notifLenPtr, threshold, epochType);
         if (!entry) {
             print_error("postSendPool: rvmaPostBuffer failed");
             return RVMA_ERROR;
@@ -292,8 +279,7 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
             return RVMA_ERROR;
         }
 
-        RVMA_Buffer_Entry *entry = rvmaPostBuffer(recv_ptr, MAX_RECV_SIZE, notifBuffPtr, (void *)notifLenPtr,
-                                    vaddr, mailbox, threshold, epochType);
+        RVMA_Buffer_Entry *entry = createBufferEntry(recv_ptr, MAX_RECV_SIZE, notifBuffPtr, (void *)notifLenPtr, threshold, epochType);
         if (!entry) {
             print_error("postRecvPool: rvmaPostBuffer failed");
             return RVMA_ERROR;
