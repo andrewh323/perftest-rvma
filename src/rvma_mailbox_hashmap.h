@@ -13,6 +13,14 @@
 #define RVMA_MAX_BATCH 16
 
 typedef struct {
+    int total_frags;
+    int received_frags;
+    int length;
+    char *buffer;
+    uint64_t msg_id;
+} RVMA_Reassembly;
+
+typedef struct {
     int key;
     int type;
     int sendCount;
@@ -35,6 +43,7 @@ typedef struct {
     struct rdma_event_channel *ec; // Event channel
     struct ibv_context *ctx; // Device context
 
+    RVMA_Reassembly *reassembly;
     RVMA_Buffer_Queue *sendBufferQueue;
     RVMA_Buffer_Queue *inflightSendQueue;
     RVMA_Buffer_Queue *recvBufferQueue;

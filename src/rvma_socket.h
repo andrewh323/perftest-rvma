@@ -15,6 +15,7 @@
 #define RS_MAX_TRANSFER 4050 /* 4KB MTU - 40B GRH */ /* set to 4050 so message fragments can be observed*/
 
 struct dgram_frag_header {
+    uint64_t msg_id;
     uint32_t frag_num;
     uint32_t total_frags;
 };

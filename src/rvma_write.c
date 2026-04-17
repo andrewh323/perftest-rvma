@@ -350,7 +350,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         .opcode = IBV_WR_SEND,
         .send_flags = IBV_SEND_SIGNALED // TODO: signal every N sends
     };
-    // ("Posting send: buffer addr=%p, size=%ld\n", data, dataSize);
+    // printf("Posting send: buffer addr=%p, size=%ld\n", data, dataSize);
 
     if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends - 1) {
         return RVMA_RETRY;
@@ -425,8 +425,7 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         // printf("Received message: %.*s\n", len, (char *)entry->realBuff);
         enqueue(mailbox->recvBufferQueue, entry);
     }
-
-
+    
     while (mailbox->posted_recvs < mailbox->max_recvs) {
         RVMA_Buffer_Entry *entry = dequeue(mailbox->recvBufferQueue);
         if (!entry) break;
@@ -451,6 +450,68 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         }
 
         mailbox->posted_recvs++;
+    }
+}
+
+void rvmaProgressUD(RVMA_Mailbox *mailbox) {
+    // Send path
+    int num_wc = 128;
+    struct ibv_wc send_wc[num_wc];
+    int sn = ibv_poll_cq(mailbox->send_cq, num_wc, send_wc);
+    if (sn < 0) {
+        fprintf(stderr, "Send CQ error: %s (%d)\n", ibv_wc_status_str(send_wc[0].status), send_wc[0].status);
+        return;
+    }
+
+    for (int i = 0; i < sn; i++) {
+        if (send_wc[i].status != IBV_WC_SUCCESS) {
+            fprintf(stderr, "Completion error: %s (%d)\n", ibv_wc_status_str(send_wc[i].status), send_wc[i].status);
+            continue;
+        }
+        // Check opcode and handle completion
+        if (send_wc[i].opcode != IBV_WC_SEND) {
+            fprintf(stderr, "Unexpected completion opcode: %d\n", send_wc[i].opcode);
+            continue;
+        }
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)send_wc[i].wr_id;
+        enqueue(mailbox->sendBufferQueue, entry);
+        mailbox->outstanding_sends--;
+    }
+
+    // Recv path
+    struct ibv_wc recv_wc[num_wc];
+    int rn;
+    struct ibv_wc *wc;
+    while ((rn = ibv_poll_cq(mailbox->recv_cq, num_wc, recv_wc)) > 0) {
+        for (int i = 0; i < rn; i++) {
+            wc = &recv_wc[i];
+            if (wc->status != IBV_WC_SUCCESS) continue;
+
+            RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc->wr_id;
+            char *recv_buf = (char *)entry->realBuff;
+
+            int grh = (wc->wc_flags & IBV_WC_GRH) ? 40 : 0;
+            char *data = recv_buf + grh;
+            int data_len = wc->byte_len - grh;
+
+            struct dgram_frag_header *hdr = (struct dgram_frag_header *)data;
+
+            char *payload = data + sizeof(*hdr);
+            int payload_len = data_len - sizeof(*hdr);
+
+            // Process reassembly here
+
+            if (hdr->frag_num == 1) {
+                // set total frags, received_frags & length = 0, allocate buffer
+            }
+
+            // Adjust offset and prepare next buffer space
+
+            // Increment received frags and length
+            // Check for completion, if complete enqueue it to completed recv queue
+            
+            // Repost recv buffer
+        }
     }
 }
 
