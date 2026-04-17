@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
+    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr, MSG_SIZE);
 
 	// Bind address to socket
 	rvbind(listen_fd, (struct sockaddr *)&addr, sizeof(addr));
@@ -79,9 +79,7 @@ int main(int argc, char **argv) {
 		}
 		printf("Client %d successfully connected!\n", i+1);
 	}
-	uint64_t t1, t2, t3;
-
-    ssize_t n;
+	
     ssize_t total = 0;
 
 	// While server is running, poll all clients and recv messages

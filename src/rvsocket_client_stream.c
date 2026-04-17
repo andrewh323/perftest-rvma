@@ -30,10 +30,17 @@ int main(int argc, char **argv) {
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(PORT);
+    // Arg 1 - Server address
     if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) != 1) {
         perror("inet_pton failed");
         return -1;
     };
+    // Arg 2 - Message size (Default to 1 KB)
+    int size = 1024;
+    if (argc > 2) {
+        size = atoi(argv[2]);
+    }
+    printf("Sending messages of size %d bytes\n", size);
 
     // Convert IP to host byte order and construct vaddr
     uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
@@ -43,7 +50,7 @@ int main(int argc, char **argv) {
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
+    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr, size);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
@@ -66,13 +73,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     printf("Connected to server %s:%d!\n", argv[1], PORT);
-
-    // Define message size
-    int size = 1024;
-    if (argc > 2) {
-        size = atoi(argv[2]);
-    }
-    printf("Sending messages of size %d bytes\n", size);
 
     int num_sends = 1000;
     int warmup_sends = 10; // number of warmup sends

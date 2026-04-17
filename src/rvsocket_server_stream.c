@@ -56,6 +56,11 @@ int main(int argc, char **argv) {
 	int num_clients = 1;
 	int conn_fd[num_clients];
 
+	int size = 1024;
+    if (argc > 1) {
+        size = atoi(argv[1]);
+    }
+
 	uint32_t host_ip = get_host_addr("ib0");
 	uint64_t vaddr = constructVaddr(reserved, host_ip, PORT);
 	printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
@@ -66,7 +71,7 @@ int main(int argc, char **argv) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
+    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr, size);
 
 	// Bind address to socket
 	rvbind(listen_fd, (struct sockaddr *)&addr, sizeof(addr));
@@ -75,10 +80,6 @@ int main(int argc, char **argv) {
 	rvlisten(listen_fd, 5);
 	printf("Server listening on port %d...\n", PORT);
 
-	int size = 1024;
-    if (argc > 1) {
-        size = atoi(argv[1]);
-    }
 	int num_sends = 1000;
 
 	void *recv_buf = malloc(size);

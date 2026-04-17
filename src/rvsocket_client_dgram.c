@@ -33,6 +33,11 @@ int main(int argc, char **argv) {
         perror("inet_pton failed");
         return -1;
     };
+    
+    int size = 1024;
+    if (argc > 2) {
+        size = atoi(argv[2]);
+    }
 
     // Convert IP to host byte order and construct vaddr
     uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
@@ -42,7 +47,7 @@ int main(int argc, char **argv) {
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
     
-    sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
+    sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr, size);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
@@ -75,10 +80,6 @@ int main(int argc, char **argv) {
     }
     int res;
 
-    int size = 1024;
-    if (argc > 2) {
-        size = atoi(argv[2]);
-    }
     printf("Sending messages of size %d bytes\n", size);
 
     int num_sends = 100;

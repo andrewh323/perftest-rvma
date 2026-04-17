@@ -195,7 +195,8 @@ RVMA_Status rvmaCloseWin(RVMA_Win *window) {
 }
 
 RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
-    size_t total_size = num_bufs * MAX_SEND_SIZE;
+    size_t total_size = MAX_BYTES;
+    size_t buffer_size = total_size / num_bufs;
     
     mailbox->send_pool = malloc(total_size);
     if (!mailbox->send_pool) {
@@ -210,9 +211,11 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
         return RVMA_ERROR;
     }
 
+    printf("Posting send pool of %d buffers\n", num_bufs);
+
     for (int i = 0; i < num_bufs; i++) {
         // Define buffer address for specific entry
-        char *send_buf = (char *)mailbox->send_pool + i * MAX_SEND_SIZE;
+        char *send_buf = (char *)mailbox->send_pool + i * buffer_size;
         void *send_ptr = send_buf;
 
         void **notifBuffPtr = malloc(sizeof(void *));
@@ -220,17 +223,18 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
         
         int64_t threshold;
         if (epochType == EPOCH_OPS) {
-            threshold = MAX_RECV_SIZE / RS_MAX_TRANSFER;
+            // Ceiling divide
+            threshold = (buffer_size + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER;
         }
         else if (epochType == EPOCH_BYTES) {
-            threshold = MAX_RECV_SIZE;
+            threshold = buffer_size;
         }
         else {
             print_error("postSendPool: invalid epoch type");
             return RVMA_ERROR;
         }
 
-        RVMA_Buffer_Entry *entry = createBufferEntry(send_ptr, MAX_SEND_SIZE, notifBuffPtr, (void *)notifLenPtr, threshold, epochType);
+        RVMA_Buffer_Entry *entry = createBufferEntry(send_ptr, buffer_size, notifBuffPtr, (void *)notifLenPtr, threshold, epochType);
         if (!entry) {
             print_error("postSendPool: rvmaPostBuffer failed");
             return RVMA_ERROR;
@@ -245,7 +249,8 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
 RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
     uint64_t start, end;
     start = rdtsc();
-    size_t total_size = num_bufs * MAX_RECV_SIZE;
+    size_t total_size = MAX_BYTES;
+    size_t buffer_size = total_size / num_bufs;
 
     mailbox->recv_pool = malloc(total_size);
     if (!mailbox->recv_pool) {
@@ -260,7 +265,7 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
     }
 
     for (int i = 0; i < num_bufs; i++) {
-        char *recv_buf = (char *)mailbox->recv_pool + i * MAX_RECV_SIZE;
+        char *recv_buf = (char *)mailbox->recv_pool + i * buffer_size;
         void *recv_ptr = recv_buf;
 
         // Setup notification pointers (per-buffer notification)
@@ -269,17 +274,17 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
 
         int64_t threshold;
         if (epochType == EPOCH_OPS) {
-            threshold = MAX_RECV_SIZE / RS_MAX_TRANSFER;
+            threshold = (buffer_size + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER;
         }
         else if (epochType == EPOCH_BYTES) {
-            threshold = MAX_RECV_SIZE;
+            threshold = buffer_size;
         }
         else {
             print_error("postRecvPool: invalid epoch type");
             return RVMA_ERROR;
         }
 
-        RVMA_Buffer_Entry *entry = createBufferEntry(recv_ptr, MAX_RECV_SIZE, notifBuffPtr, (void *)notifLenPtr, threshold, epochType);
+        RVMA_Buffer_Entry *entry = createBufferEntry(recv_ptr, buffer_size, notifBuffPtr, (void *)notifLenPtr, threshold, epochType);
         if (!entry) {
             print_error("postRecvPool: rvmaPostBuffer failed");
             return RVMA_ERROR;
@@ -292,7 +297,7 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
         // Build sge and wr, then post recv
         struct ibv_sge sge = {
             .addr = (uintptr_t)recv_ptr,
-            .length = MAX_RECV_SIZE,
+            .length = buffer_size,
             .lkey = entry->mr->lkey
         };
 
@@ -345,7 +350,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         .opcode = IBV_WR_SEND,
         .send_flags = IBV_SEND_SIGNALED // TODO: signal every N sends
     };
-    // printf("Posting send: buffer addr=%p, size=%ld\n", data, dataSize);
+    // ("Posting send: buffer addr=%p, size=%ld\n", data, dataSize);
 
     if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends - 1) {
         return RVMA_RETRY;

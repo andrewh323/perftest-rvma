@@ -91,7 +91,6 @@ RVMA_Status enqueue(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry) {
     if (!entry) return RVMA_FAILURE;
 
     if (isFull(queue) == RVMA_TRUE) {
-        printf("enqueue: queue is full, capacity=%d, size=%d\n", queue->capacity, queue->size);
         return RVMA_QUEUE_FULL;
     }
     // Store entry at end position

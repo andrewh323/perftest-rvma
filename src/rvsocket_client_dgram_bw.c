@@ -10,16 +10,14 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024*4
+#define MSG_SIZE 1024*1024
 #define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
-
 int main(int argc, char **argv) {
-    double cpu_ghz = get_cpu_ghz();
     uint16_t reserved = 0x0001;
     int sockfd;
+    double cpu_ghz = get_cpu_ghz();
     struct sockaddr_in server_addr;
-    char *buffer = malloc(MSG_SIZE);
     memset(&server_addr, 0, sizeof(server_addr));
 
     server_addr.sin_family = AF_INET;
@@ -36,31 +34,42 @@ int main(int argc, char **argv) {
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
-
-    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr, MSG_SIZE);
+    
+    sockfd = rvsocket(SOCK_DGRAM, vaddr, windowPtr, MSG_SIZE);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
     }
+    
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
 
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET; // IPv4
     server_addr.sin_port = htons(PORT); // Port number
-    inet_pton(AF_INET, argv[1], &server_addr.sin_addr); // Convert IP address from text to binary form
 
     if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) <= 0) {
         perror("inet_pton");
         exit(EXIT_FAILURE);
     }
 
-    printf("Attempting to connect to server with vaddr %" PRIu64 "...\n", vaddr);
-
-    if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr) < 0) {
-        perror("rconnect");
-        exit(EXIT_FAILURE);
+    int ret;
+    // In case server is not yet ready for connection request, reattempt
+    for (int i = 0; i < 50; i++) {
+        ret = rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+        if (ret == 0) {
+            break;  // successfully connected
+        }
+        usleep(1000 * 100); // wait for 100 ms before reattempting
     }
-    printf("Connected to server %s:%d!\n", argv[1], PORT);
 
+    if (ret != 0) {
+        fprintf(stderr, "Failed to connect after multiple retries\n");
+        exit(1);
+    }
+    int res;
+
+    // Set to 1 to exclude warm-ups
+    void *buffer = malloc(MSG_SIZE);
 
     struct timespec start_time, end_time;
     size_t bytes_sent = 0;
@@ -69,7 +78,7 @@ int main(int argc, char **argv) {
     clock_gettime(CLOCK_MONOTONIC, &start_time); // Start timing just before sending
     
     while (bytes_sent < TOTAL_BYTES) {
-        int res = rvsend(sockfd, buffer, MSG_SIZE);
+        int res = rvsendto(sockfd, buffer, MSG_SIZE, windowPtr);
         if (res < 0) {
             fprintf(stderr, "Failed to send message\n");
         }
@@ -90,7 +99,7 @@ int main(int argc, char **argv) {
 
     printf("Elapsed time: %.2f microseconds\n", elapsed * 1e6);
     printf("Bandwidth: %.2f MB/s (%.2f GiB/s)\n", bandwidth_MBps, bandwidth_GBps); //GiB vs GB
-    
+
     rclose(sockfd);
     return 0;
 }

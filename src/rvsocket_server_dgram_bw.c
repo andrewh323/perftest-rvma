@@ -10,7 +10,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-
+#define MSG_SIZE 1024*4
 
 uint32_t get_host_addr(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;
@@ -43,11 +43,6 @@ int main(int argc, char **argv) {
     memset(&addr, 0, sizeof(addr));
 	int dgram_fd;
 
-    int64_t size = 1024;
-    if (argc > 1) {
-        size = atoi(argv[1]);
-    }
-
     // Construct virtual address
     uint32_t host_ip = get_host_addr("ib0");
 	uint64_t vaddr = constructVaddr(reserved, host_ip, PORT);
@@ -59,7 +54,7 @@ int main(int argc, char **argv) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr, size);
+    dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr, MSG_SIZE);
 
 	// Bind host address for datagram socket
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));
@@ -82,23 +77,11 @@ int main(int argc, char **argv) {
     // Accept connection to exchange UD connection info
     rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
-    uint64_t t2;
-    
-    int num_sends = 100;
-    int warmup_sends = 10;
-    int ret;
+    ssize_t total = 0;
 
-    void *recv_buf = malloc(size);
-    for (int i = 0; i < num_sends; i++){
-        ret = rvrecv(dgram_fd, recv_buf, size, 0);
-        if (ret < 0) {
-            perror("Error receiving message");
-        }
-
-        ret = rvsendto(dgram_fd, "ACK", 4, windowPtr);
-        if (ret < 0) {
-            perror("Error sending ACK");
-        }
+    void *recv_buf = malloc(MSG_SIZE);
+    while ((rvrecv(dgram_fd, recv_buf, MSG_SIZE, 0)) == 0) {
+        total += MSG_SIZE;
     }
 
     close(dgram_fd);
