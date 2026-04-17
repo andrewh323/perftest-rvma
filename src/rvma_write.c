@@ -350,7 +350,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         .opcode = IBV_WR_SEND,
         .send_flags = IBV_SEND_SIGNALED // TODO: signal every N sends
     };
-    // ("Posting send: buffer addr=%p, size=%ld\n", data, dataSize);
+    // printf("Posting send: buffer addr=%p, size=%ld\n", data, dataSize);
 
     if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends - 1) {
         return RVMA_RETRY;
@@ -396,6 +396,7 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
             fprintf(stderr, "Unexpected completion opcode: %d\n", send_wc[i].opcode);
             continue;
         }
+
         RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)send_wc[i].wr_id;
         enqueue(mailbox->sendBufferQueue, entry);
         mailbox->outstanding_sends--;
@@ -422,6 +423,8 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)recv_wc[i].wr_id;
         int len = recv_wc[i].byte_len;
         mailbox->posted_recvs--;
+        mailbox->recvCount++;
+        // printf("recv count: %d\n", mailbox->recvCount);
         // printf("Received message: %.*s\n", len, (char *)entry->realBuff);
         enqueue(mailbox->recvBufferQueue, entry);
     }

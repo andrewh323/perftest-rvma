@@ -16,6 +16,7 @@ typedef struct {
     int key;
     int type;
     int sendCount;
+    int recvCount;
     int max_outstanding_sends;
     int outstanding_sends;
     int posted_recvs;

@@ -149,6 +149,35 @@ static void rs_free(struct rvsocket *rvs) {
     free(rvs);
 }
 
+int rvclose(int socket) {
+    struct rvsocket *rvs = idm_lookup(&idm, socket);
+    if (!rvs) return -1;
+    RVMA_Mailbox *mb = rvs->mailboxPtr;
+
+    while (mb->outstanding_sends > 0) {
+        rvmaProgress(mb);
+    }
+
+    rdma_disconnect(rvs->cm_id);
+    if (mb->qp) ibv_destroy_qp(mb->qp);
+
+    if (mb->recv_mr) ibv_dereg_mr(mb->recv_mr);
+    if (mb->send_mr) ibv_dereg_mr(mb->send_mr);
+
+    if (mb->send_cq) ibv_destroy_cq(mb->send_cq);
+    if (mb->recv_cq) ibv_destroy_cq(mb->recv_cq);
+
+    if (mb->recv_pool) free(mb->recv_pool);
+    if (mb->send_pool) free(mb->send_pool);
+
+    ibv_dealloc_pd(mb->pd);
+
+    close(socket);
+    free(mb);
+    free(rvs);
+    return 0;
+}
+
 // Helper to construct virtual address
 uint64_t constructVaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port) {
     uint64_t res = (uint64_t)reserved << 48 | ((uint64_t)ip_host_order << 16) | port;
@@ -1174,6 +1203,9 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
         }
     } else {
         rvmaProgress(mailbox);
+        if (mailbox->recvCount == 1000) {
+            return 1;
+        }
     }
     return 0;
 }

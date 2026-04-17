@@ -103,7 +103,6 @@ int main(int argc, char **argv) {
             fprintf(stderr, "send failed at %d\n", completed);
             break;
         }
-        // rvrecv(sockfd, recv_buf, size, 0);  // drain the CQ after each send
         completed++;
     }
     t2 = rdtsc();
@@ -112,6 +111,6 @@ int main(int argc, char **argv) {
     printf("Average time per message: %.3f µs\n", elapsed_us / completed);
 
     free(send_times);
-    rclose(sockfd);
+    rvclose(sockfd);
     return 0;
 }

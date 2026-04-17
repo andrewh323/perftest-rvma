@@ -61,6 +61,8 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     mailboxPtr->outstanding_sends = 0;
     mailboxPtr->max_recvs = 128;
     mailboxPtr->posted_recvs = 0;
+    mailboxPtr->sendCount = 0;
+    mailboxPtr->recvCount = 0;
     mailboxPtr->sendBufferQueue = sendBufferQueue;
     mailboxPtr->inflightSendQueue = inflightSendQueue;
     mailboxPtr->recvBufferQueue = recvBufferQueue;

@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 
 	// While server is running, poll all clients and recv messages
 	// Currently rvrecv is blocking but maintains flow control
-	while ((rvrecv(conn_fd[0], buffer, MSG_SIZE, 0)) == 0) {
+	while ((rvrecv(conn_fd[0], buffer, MSG_SIZE, 0)) == 0 || 1) {
         total += MSG_SIZE;
     }
 	
@@ -92,8 +92,8 @@ int main(int argc, char **argv) {
 
 	// Close connections
 	for (int i = 0; i < num_clients; i++) {
-		rclose(conn_fd[i]);
+		rvclose(conn_fd[i]);
 	}
-	rclose(listen_fd);
+	close(listen_fd);
 	return 0;
 }
