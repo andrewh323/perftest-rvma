@@ -66,22 +66,20 @@ int main(int argc, char **argv) {
     size_t bytes_sent = 0;
     int count = 0;
 
-    clock_gettime(CLOCK_MONOTONIC, &start_time); // Start timing just before sending
-    
+    // Start timing after warmup
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
     while (bytes_sent < TOTAL_BYTES) {
         int res = rvsend(sockfd, buffer, MSG_SIZE);
-        if (res < 0) {
-            fprintf(stderr, "Failed to send message\n");
-        }
-        else {
-            bytes_sent += MSG_SIZE;
-            count += 1;
-        }
+        if (res < 0) break;
+        
+        bytes_sent += MSG_SIZE;
+        count += 1;
     }
-    
-    printf("Messages sent: %d\n", count);
+
     clock_gettime(CLOCK_MONOTONIC, &end_time); // End timing just after sending
 
+    printf("Messages sent: %d\n", count);
     // Calculate elapsed time in seconds
     double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
 

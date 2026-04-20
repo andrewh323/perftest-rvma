@@ -94,21 +94,28 @@ int main(int argc, char **argv) {
 
     void *recv_buf = malloc(size);
     uint64_t t1, t2;
-    int completed = 0, sent = 0;
+    uint64_t firstSendTime;
+    uint64_t total = 0, sent = 0;
 
     // Send messages to server
-    t1 = rdtsc();
-    while (completed < num_sends) {
-        if (rvsend(sockfd, messages[completed], size) < 0) {
-            fprintf(stderr, "send failed at %d\n", completed);
-            break;
+    for (int i = 0; i < num_sends; i++) {
+        t1 = rdtsc();
+        rvsend(sockfd, messages[i], size);
+        while (rvrecv(sockfd, recv_buf, size, 0) == 0) {}
+        t2 = rdtsc();
+        if (i == 0) {
+            firstSendTime = (t2 - t1);
         }
-        completed++;
+        else {
+            total += (t2 - t1);
+        }
     }
-    t2 = rdtsc();
-    elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
-    printf("Total time for sending %d messages: %.3f µs\n", completed, elapsed_us);
-    printf("Average time per message: %.3f µs\n", elapsed_us / completed);
+    
+    elapsed_us = total / (cpu_ghz * 1e3);
+    double firstSend_us = firstSendTime / (cpu_ghz * 1e3);
+    printf("Total time for sending %d messages: %.3f µs\n", num_sends, elapsed_us);
+    printf("Time to send first message: %.3f µs\n", firstSend_us);
+    printf("Average time per message: %.3f µs\n", elapsed_us / num_sends);
 
     free(send_times);
     rvclose(sockfd);

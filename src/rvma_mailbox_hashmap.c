@@ -43,6 +43,15 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
         return NULL;
     }
 
+    RVMA_Buffer_Queue *completedRecvQueue;
+    completedRecvQueue = createBufferQueue(QUEUE_CAPACITY);
+    if(!completedRecvQueue) {
+        print_error("setupMailbox: Recv Buffer Queue failed to be created");
+        free(mailboxPtr);
+        free(sendBufferQueue);
+        return NULL;
+    }
+
     RVMA_Buffer_Queue *retiredBufferQueue;
     retiredBufferQueue = createBufferQueue(1);
     if(!retiredBufferQueue) {
@@ -57,7 +66,7 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     mailboxPtr->send_cq = NULL;
     mailboxPtr->recv_cq = NULL;
     mailboxPtr->qp = NULL;
-    mailboxPtr->max_outstanding_sends = 128;
+    mailboxPtr->max_outstanding_sends = 1000;
     mailboxPtr->outstanding_sends = 0;
     mailboxPtr->max_recvs = 128;
     mailboxPtr->posted_recvs = 0;
@@ -66,6 +75,7 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     mailboxPtr->sendBufferQueue = sendBufferQueue;
     mailboxPtr->inflightSendQueue = inflightSendQueue;
     mailboxPtr->recvBufferQueue = recvBufferQueue;
+    mailboxPtr->completedRecvQueue = completedRecvQueue;
     mailboxPtr->retiredBufferQueue = retiredBufferQueue;
     mailboxPtr->vaddr = vaddr;
     mailboxPtr->key = hashFunction(mailboxPtr->vaddr, hashmapCapacity);

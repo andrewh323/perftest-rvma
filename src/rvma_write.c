@@ -203,6 +203,8 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
         print_error("postSendPool: malloc failed");
         return RVMA_ERROR;
     }
+    
+    memset(mailbox->send_pool, 0, total_size);
 
     // Register memory region as one large chunk
     mailbox->send_mr = ibv_reg_mr(mailbox->pd, mailbox->send_pool, total_size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
@@ -257,6 +259,8 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
         print_error("postRecvPool: malloc failed");
         return RVMA_ERROR;
     }
+
+    memset(mailbox->recv_pool, 0, total_size);
     
     mailbox->recv_mr = ibv_reg_mr(mailbox->pd, mailbox->recv_pool, total_size, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
     if (!mailbox->recv_mr) {
@@ -325,16 +329,16 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         return RVMA_RETRY;
     }
 
+    if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends) {
+        enqueue(mailbox->sendBufferQueue, entry);
+        return RVMA_RETRY;
+    }
+
     // Fill the buffer with data to send
     memcpy(entry->realBuff, buf, size);
     void *data = entry->realBuff;
     int64_t dataSize = size;
-
-    unsigned int flags = 0;
-    if (mailbox->sendCount % SIGNAL_INTERVAL == 0) {
-        flags |= IBV_SEND_SIGNALED;
-    }
-
+    
     // Build sge
     struct ibv_sge sge = {
         .addr = (uintptr_t)data,
@@ -350,11 +354,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         .opcode = IBV_WR_SEND,
         .send_flags = IBV_SEND_SIGNALED // TODO: signal every N sends
     };
-    // printf("Posting send: buffer addr=%p, size=%ld\n", data, dataSize);
 
-    if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends - 1) {
-        return RVMA_RETRY;
-    }
     struct ibv_send_wr *bad_wr = NULL;
     if (ibv_post_send(mailbox->qp, &send_wr, &bad_wr)) {
         perror("rvmaSend: ibv_post_send failed");
@@ -398,6 +398,11 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         }
 
         RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)send_wc[i].wr_id;
+        if (!entry) {
+            printf("NULL entry in completion!\n");
+            mailbox->outstanding_sends--;
+            continue;
+        }
         enqueue(mailbox->sendBufferQueue, entry);
         mailbox->outstanding_sends--;
     }
@@ -422,11 +427,10 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
 
         RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)recv_wc[i].wr_id;
         int len = recv_wc[i].byte_len;
-        mailbox->posted_recvs--;
-        mailbox->recvCount++;
         // printf("recv count: %d\n", mailbox->recvCount);
         // printf("Received message: %.*s\n", len, (char *)entry->realBuff);
-        enqueue(mailbox->recvBufferQueue, entry);
+        enqueue(mailbox->completedRecvQueue, entry);
+        mailbox->posted_recvs--;
     }
 
 

@@ -39,7 +39,7 @@ typedef struct {
     RVMA_Buffer_Queue *sendBufferQueue;
     RVMA_Buffer_Queue *inflightSendQueue;
     RVMA_Buffer_Queue *recvBufferQueue;
-    RVMA_Buffer_Queue *pendingRecvQueue;
+    RVMA_Buffer_Queue *completedRecvQueue;
     RVMA_Buffer_Queue *retiredBufferQueue;
 } RVMA_Mailbox;
 

@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
 	int num_sends = 1000;
 
 	void *recv_buf = malloc(size);
+	char *send_buf = "ACK";
 
 	char *messages[num_sends];
     for (int i = 0; i < num_sends; i++) {
@@ -103,18 +104,13 @@ int main(int argc, char **argv) {
 	uint64_t t1, t2, t3;
 
 	// While server is running, poll all clients and recv messages
-	// Currently rvrecv is blocking but maintains flow control
-
-	int complete = 0;
-	while(!complete) {
+	for (int i = 0; i < num_sends; i++) {
 		for (int c = 0; c < num_clients; c++) {
-			if (rvrecv(conn_fd[c], recv_buf, size, 0) == 1) {
-				complete = 1;
+			while (rvrecv(conn_fd[c], recv_buf, size, 0) == 0) {
 			}
+			rvsend(conn_fd[c], send_buf, size);
 		}
 	}
-
-	printf("Received all messages!\n");
 	
 	// Close the connection
 	for (int i = 0; i < num_clients; i++) {

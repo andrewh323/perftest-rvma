@@ -464,7 +464,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         return -1;
     }
 
-    uint64_t rdmaStart = rdtsc(); // Start timing after get_cm_event since it is blocking
+    start = rdtsc();
 
     // Check if event is a connection request
     if (event->event != RDMA_CM_EVENT_CONNECT_REQUEST) {
@@ -490,13 +490,13 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     }
 
     // Create completion queue
-    struct ibv_cq *send_cq = ibv_create_cq(client_cm_id->verbs, 128, NULL, NULL, 0);
+    struct ibv_cq *send_cq = ibv_create_cq(client_cm_id->verbs, 1024, NULL, NULL, 0);
     if (!send_cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
         return -1;
     }
-    struct ibv_cq *recv_cq = ibv_create_cq(client_cm_id->verbs, 128, NULL, NULL, 0);
+    struct ibv_cq *recv_cq = ibv_create_cq(client_cm_id->verbs, 1024, NULL, NULL, 0);
     if (!recv_cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
@@ -519,32 +519,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         perror("rdma_create_qp");
         return -1;
     }
-    uint64_t rdmaEnd = rdtsc();
-    double rdmaTime = (rdmaEnd - rdmaStart) / (cpu_ghz * 1e3);
-    printf("Time to setup rdma resources in rvaccept: %.3f µs\n", rdmaTime);
-    
-    start = rdtsc();
-
-    // Accept connection
-    if (rdma_accept(client_cm_id, NULL)) {
-        perror("rdma_accept");
-        rdma_ack_cm_event(event);
-        return -1;
-    }
-
-    // Drain the event channel for established event
-    if (rdma_get_cm_event(rvs->ec, &event)) {
-        perror("rdma_get_cm_event ESTABLISHED");
-        return -1;
-    }
-
-    if (event->event != RDMA_CM_EVENT_ESTABLISHED) {
-        fprintf(stderr, "Expected ESTABLISHED event: %s\n", rdma_event_str(event->event));
-        rdma_ack_cm_event(event);
-        return -1;
-    }
-
-    rdma_ack_cm_event(event);
 
     // Create a new rvsocket for accepted connection
     new_rvs = calloc(1, sizeof(*new_rvs));
@@ -576,8 +550,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     new_rvs->state = rs_connected;
     new_rvs->size = rvs->size;
 
-    end = rdtsc();
-
     // Dynamically set size of buffer pools
     int num_bufs = MAX_BYTES / new_rvs->size;
     if (num_bufs > 1000) {
@@ -598,11 +570,34 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
         return -1;
     }
 
+    // Accept connection
+    if (rdma_accept(client_cm_id, NULL)) {
+        perror("rdma_accept");
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+
+    // Drain the event channel for established event
+    if (rdma_get_cm_event(rvs->ec, &event)) {
+        perror("rdma_get_cm_event ESTABLISHED");
+        return -1;
+    }
+
+    if (event->event != RDMA_CM_EVENT_ESTABLISHED) {
+        fprintf(stderr, "Expected ESTABLISHED event: %s\n", rdma_event_str(event->event));
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+
+    rdma_ack_cm_event(event);
+
     // Insert new rvsocket into index map
     rs_insert(new_rvs, new_rvs->index);
 
     if (addr && addrlen)
         rgetpeername(new_rvs->index, addr, addrlen);
+
+    end = rdtsc();
 
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
     printf("rvaccept time: %.3f µs\n", elapsed_us);
@@ -752,13 +747,13 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     rvs->mailboxPtr->pd = pd;
 
     // Create CQ
-    struct ibv_cq *send_cq = ibv_create_cq(rvs->cm_id->verbs, 16, NULL, NULL, 0);
+    struct ibv_cq *send_cq = ibv_create_cq(rvs->cm_id->verbs, 1024, NULL, NULL, 0);
     if (!send_cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
         return -1;
     }
-    struct ibv_cq *recv_cq = ibv_create_cq(rvs->cm_id->verbs, 16, NULL, NULL, 0);
+    struct ibv_cq *recv_cq = ibv_create_cq(rvs->cm_id->verbs, 1024, NULL, NULL, 0);
     if (!recv_cq) {
         perror("ibv_create_cq failed");
         ibv_dealloc_pd(pd);
@@ -785,7 +780,6 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
         return -1;
     }
     rvs->mailboxPtr->qp = rvs->cm_id->qp;
-
     uint64_t rdmaSetup = rdtsc();
 
     // Connect
@@ -930,23 +924,11 @@ int rvsend(int socket, void *buf, int64_t len) {
     struct rvsocket *rvs = idm_at(&idm, socket);
     uint64_t vaddr = rvs->vaddr;
     RVMA_Status status;
-
-    if (rvs->type != SOCK_STREAM) {
-        fprintf(stderr, "rvsend: Socket type is not stream\n");
-        return -1;
-    }
-
+    int retries = 0;
     do {
         rvmaProgress(rvs->mailboxPtr);
         status = rvmaSend(buf, len, vaddr, rvs->mailboxPtr);
     } while (status == RVMA_RETRY);
-
-    if (status != RVMA_SUCCESS) {
-        fprintf(stderr, "rvmaSend failed\n");
-        return -1;
-    }
-    rvmaProgress(rvs->mailboxPtr);
-
     return 0;
 }
 
@@ -1180,7 +1162,6 @@ int rvrecvfrom(RVMA_Mailbox *mailbox) {
             free(msg_buf);
             return -1;
         }
-
         recv_count++;
     }
     free(msg_buf);
@@ -1201,11 +1182,15 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
             fprintf(stderr, "rvmaRecvfrom failed\n");
             return -1;
         }
-    } else {
-        rvmaProgress(mailbox);
-        if (mailbox->recvCount == 1000) {
-            return 1;
-        }
     }
-    return 0;
+    RVMA_Buffer_Entry *entry = NULL;
+    while (!entry) {
+        rvmaProgress(mailbox);
+        entry = dequeue(mailbox->completedRecvQueue);
+    }
+    size_t copy_len = len < (size_t)entry->realBuffSize ? len : (size_t)entry->realBuffSize;
+    memcpy(buf, entry->realBuff, copy_len);
+    enqueue(mailbox->recvBufferQueue, entry);
+
+    return (int)copy_len;
 }

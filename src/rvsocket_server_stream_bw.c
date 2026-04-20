@@ -12,6 +12,7 @@
 
 #define PORT 7471
 #define MSG_SIZE 1024*4
+#define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 uint32_t get_host_addr(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;
@@ -79,15 +80,17 @@ int main(int argc, char **argv) {
 		}
 		printf("Client %d successfully connected!\n", i+1);
 	}
-	
-    ssize_t total = 0;
 
-	// While server is running, poll all clients and recv messages
-	// Currently rvrecv is blocking but maintains flow control
-	while ((rvrecv(conn_fd[0], buffer, MSG_SIZE, 0)) == 0 || 1) {
-        total += MSG_SIZE;
-    }
-	
+	size_t total = 0;
+	while (total < TOTAL_BYTES) {
+		int n = rvrecv(conn_fd[0], buffer, MSG_SIZE, 0);
+		if (n < 0) {
+			fprintf(stderr, "rvrecv failed\n");
+			break;
+		}
+		total += n;
+	}
+
 	printf("Server received %zd bytes\n", total);
 
 	// Close connections
