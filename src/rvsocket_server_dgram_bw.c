@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr, MSG_SIZE);
+    dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
 
 	// Bind host address for datagram socket
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));

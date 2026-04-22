@@ -21,7 +21,7 @@ struct dgram_frag_header {
 
 uint64_t constructVaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port);
 
-uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window, int size);
+uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window);
 
 int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen);
 

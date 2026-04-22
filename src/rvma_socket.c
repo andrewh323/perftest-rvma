@@ -29,7 +29,7 @@
 #include "rvma_socket.h"
 #include "indexer.h"
 
-#define MAX_POOL_BUFS 128 // CHANGE: Set this dynamically according to specified message size
+#define MAX_POOL_BUFS 64 // CHANGE: Set this dynamically according to specified message size
 #define MAX_RECV_SIZE 1024*1024
 #define SIGNAL_INTERVAL 16
 #define MAX_BYTES 128*1024*1024 // Hardware limit of NIC
@@ -203,7 +203,7 @@ static inline uint64_t rdtsc(){
 
 // Create rvsocket
 // Return socketfd after inserting into idm
-uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window, int size) {
+uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     double cpu_ghz = get_cpu_ghz();
 	uint64_t start, end;
     double rdmaTime = 0;
@@ -216,7 +216,6 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window, int size) {
         return -1;
     
     rvs->type = type;
-    rvs->size = size;
 
     // Set rvsocket vaddr and mailbox
     rvs->vaddr = vaddr;
@@ -341,19 +340,13 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window, int size) {
         // Save qp to rvs
         rvs->mailboxPtr->qp = qp;
 
-        // Dynamically set size of buffer pools
-        int num_bufs = MAX_BYTES / rvs->size;
-        if (num_bufs > 1000) {
-            num_bufs = 1000;
-        }
-
-        printf("Allocating %d buffers into send and recv pools\n", num_bufs);
+        printf("Allocating %d buffers into send and recv pools\n", MAX_POOL_BUFS);
         // Post pools to prepare for incoming transmissions
-        if (postSendPool(rvs->mailboxPtr, num_bufs, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
             perror("postSendPool failed");
             return -1;
         }
-        if (postRecvPool(rvs->mailboxPtr, num_bufs, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
             perror("postRecvPool failed");
             return ;
         }
@@ -548,24 +541,17 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
 
     new_rvs->index = next_fd++;
     new_rvs->state = rs_connected;
-    new_rvs->size = rvs->size;
 
-    // Dynamically set size of buffer pools
-    int num_bufs = MAX_BYTES / new_rvs->size;
-    if (num_bufs > 1000) {
-        num_bufs = 1000;
-    }
-
-    printf("Allocating %d buffer into send and recv pools\n", num_bufs);
+    printf("Allocating %d buffers into send and recv pools\n", MAX_POOL_BUFS);
 
     // Prepost buffer pools
-    if (postSendPool(new_rvs->mailboxPtr, num_bufs, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+    if (postSendPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
         perror("postSendPool failed");
         return -1;
     }
     
     printf("Posting buffer pools\n");
-    if (postRecvPool(new_rvs->mailboxPtr, num_bufs, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+    if (postRecvPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
         perror("postRecvPool failed");
         return -1;
     }
@@ -800,23 +786,17 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     rdma_ack_cm_event(event);
 
     uint64_t beforePostRecv = rdtsc();
-    // Prepost buffer pools
-    // Dynamically set size of buffer pools
-    int num_bufs = MAX_BYTES / rvs->size;
-    if (num_bufs > 1000) {
-        num_bufs = 1000;
-    }
 
-    printf("Allocating %d buffer into send and recv pools\n", num_bufs);
+    printf("Allocating %d buffer into send and recv pools\n", MAX_POOL_BUFS);
     
     // Prepost buffer pools
-    if (postSendPool(rvs->mailboxPtr, num_bufs, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+    if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
         perror("postSendPool failed");
         return -1;
     }
     
     printf("Posting buffer pools\n");
-    if (postRecvPool(rvs->mailboxPtr, num_bufs, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+    if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
         perror("postRecvPool failed");
         return -1;
     }
@@ -929,7 +909,7 @@ int rvsend(int socket, void *buf, int64_t len) {
         rvmaProgress(rvs->mailboxPtr);
         status = rvmaSend(buf, len, vaddr, rvs->mailboxPtr);
     } while (status == RVMA_RETRY);
-    return 0;
+    return len;
 }
 
 // Send for datagram sockets

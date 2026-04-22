@@ -11,7 +11,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024*4
+#define MSG_SIZE 1024
 #define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 uint32_t get_host_addr(const char *iface_name) {
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr, MSG_SIZE);
+    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
 
 	// Bind address to socket
 	rvbind(listen_fd, (struct sockaddr *)&addr, sizeof(addr));

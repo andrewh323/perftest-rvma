@@ -83,40 +83,78 @@ int main(int argc, char **argv) {
     elapsed_us = (end - start) / (cpu_ghz * 1e3);
     printf("rconnect time: %.3f µs\n", elapsed_us);
 
-    size_t msg_size = atoi(argv[2]);
+    int msg_size = 1024;
+    if (argc > 2) {
+        msg_size = atoi(argv[2]);
+    }
+
     char *message = malloc(msg_size);
 
     memset(message, 'A', msg_size - 1);
     message[msg_size - 1] = '\0';
 
-    int num_sends = 100;
-    double *latencies = malloc(num_sends * sizeof(double));
-    char ack[8];
+    int num_sends = 1000;
+    uint64_t *latencies = malloc(num_sends * sizeof(uint64_t));
+    uint64_t t1, t2;
+    uint64_t total = 0;
 
     for (int i = 0; i < num_sends; i++) {
         uint64_t t1 = rdtsc();
-        if (rsend(sockfd, message, msg_size, 0) < 0) {
-            perror("rsend");
-            exit(EXIT_FAILURE);
+        size_t total_sent = 0;
+        while (total_sent < msg_size) {
+            ssize_t n = rsend(sockfd, message + total_sent, msg_size - total_sent, 0);
+            if (n <= 0) {
+                perror("rsend");
+                exit(EXIT_FAILURE);
+            }
+            total_sent += n;
         }
-
-        if (rrecv(sockfd, ack, sizeof(ack), 0) < 0) {
-            perror("rrecv");
-            exit(EXIT_FAILURE);
+        size_t total_recv = 0;
+        while (total_recv < msg_size) {
+            ssize_t n = rrecv(sockfd, message + total_recv, msg_size - total_recv, 0);
+            if (n <= 0) {
+                perror("rrecv");
+                exit(EXIT_FAILURE);
+            }
+            total_recv += n;
         }
-        uint64_t t4 = rdtsc();
-        if (i == 0) {
-            latencies[i] = 0;
+        uint64_t t2 = rdtsc();
+        if (i > 0) { // Skip warmup round
+            latencies[i - 1] = t2 - t1;
+            total += (t2 - t1);
         }
-        else {
-            rtt += ((t4 - t1) / (cpu_ghz * 1e3));
-        }
-        usleep(10);
+        
     }
 
-    double send_time = rtt / (num_sends);
-    printf("RTT: %.3f microseconds\n", send_time);
+    double mean_cycles = total / (double)(num_sends - 1);
+    double mean_us = mean_cycles / (cpu_ghz * 1e3);
 
+    double variance = 0.0;
+    for (int i = 0; i < num_sends - 1; i++) {
+        double diff = latencies[i] - mean_cycles;
+        variance += diff * diff;
+    }
+    variance /= (num_sends - 1);
+
+    double stddev_cycles = sqrt(variance);
+    double stddev_us = stddev_cycles / (cpu_ghz * 1e3);
+
+    uint64_t min = latencies[0];
+    uint64_t max = latencies[0];
+
+    for (int i = 1; i < num_sends - 1; i++) {
+        if (latencies[i] < min) min = latencies[i];
+        if (latencies[i] > max) max = latencies[i];
+    }
+    
+    printf("Mean: %.3f µs\n", mean_us);
+    printf("Stddev: %.3f µs\n", stddev_us);
+    printf("Min: %.3f µs\n", min / (cpu_ghz * 1e3));
+    printf("Max: %.3f µs\n", max / (cpu_ghz * 1e3));
+
+    free(latencies);
+    free(message);
+    
     // Close the socket
     rclose(sockfd);
     return 0;

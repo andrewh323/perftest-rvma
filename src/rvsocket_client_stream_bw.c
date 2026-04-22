@@ -10,7 +10,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024*4
+#define MSG_SIZE 1024
 #define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr, MSG_SIZE);
+    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     double bandwidth_GBps = bandwidth_MBps / 1024; // Convert to GiB/s
 
     printf("Elapsed time: %.2f microseconds\n", elapsed * 1e6);
-    printf("Bandwidth: %.2f MB/s (%.2f GiB/s)\n", bandwidth_MBps, bandwidth_GBps); //GiB vs GB
+    printf("Bandwidth: %.2f MiB/s (%.2f GiB/s)\n", bandwidth_MBps, bandwidth_GBps); //GiB vs GB
     
     rvclose(sockfd);
     return 0;

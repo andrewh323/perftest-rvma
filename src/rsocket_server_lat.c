@@ -20,16 +20,22 @@ static inline uint64_t rdtsc(){
     return ((uint64_t)hi << 32) | lo;
 }
 
-int main() {
+int main(int argc, char **argv) {
+	double cpu_ghz = get_cpu_ghz();
 	int listen_fd, conn_fd;
 	struct sockaddr_in addr;
-	char buffer[1024*100];
+	int size = 1024;
+    if (argc > 1) {
+        size = atoi(argv[1]);
+    }
+
+	char *buffer = malloc(size);
 	uint64_t start, end, t2, t3;
 
 	start = rdtsc();
 	listen_fd = rsocket(AF_INET, SOCK_STREAM, 0);
 	end = rdtsc();
-	printf("rsocket setup time: %.3f µs\n", (end - start) / (2.45 * 1e3));
+	printf("rsocket setup time: %.3f µs\n", (end - start) / (cpu_ghz * 1e3));
 
 	memset(&addr, 0, sizeof(addr));
 
@@ -42,34 +48,45 @@ int main() {
 	start = rdtsc();
 	rbind(listen_fd, (struct sockaddr *)&addr, sizeof(addr));
 	end = rdtsc();
-	printf("rbind time: %.3f µs\n", (end - start) / (2.45 * 1e3));
+	printf("rbind time: %.3f µs\n", (end - start) / (cpu_ghz * 1e3));
 
 	// Listen for incoming connections
 	start = rdtsc();
 	rlisten(listen_fd, 5);
 	end = rdtsc();
-	printf("rlisten time: %.3f µs\n", (end - start) / (2.45 * 1e3));
+	printf("rlisten time: %.3f µs\n", (end - start) / (cpu_ghz * 1e3));
 	printf("Server listening on port %d...\n", PORT);
 
 	// Accept a connection from client
 	conn_fd = raccept(listen_fd, NULL, NULL); // print in rsocket.c since raccept is blocking
 
-	int num_recv = 100;
-	double cpu_ghz = get_cpu_ghz();
+	int num_recv = 1000;
 	double *recv_times = malloc(num_recv * sizeof(double));
 
 	for (int i = 0; i < num_recv; i++) {
-		// Receive data from client
-		t2 = rdtsc();
-		ssize_t n = rrecv(conn_fd, buffer, sizeof(buffer), 0);
-		if (n <= 0) break;
-		uint64_t t3 = rdtsc();
-		recv_times[i] = t2 / (cpu_ghz * 1e3);
-		printf("Server received message %d\n", i);
-		rsend(conn_fd, "ACK", 4, 0);
+		size_t total_recv = 0;
+		while (total_recv < size) {
+			ssize_t n = rrecv(conn_fd, buffer + total_recv, size - total_recv, 0);
+			if (n <= 0) {
+				perror("rrecv");
+				exit(EXIT_FAILURE);
+			}
+			total_recv += n;
+		}
+
+		size_t total_sent = 0;
+		while (total_sent < size) {
+			ssize_t n = rsend(conn_fd, buffer + total_sent, size - total_sent, 0);
+			if (n <= 0) {
+				perror("rsend");
+				exit(EXIT_FAILURE);
+			}
+			total_sent += n;
+		}
 	}
 
 	// Close the connection
+	free(buffer);
 	rclose(conn_fd);
 	rclose(listen_fd);
 	return 0;

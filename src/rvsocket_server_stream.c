@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
 	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr, size);
+    listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
 
 	// Bind address to socket
 	rvbind(listen_fd, (struct sockaddr *)&addr, sizeof(addr));
@@ -83,14 +83,8 @@ int main(int argc, char **argv) {
 	int num_sends = 1000;
 
 	void *recv_buf = malloc(size);
-	char *send_buf = "ACK";
-
-	char *messages[num_sends];
-    for (int i = 0; i < num_sends; i++) {
-        messages[i] = malloc(size);
-        memset(messages[i], 'A', size);
-        snprintf(messages[i], size, "Msg %d", i);
-    }
+	char *send_buf = malloc(size);
+	memset(send_buf, 'B', size);
 
 	for (int i = 0; i < num_clients; i++) {
 		// Accept a connection from client
@@ -106,9 +100,8 @@ int main(int argc, char **argv) {
 	// While server is running, poll all clients and recv messages
 	for (int i = 0; i < num_sends; i++) {
 		for (int c = 0; c < num_clients; c++) {
-			while (rvrecv(conn_fd[c], recv_buf, size, 0) == 0) {
-			}
-			rvsend(conn_fd[c], send_buf, size);
+			rvrecv(conn_fd[c], recv_buf, size, 0);
+			rvsend(conn_fd[c], recv_buf, size); // Echo back message
 		}
 	}
 	

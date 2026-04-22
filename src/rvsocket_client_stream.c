@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
 
-    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr, size);
+    sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     if (sockfd < 0) {
         perror("rsocket");
         exit(EXIT_FAILURE);
@@ -75,15 +75,8 @@ int main(int argc, char **argv) {
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
     int num_sends = 1000;
-    int warmup_sends = 10; // number of warmup sends
 
-    // Set to 1 to exclude warm-ups
-    int exclude_warmup = 1;
-
-    int measured_sends = exclude_warmup ? (num_sends - warmup_sends) : num_sends;
-    double *send_times = malloc(measured_sends * sizeof(double));
-
-    double elapsed_us = 0;
+    uint64_t *latencies = malloc(num_sends * sizeof(uint64_t));
 
     char *messages[num_sends];
     for (int i = 0; i < num_sends; i++) {
@@ -94,30 +87,47 @@ int main(int argc, char **argv) {
 
     void *recv_buf = malloc(size);
     uint64_t t1, t2;
-    uint64_t firstSendTime;
-    uint64_t total = 0, sent = 0;
+    uint64_t total = 0;
 
     // Send messages to server
     for (int i = 0; i < num_sends; i++) {
         t1 = rdtsc();
         rvsend(sockfd, messages[i], size);
-        while (rvrecv(sockfd, recv_buf, size, 0) == 0) {}
+        rvrecv(sockfd, recv_buf, size, 0);
         t2 = rdtsc();
-        if (i == 0) {
-            firstSendTime = (t2 - t1);
-        }
-        else {
+        if (i > 0) { // Skip warmup round
+            latencies[i - 1] = t2 - t1;
             total += (t2 - t1);
         }
     }
-    
-    elapsed_us = total / (cpu_ghz * 1e3);
-    double firstSend_us = firstSendTime / (cpu_ghz * 1e3);
-    printf("Total time for sending %d messages: %.3f µs\n", num_sends, elapsed_us);
-    printf("Time to send first message: %.3f µs\n", firstSend_us);
-    printf("Average time per message: %.3f µs\n", elapsed_us / num_sends);
 
-    free(send_times);
+    double mean_cycles = total / (double)(num_sends - 1);
+    double mean_us = mean_cycles / (cpu_ghz * 1e3);
+
+    double variance = 0.0;
+    for (int i = 0; i < num_sends - 1; i++) {
+        double diff = latencies[i] - mean_cycles;
+        variance += diff * diff;
+    }
+    variance /= (num_sends - 1);
+
+    double stddev_cycles = sqrt(variance);
+    double stddev_us = stddev_cycles / (cpu_ghz * 1e3);
+
+    uint64_t min = latencies[0];
+    uint64_t max = latencies[0];
+
+    for (int i = 1; i < num_sends - 1; i++) {
+        if (latencies[i] < min) min = latencies[i];
+        if (latencies[i] > max) max = latencies[i];
+    }
+    
+    printf("Mean: %.3f µs\n", mean_us);
+    printf("Stddev: %.3f µs\n", stddev_us);
+    printf("Min: %.3f µs\n", min / (cpu_ghz * 1e3));
+    printf("Max: %.3f µs\n", max / (cpu_ghz * 1e3));
+
+    free(latencies);
     rvclose(sockfd);
     return 0;
 }
