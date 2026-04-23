@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 
     uint64_t t2;
     
-    int num_sends = 100;
+    int num_sends = 1000;
     int warmup_sends = 10;
     int ret;
 
@@ -94,8 +94,7 @@ int main(int argc, char **argv) {
         if (ret < 0) {
             perror("Error receiving message");
         }
-
-        ret = rvsendto(dgram_fd, "ACK", 4, windowPtr);
+        ret = rvsendto(dgram_fd, recv_buf, size, windowPtr); // Echo the same message back
         if (ret < 0) {
             perror("Error sending ACK");
         }

@@ -74,14 +74,11 @@ int main() {
     while (1) {
         ssize_t n = rrecvfrom(sockfd, buf, max_msg_size, 0,
                               (struct sockaddr *)&client_addr, &client_len);
-
-		printf("received!\n");
         if (n < (ssize_t)sizeof(struct msg_hdr))
             continue;
 
         rsendto(sockfd, buf, n, 0,
                 (struct sockaddr *)&client_addr, client_len);
-		printf("sent!\n");
     }
 
     rclose(sockfd);

@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
         exit(1);
 	}
 
-    int num_sends = 12;
+    int num_sends = 1000;
 
     memset(send_buf, 0, msg_size);
     memset(send_buf + sizeof(struct msg_hdr), 0xAB, payload_size);
@@ -128,7 +128,6 @@ int main(int argc, char **argv) {
                 perror("rrecvfrom");
                 continue;
             }
-            printf("Received message!\n");
 
             if (n < sizeof(struct msg_hdr))
                 continue;

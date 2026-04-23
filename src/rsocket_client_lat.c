@@ -123,7 +123,6 @@ int main(int argc, char **argv) {
             latencies[i - 1] = t2 - t1;
             total += (t2 - t1);
         }
-        
     }
 
     double mean_cycles = total / (double)(num_sends - 1);

@@ -39,7 +39,7 @@ int rvsend(int socket, void *buf, int64_t len);
 
 int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window);
 
-int rvrecvfrom(RVMA_Mailbox *mailbox);
+int rvrecvfrom(int socket, void *buf, size_t len, int flags);
 
 int rvrecv(int socket, void *buf, size_t len, int flags);
 

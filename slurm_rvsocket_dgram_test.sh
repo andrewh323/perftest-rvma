@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=rvsocket_dgram_test
 #SBATCH --exclusive
-#SBATCH --account=rrg-regrant
+#SBATCH --account=def-regrant
 #SBATCH --output=results/%x-%j.out
 #SBATCH --nodes=2
 #SBATCH --mem=16G
@@ -10,14 +10,14 @@
 
 REPEATS=10
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/rvsocket_dgram_exclude_warmup2.csv"
+CSV_FILE="$PATH_TO_BIN/results/rvsocket_dgram_exclude_warmup.csv"
 
 # Create results directory if needed
 mkdir -p "$PATH_TO_BIN/results/temp"
 
 # Write CSV header once
 if [ ! -f "$CSV_FILE" ]; then
-    echo "timestamp,repetition,size_bytes,min_send,max_send,avg_send,std_dev_send,avg_buffer_setup,avg_frag_setup,avg_wr_setup,avg_send_poll,min_recv,max_recv,avg_recv,avg_recv_poll,std_dev_recv,mailbox_init,rvsocket,rvbind,rvconnect_dgram,rvaccept_dgram,postRecvPool,qp_setup" > "$CSV_FILE"
+    echo "timestamp,repetition,size_bytes,avg_send,std_dev_send,mailbox_init,rvsocket,rvbind,rvconnect_dgram,rvaccept_dgram,qp_setup" > "$CSV_FILE"
 fi
 
 # Get nodes
@@ -39,7 +39,7 @@ CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/client-dgram-$SLURM_JOB_ID.out"
 SERVER_EXEC="$PATH_TO_BIN/rvsocket_server_dgram"
 CLIENT_EXEC="$PATH_TO_BIN/rvsocket_client_dgram"
 
-declare -a SIZES=(1 4 16 64 256 1024 4050 16384 65536 262144 1048576) # 1B to 1MB
+declare -a SIZES=(1024 2048 4096 8192 16384 32768 65536 131072 262144 524288 1048576) # 1B to 1MB
 
 # Repeat the tests
 for REP in $(seq 1 $REPEATS); do
@@ -60,29 +60,17 @@ for REP in $(seq 1 $REPEATS); do
         wait $SERVER_PID 2>/dev/null
 
         # Extract times from client output
-        MIN_SEND=$(grep "^Min send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        MAX_SEND=$(grep "^Max send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         AVG_SEND=$(grep "^Avg send time:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         STD_DEV_SEND=$(grep "Send time stddev:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        BUFF_TIME=$(grep "Average buffer setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        FRAGMENT_SETUP=$(grep "Average frag setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        WR_TIME=$(grep "Average WR setup:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        AVG_SEND_POLL=$(grep "Average poll time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         WINDOW_INIT=$(grep "Window init setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         RVSOCKET_SETUP=$(grep "rvsocket total setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         RVCONNECT=$(grep "rvconnect_dgram total time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
         # Extract times from server output
-        MIN_RECV=$(grep "^Min recv time:"   "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        MAX_RECV=$(grep "^Max recv time:"   "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        AVG_RECV=$(grep "Avg recv time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        AVG_RECV_POLL=$(grep "Avg recv poll time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        STD_DEV_RECV=$(grep "Recv time stddev:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         RVBIND=$(grep "rvbind total time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        POSTRECVPOOL=$(grep "postRecvPool time" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         RVACCEPT=$(grep "rvaccept_dgram total time" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         QPSETUP=$(grep "Time to setup QP in rvsocket" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         # Append to CSV with repetition
-        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$MIN_SEND,$MAX_SEND,$AVG_SEND,$STD_DEV_SEND,$BUFF_TIME,$FRAGMENT_SETUP,$WR_TIME,$AVG_SEND_POLL,$MIN_RECV,$MAX_RECV,$AVG_RECV,$AVG_RECV_POLL,$STD_DEV_RECV,$WINDOW_INIT,$RVSOCKET_SETUP,$RVBIND,$RVCONNECT,$RVACCEPT,$POSTRECVPOOL,$QPSETUP" >> "$CSV_FILE"
+        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$AVG_SEND,$STD_DEV_SEND,$WINDOW_INIT,$RVSOCKET_SETUP,$RVBIND,$RVCONNECT,$RVACCEPT,$QPSETUP" >> "$CSV_FILE"
     done
     # Add empty line between repetitions
     echo "" >> "$CSV_FILE"

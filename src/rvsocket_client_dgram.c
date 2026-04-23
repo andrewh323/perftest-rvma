@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
     printf("Sending messages of size %d bytes\n", size);
 
-    int num_sends = 100;
+    int num_sends = 1000;
     int warmup_sends = 10; // number of warmup sends
 
     // Set to 1 to exclude warm-ups
