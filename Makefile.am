@@ -57,7 +57,7 @@ if HABANALABS
 libperftest_a_SOURCES += src/hl_memory.c
 endif
 
-bin_PROGRAMS = ib_write_lat ib_write_bw rsocket_client_lat rsocket_server_lat rsocket_client_bw rsocket_server_bw rvma_mailbox_server rvma_mailbox_client rvsocket_client_stream rvsocket_server_stream rvsocket_server_dgram rvsocket_client_dgram rsocket_server_dgram rsocket_client_dgram rvsocket_server_stream_bw rvsocket_client_stream_bw rvsocket_server_dgram_bw rvsocket_client_dgram_bw
+bin_PROGRAMS = ib_write_lat ib_write_bw rsocket_client_lat rsocket_server_lat rsocket_client_bw rsocket_server_bw rvma_mailbox_server rvma_mailbox_client rvsocket_client_stream rvsocket_server_stream rvsocket_server_dgram rvsocket_client_dgram rsocket_server_dgram rsocket_client_dgram rvsocket_server_stream_bw rvsocket_client_stream_bw rvsocket_server_dgram_bw rvsocket_client_dgram_bw libvma_client_stream libvma_server_stream
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 
 if HAVE_RAW_ETH
@@ -75,6 +75,12 @@ LIBMLX4= -lmlx4
 else
 LIBMLX4=
 endif
+
+libvma_client_stream_SOURCES = src/libvma_client_stream.c
+libvma_client_stream_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+
+libvma_server_stream_SOURCES = src/libvma_server_stream.c
+libvma_server_stream_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
 rvsocket_client_dgram_SOURCES = src/rvsocket_client_dgram.c
 rvsocket_client_dgram_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)

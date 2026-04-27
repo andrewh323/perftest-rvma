@@ -138,8 +138,9 @@ bin_PROGRAMS = ib_write_lat$(EXEEXT) ib_write_bw$(EXEEXT) \
 	rvsocket_server_stream_bw$(EXEEXT) \
 	rvsocket_client_stream_bw$(EXEEXT) \
 	rvsocket_server_dgram_bw$(EXEEXT) \
-	rvsocket_client_dgram_bw$(EXEEXT) $(am__EXEEXT_1) \
-	$(am__EXEEXT_2)
+	rvsocket_client_dgram_bw$(EXEEXT) \
+	libvma_client_stream$(EXEEXT) libvma_server_stream$(EXEEXT) \
+	$(am__EXEEXT_1) $(am__EXEEXT_2)
 @HAVE_RAW_ETH_TRUE@am__append_5 = src/raw_ethernet_resources.c
 @HAVE_RAW_ETH_TRUE@am__append_6 = src/raw_ethernet_resources.h
 @HAVE_RAW_ETH_TRUE@am__append_7 = raw_ethernet_bw raw_ethernet_lat raw_ethernet_burst_lat raw_ethernet_fs_rate
@@ -221,6 +222,16 @@ ib_write_lat_OBJECTS = $(am_ib_write_lat_OBJECTS)
 ib_write_lat_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
+am_libvma_client_stream_OBJECTS = src/libvma_client_stream.$(OBJEXT)
+libvma_client_stream_OBJECTS = $(am_libvma_client_stream_OBJECTS)
+libvma_client_stream_DEPENDENCIES = libperftest.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_libvma_server_stream_OBJECTS = src/libvma_server_stream.$(OBJEXT)
+libvma_server_stream_OBJECTS = $(am_libvma_server_stream_OBJECTS)
+libvma_server_stream_DEPENDENCIES = libperftest.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__raw_ethernet_burst_lat_SOURCES_DIST =  \
 	src/raw_ethernet_send_burst_lat.c
 @HAVE_RAW_ETH_TRUE@am_raw_ethernet_burst_lat_OBJECTS =  \
@@ -389,6 +400,8 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/get_clock.Po src/$(DEPDIR)/hl_memory.Po \
 	src/$(DEPDIR)/host_memory.Po src/$(DEPDIR)/indexer.Po \
+	src/$(DEPDIR)/libvma_client_stream.Po \
+	src/$(DEPDIR)/libvma_server_stream.Po \
 	src/$(DEPDIR)/mmap_memory.Po src/$(DEPDIR)/neuron_memory.Po \
 	src/$(DEPDIR)/perftest_communication.Po \
 	src/$(DEPDIR)/perftest_counters.Po \
@@ -441,13 +454,14 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
-	$(ib_write_lat_SOURCES) $(raw_ethernet_burst_lat_SOURCES) \
-	$(raw_ethernet_bw_SOURCES) $(raw_ethernet_fs_rate_SOURCES) \
-	$(raw_ethernet_lat_SOURCES) $(rsocket_client_bw_SOURCES) \
-	$(rsocket_client_dgram_SOURCES) $(rsocket_client_lat_SOURCES) \
-	$(rsocket_server_bw_SOURCES) $(rsocket_server_dgram_SOURCES) \
-	$(rsocket_server_lat_SOURCES) $(rvma_mailbox_client_SOURCES) \
-	$(rvma_mailbox_server_SOURCES) \
+	$(ib_write_lat_SOURCES) $(libvma_client_stream_SOURCES) \
+	$(libvma_server_stream_SOURCES) \
+	$(raw_ethernet_burst_lat_SOURCES) $(raw_ethernet_bw_SOURCES) \
+	$(raw_ethernet_fs_rate_SOURCES) $(raw_ethernet_lat_SOURCES) \
+	$(rsocket_client_bw_SOURCES) $(rsocket_client_dgram_SOURCES) \
+	$(rsocket_client_lat_SOURCES) $(rsocket_server_bw_SOURCES) \
+	$(rsocket_server_dgram_SOURCES) $(rsocket_server_lat_SOURCES) \
+	$(rvma_mailbox_client_SOURCES) $(rvma_mailbox_server_SOURCES) \
 	$(rvsocket_client_dgram_SOURCES) \
 	$(rvsocket_client_dgram_bw_SOURCES) \
 	$(rvsocket_client_stream_SOURCES) \
@@ -458,6 +472,8 @@ SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
 	$(rvsocket_server_stream_bw_SOURCES)
 DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(ib_write_bw_SOURCES) $(ib_write_lat_SOURCES) \
+	$(libvma_client_stream_SOURCES) \
+	$(libvma_server_stream_SOURCES) \
 	$(am__raw_ethernet_burst_lat_SOURCES_DIST) \
 	$(am__raw_ethernet_bw_SOURCES_DIST) \
 	$(am__raw_ethernet_fs_rate_SOURCES_DIST) \
@@ -691,6 +707,10 @@ noinst_HEADERS = src/get_clock.h src/perftest_communication.h \
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 @IS_FREEBSD_FALSE@LIBMLX4 = 
 @IS_FREEBSD_TRUE@LIBMLX4 = -lmlx4
+libvma_client_stream_SOURCES = src/libvma_client_stream.c
+libvma_client_stream_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+libvma_server_stream_SOURCES = src/libvma_server_stream.c
+libvma_server_stream_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rvsocket_client_dgram_SOURCES = src/rvsocket_client_dgram.c
 rvsocket_client_dgram_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 rvsocket_server_dgram_SOURCES = src/rvsocket_server_dgram.c
@@ -903,6 +923,18 @@ src/write_lat.$(OBJEXT): src/$(am__dirstamp) \
 ib_write_lat$(EXEEXT): $(ib_write_lat_OBJECTS) $(ib_write_lat_DEPENDENCIES) $(EXTRA_ib_write_lat_DEPENDENCIES) 
 	@rm -f ib_write_lat$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(ib_write_lat_OBJECTS) $(ib_write_lat_LDADD) $(LIBS)
+src/libvma_client_stream.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+libvma_client_stream$(EXEEXT): $(libvma_client_stream_OBJECTS) $(libvma_client_stream_DEPENDENCIES) $(EXTRA_libvma_client_stream_DEPENDENCIES) 
+	@rm -f libvma_client_stream$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(libvma_client_stream_OBJECTS) $(libvma_client_stream_LDADD) $(LIBS)
+src/libvma_server_stream.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+libvma_server_stream$(EXEEXT): $(libvma_server_stream_OBJECTS) $(libvma_server_stream_DEPENDENCIES) $(EXTRA_libvma_server_stream_DEPENDENCIES) 
+	@rm -f libvma_server_stream$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(libvma_server_stream_OBJECTS) $(libvma_server_stream_LDADD) $(LIBS)
 src/raw_ethernet_send_burst_lat.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
@@ -1071,6 +1103,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/hl_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/host_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/indexer.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libvma_client_stream.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libvma_server_stream.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/mmap_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/neuron_memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/perftest_communication.Po@am__quote@ # am--include-marker
@@ -1428,6 +1462,8 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/hl_memory.Po
 	-rm -f src/$(DEPDIR)/host_memory.Po
 	-rm -f src/$(DEPDIR)/indexer.Po
+	-rm -f src/$(DEPDIR)/libvma_client_stream.Po
+	-rm -f src/$(DEPDIR)/libvma_server_stream.Po
 	-rm -f src/$(DEPDIR)/mmap_memory.Po
 	-rm -f src/$(DEPDIR)/neuron_memory.Po
 	-rm -f src/$(DEPDIR)/perftest_communication.Po
@@ -1515,6 +1551,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/hl_memory.Po
 	-rm -f src/$(DEPDIR)/host_memory.Po
 	-rm -f src/$(DEPDIR)/indexer.Po
+	-rm -f src/$(DEPDIR)/libvma_client_stream.Po
+	-rm -f src/$(DEPDIR)/libvma_server_stream.Po
 	-rm -f src/$(DEPDIR)/mmap_memory.Po
 	-rm -f src/$(DEPDIR)/neuron_memory.Po
 	-rm -f src/$(DEPDIR)/perftest_communication.Po
