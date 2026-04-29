@@ -10,7 +10,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024*4
+#define MSG_SIZE 1024 * 1024
 
 uint32_t get_host_addr(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;

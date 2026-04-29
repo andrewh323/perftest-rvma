@@ -57,7 +57,7 @@ if HABANALABS
 libperftest_a_SOURCES += src/hl_memory.c
 endif
 
-bin_PROGRAMS = ib_write_lat ib_write_bw rsocket_client_lat rsocket_server_lat rsocket_client_bw rsocket_server_bw rvma_mailbox_server rvma_mailbox_client rvsocket_client_stream rvsocket_server_stream rvsocket_server_dgram rvsocket_client_dgram rsocket_server_dgram rsocket_client_dgram rvsocket_server_stream_bw rvsocket_client_stream_bw rvsocket_server_dgram_bw rvsocket_client_dgram_bw libvma_client_stream libvma_server_stream
+bin_PROGRAMS = ib_write_lat ib_write_bw rsocket_client_lat rsocket_server_lat rsocket_client_bw rsocket_server_bw rvma_mailbox_server rvma_mailbox_client rvsocket_client_stream rvsocket_server_stream rvsocket_server_dgram rvsocket_client_dgram rsocket_server_dgram rsocket_client_dgram rsocket_server_dgram_bw rsocket_client_dgram_bw rvsocket_server_stream_bw rvsocket_client_stream_bw rvsocket_server_dgram_bw rvsocket_client_dgram_bw libvma_client_stream libvma_server_stream
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 
 if HAVE_RAW_ETH
@@ -118,7 +118,6 @@ rsocket_client_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX
 rsocket_client_dgram_SOURCES = src/rsocket_client_dgram.c
 rsocket_client_dgram_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
-
 rsocket_server_lat_SOURCES = src/rsocket_server_lat.c
 rsocket_server_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
@@ -130,6 +129,12 @@ rsocket_client_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5
 
 rsocket_server_bw_SOURCES = src/rsocket_server_bw.c
 rsocket_server_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+
+rsocket_client_dgram_bw_SOURCES = src/rsocket_client_dgram_bw.c
+rsocket_client_dgram_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+
+rsocket_server_dgram_bw_SOURCES = src/rsocket_server_dgram_bw.c
+rsocket_server_dgram_bw_LDADD = libperftest.a -lrdmacm $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 
 ib_write_lat_SOURCES = src/write_lat.c
 ib_write_lat_LDADD = libperftest.a -lrdmacm $(LIBMATH)  $(LIBMLX4) $(LIBMLX5) $(LIBEFA)

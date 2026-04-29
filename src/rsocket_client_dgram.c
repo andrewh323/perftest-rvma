@@ -1,15 +1,3 @@
-/*
-The server first binds address that clients will use to find the server
-Server then listens for clients to request a connection
-When a request is received by the client the server accepts the connection
-The server then posts a receive buffer to the connection
-THe client sends a message to the server and the server receives it
-The server then sends a message back to the client confirming the message was received
-The client then receives the message from the server
-The server then disconnects from the client
-The client then disconnects from the server
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
