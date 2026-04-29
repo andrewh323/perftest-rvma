@@ -19,14 +19,22 @@ The client then disconnects from the server
 #include <arpa/inet.h>
 
 #define PORT 7471
+<<<<<<< HEAD
 #define MSG_SIZE 1024*1024 // Size of message buffer
+=======
+#define MSG_SIZE 1024*4 // Size of message buffer
+>>>>>>> 13b109d (Finalizing designs)
 #define TOTAL_BYTES (128 * 1024 * 1024) // Total bytes to send (128 MB)
 
 
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server_addr;
-    char *buffer = malloc(MSG_SIZE); // Allocate 4096 bytes
+    int64_t msg_size = MSG_SIZE;
+    if (argc > 2) {
+        msg_size = atoi(argv[2]);
+    }
+    char *buffer = malloc(msg_size); // Allocate 4096 bytes
     if (!buffer) {
         perror("malloc");
         exit(EXIT_FAILURE);
@@ -60,7 +68,7 @@ int main(int argc, char **argv) {
     clock_gettime(CLOCK_MONOTONIC, &start_time); // Start timing just before sending
     
     while (bytes_sent < TOTAL_BYTES) {
-        ssize_t n = rsend(sockfd, buffer, MSG_SIZE, 0);
+        ssize_t n = rsend(sockfd, buffer, msg_size, 0);
         if (n < 0) {
             perror("rsend");
             break;

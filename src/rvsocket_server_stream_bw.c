@@ -12,6 +12,10 @@
 
 #define PORT 7471
 #define MSG_SIZE 1024*4
+<<<<<<< HEAD
+=======
+#define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
+>>>>>>> 13b109d (Finalizing designs)
 
 uint32_t get_host_addr(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;
@@ -49,6 +53,11 @@ int main(int argc, char **argv) {
 	int num_clients = 1;
 	int conn_fd[num_clients];
 
+	int64_t msg_size = MSG_SIZE;
+    if (argc > 1) {
+        msg_size = atoi(argv[1]);
+    }
+
 	uint32_t host_ip = get_host_addr("ib0");
 	uint64_t vaddr = constructVaddr(reserved, host_ip, PORT);
 	printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
@@ -68,7 +77,7 @@ int main(int argc, char **argv) {
 	rvlisten(listen_fd, 5);
 	printf("Server listening on port %d...\n", PORT);
 
-	void *buffer = malloc(MSG_SIZE);
+	void *buffer = malloc(msg_size);
 
 	for (int i = 0; i < num_clients; i++) {
 		// Accept a connection from client
@@ -82,12 +91,25 @@ int main(int argc, char **argv) {
 	
     ssize_t total = 0;
 
+<<<<<<< HEAD
 	// While server is running, poll all clients and recv messages
 	// Currently rvrecv is blocking but maintains flow control
 	while ((rvrecv(conn_fd[0], buffer, MSG_SIZE, 0)) == 0) {
         total += MSG_SIZE;
     }
 	
+=======
+	size_t total = 0;
+	while (total < TOTAL_BYTES) {
+		int n = rvrecv(conn_fd[0], buffer, msg_size, 0);
+		if (n < 0) {
+			fprintf(stderr, "rvrecv failed\n");
+			break;
+		}
+		total += n;
+	}
+
+>>>>>>> 13b109d (Finalizing designs)
 	printf("Server received %zd bytes\n", total);
 
 	// Close connections

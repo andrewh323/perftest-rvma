@@ -18,13 +18,21 @@ The client then disconnects from the server
 #include <arpa/inet.h>
 
 #define PORT 7471
+<<<<<<< HEAD
 #define MSG_SIZE (1024 * 1024) // Size of expected message
+=======
+#define MSG_SIZE 1024*4 // Size of expected message
+>>>>>>> 13b109d (Finalizing designs)
 
 
-int main() {
+int main(int argc, char **argv) {
 	int listen_fd, conn_fd;
 	struct sockaddr_in addr;
-	char *buffer = malloc(MSG_SIZE); // Allocate 128 MB buffer
+	int64_t msg_size = MSG_SIZE;
+    if (argc > 1) {
+        msg_size = atoi(argv[1]);
+    }
+	char *buffer = malloc(msg_size); // Allocate buffer
 
 	listen_fd = rsocket(AF_INET, SOCK_STREAM, 0);
 
@@ -56,7 +64,7 @@ int main() {
 
 	ssize_t total = 0; // Total bytes received
 	// Receive data from client
-	while ((n = rrecv(conn_fd, buffer, MSG_SIZE, 0)) > 0) {
+	while ((n = rrecv(conn_fd, buffer, msg_size, 0)) > 0) {
 		total += n; // Accumulate total bytes received
 	}
 
