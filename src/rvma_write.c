@@ -197,6 +197,10 @@ RVMA_Status rvmaCloseWin(RVMA_Win *window) {
 RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
     size_t total_size = MAX_BYTES;
     size_t buffer_size = total_size / num_bufs;
+    if (buffer_size > MAX_RECV_SIZE) {
+        buffer_size = MAX_RECV_SIZE;
+    }
+    total_size = buffer_size * num_bufs;
     
     mailbox->send_pool = malloc(total_size);
     if (!mailbox->send_pool) {
@@ -249,10 +253,12 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
 }
 
 RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
-    uint64_t start, end;
-    start = rdtsc();
     size_t total_size = MAX_BYTES;
-    size_t buffer_size = total_size / num_bufs;
+    size_t buffer_size = total_size / num_bufs; // Divide buffers into chunks
+    if (buffer_size > MAX_RECV_SIZE) {
+        buffer_size = MAX_RECV_SIZE;
+    }
+    total_size = buffer_size * num_bufs;
 
     mailbox->recv_pool = malloc(total_size);
     if (!mailbox->recv_pool) {

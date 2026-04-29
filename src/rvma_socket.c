@@ -29,7 +29,7 @@
 #include "rvma_socket.h"
 #include "indexer.h"
 
-#define MAX_POOL_BUFS 64 // CHANGE: Set this dynamically according to specified message size
+#define MAX_POOL_BUFS 64
 #define MAX_RECV_SIZE 1024*1024
 #define SIGNAL_INTERVAL 16
 #define MAX_BYTES 128*1024*1024 // Hardware limit of NIC

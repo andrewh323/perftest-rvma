@@ -10,14 +10,14 @@
 
 REPEATS=10
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/rvsocket_stream_exclude_warmup.csv"
+CSV_FILE="$PATH_TO_BIN/results/rvsocket_stream_bw.csv"
 
 # Create results directory if needed
 mkdir -p "$PATH_TO_BIN/results/temp"
 
 # Write CSV header once
 if [ ! -f "$CSV_FILE" ]; then
-    echo "timestamp,repetition,size_bytes,avg_send,send_stddev,window_init,rvsocket,rvbind,rvlisten,rvconnect,rvaccept" > "$CSV_FILE"
+    echo "timestamp,repetition,size_bytes,throughput" > "$CSV_FILE"
 fi
 
 # Get nodes
@@ -36,10 +36,10 @@ echo "Client IB HW IP: $CLIENT_IP"
 SERVER_OUT_PATH="$PATH_TO_BIN/results/temp/server-stream-$SLURM_JOB_ID.out"
 CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/client-stream-$SLURM_JOB_ID.out"
 
-SERVER_EXEC="$PATH_TO_BIN/rvsocket_server_stream"
-CLIENT_EXEC="$PATH_TO_BIN/rvsocket_client_stream"
+SERVER_EXEC="$PATH_TO_BIN/rvsocket_server_stream_bw"
+CLIENT_EXEC="$PATH_TO_BIN/rvsocket_client_stream_bw"
 
-declare -a SIZES=(1 4 16 64 256 1024 4096 16384 65536 262144 1048576) # 1B to 1MB
+declare -a SIZES=(1024 4096 16384 65536 262144 1048576) # 1KB to 1MB
 
 # Repeat the tests
 for REP in $(seq 1 $REPEATS); do
@@ -62,18 +62,10 @@ for REP in $(seq 1 $REPEATS); do
         pkill -9 rvsocket_server_stream 2>/dev/null
         
         # Extract times from client output
-        AVG_SEND=$(grep "Mean:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        SEND_STDDEV=$(grep "Stddev:"   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        WINDOW_INIT=$(grep "Window init setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        RVSOCKET_SETUP=$(grep "rvsocket total setup time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
-        RVCONNECT=$(grep "rvconnect total time:" "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        THROUGHPUT=$(grep "Bandwidth:" "$CLIENT_OUT_PATH" | awk '{gsub(/[()]/, "", $(NF-1)); print $(NF-1)}')
 
-        # Extract times from server output
-        RVBIND=$(grep "rvbind total time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        RVLISTEN=$(grep "rvlisten total time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        RVACCEPT=$(grep "rvaccept time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         # Append to CSV with repetition
-        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$AVG_SEND,$SEND_STDDEV,$WINDOW_INIT,$RVSOCKET_SETUP,$RVBIND,$RVLISTEN,$RVCONNECT,$RVACCEPT" >> "$CSV_FILE"
+        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$THROUGHPUT" >> "$CSV_FILE"
     done
     # Add empty line between repetitions
     echo "" >> "$CSV_FILE"

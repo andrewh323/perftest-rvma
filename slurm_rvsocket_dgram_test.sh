@@ -39,7 +39,7 @@ CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/client-dgram-$SLURM_JOB_ID.out"
 SERVER_EXEC="$PATH_TO_BIN/rvsocket_server_dgram"
 CLIENT_EXEC="$PATH_TO_BIN/rvsocket_client_dgram"
 
-declare -a SIZES=(1024 2048 4096 8192 16384 32768 65536 131072 262144 524288 1048576) # 1B to 1MB
+declare -a SIZES=(1 4 16 64 256 1024 4096 16384 65536 262144 1048576) # 1B to 1MB
 
 # Repeat the tests
 for REP in $(seq 1 $REPEATS); do

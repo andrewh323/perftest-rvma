@@ -1,127 +1,77 @@
-Server Node: rc12505
-Client Node: rc12816
+Server Node: rc13105
+Client Node: rc13508
 Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
 Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
-Server IB HW IP: 10.85.25.5
-Client IB HW IP: 10.85.28.16
+Server IB HW IP: 10.85.31.5
+Client IB HW IP: 10.85.35.8
 === Run 1 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 2 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 3 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 4 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 5 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 6 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 7 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 8 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 9 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
 === Run 10 of 10 ===
 Running test with message size: 1024 bytes
-Running test with message size: 2048 bytes
 Running test with message size: 4096 bytes
-Running test with message size: 8192 bytes
 Running test with message size: 16384 bytes
-Running test with message size: 32768 bytes
 Running test with message size: 65536 bytes
-Running test with message size: 131072 bytes
 Running test with message size: 262144 bytes
-Running test with message size: 524288 bytes
 Running test with message size: 1048576 bytes
-All tests completed. Results saved in /home/andrewh8/src/perftest-rvma/results/rvsocket_stream_exclude_warmup.csv
+All tests completed. Results saved in /home/andrewh8/src/perftest-rvma/results/rvsocket_stream_bw.csv

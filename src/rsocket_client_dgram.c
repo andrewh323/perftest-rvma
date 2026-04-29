@@ -134,8 +134,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    double one_way = rtt / (2 * (num_sends - 10));
-    printf("Average one-way latency: %.3f µs\n", one_way);
+    double avg_rtt = rtt / (num_sends - 10);
+    printf("Average RTT latency: %.3f µs\n", avg_rtt);
 
     free(send_buf);
     free(recv_buf);

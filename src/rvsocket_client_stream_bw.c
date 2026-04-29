@@ -10,7 +10,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024
+#define MSG_SIZE 1024*4
 #define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 
@@ -19,7 +19,6 @@ int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
     int sockfd;
     struct sockaddr_in server_addr;
-    char *buffer = malloc(MSG_SIZE);
     memset(&server_addr, 0, sizeof(server_addr));
 
     server_addr.sin_family = AF_INET;
@@ -28,6 +27,13 @@ int main(int argc, char **argv) {
         perror("inet_pton failed");
         return -1;
     };
+
+    int64_t msg_size = MSG_SIZE;
+    if (argc > 2) {
+        msg_size = atoi(argv[2]);
+    }
+
+    char *buffer = malloc(msg_size);
 
     // Convert IP to host byte order and construct vaddr
     uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
@@ -70,10 +76,10 @@ int main(int argc, char **argv) {
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     while (bytes_sent < TOTAL_BYTES) {
-        int res = rvsend(sockfd, buffer, MSG_SIZE);
+        int res = rvsend(sockfd, buffer, msg_size);
         if (res < 0) break;
         
-        bytes_sent += MSG_SIZE;
+        bytes_sent += msg_size;
         count += 1;
     }
 
