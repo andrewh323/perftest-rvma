@@ -22,6 +22,8 @@ typedef struct {
     void **notifBuffPtrAddr;
     void **notifLenPtrAddr;
     struct ibv_mr *mr;
+    uint32_t wc_flags;
+    uint32_t received_len;
 } RVMA_Buffer_Entry;
 
 typedef struct {

@@ -432,7 +432,8 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         }
 
         RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)recv_wc[i].wr_id;
-        int len = recv_wc[i].byte_len;
+        entry->received_len = recv_wc[i].byte_len;
+        entry->wc_flags = recv_wc[i].wc_flags;
         // printf("recv count: %d\n", mailbox->recvCount);
         // printf("Received message: %.*s\n", len, (char *)entry->realBuff);
         enqueue(mailbox->completedRecvQueue, entry);
@@ -441,25 +442,25 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
 
 
     while (mailbox->posted_recvs < mailbox->max_recvs) {
-        RVMA_Buffer_Entry *entry = dequeue(mailbox->recvBufferQueue);
-        if (!entry) break;
+        RVMA_Buffer_Entry *e = dequeue(mailbox->recvBufferQueue);
+        if (!e) break;
 
         struct ibv_sge sge = {
-            .addr = (uintptr_t)entry->realBuff,
+            .addr = (uintptr_t)e->realBuff,
             .length = MAX_RECV_SIZE,
-            .lkey = entry->mr->lkey
+            .lkey = e->mr->lkey
         };
 
         struct ibv_recv_wr wr = {
-            .wr_id = (uintptr_t)entry,
+            .wr_id = (uintptr_t)e,
             .sg_list = &sge,
             .num_sge = 1
         };
 
-        // printf("Posting recv with buffer addr=%p, size=%d\n", entry->realBuff, MAX_RECV_SIZE);
+        // printf("Posting recv with buffer addr=%p, size=%d\n", e->realBuff, MAX_RECV_SIZE);
         if(ibv_post_recv(mailbox->qp, &wr, NULL)) {
             // If posting fails, put entry back and break
-            enqueue(mailbox->recvBufferQueue, entry);
+            enqueue(mailbox->recvBufferQueue, e);
             break;
         }
 

@@ -10,7 +10,8 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024*256
+#define MSG_SIZE 1024*128
+#define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 uint32_t get_host_addr(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;
@@ -78,10 +79,16 @@ int main(int argc, char **argv) {
     rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
     ssize_t total = 0;
+    int bytes_recvd = 0;
 
     void *recv_buf = malloc(MSG_SIZE);
-    while ((rvrecv(dgram_fd, recv_buf, MSG_SIZE, 0)) == 0) {
-        total += MSG_SIZE;
+    while (total < TOTAL_BYTES) {
+        bytes_recvd = rvrecvfrom(dgram_fd, recv_buf, MSG_SIZE, 0);
+        if (bytes_recvd < 0) {
+            perror("rvrecvfrom");
+            exit(1);
+        }
+        total += bytes_recvd;
     }
 
     close(dgram_fd);

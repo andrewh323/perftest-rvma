@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
-        res = rvrecv(sockfd, recv_buf, size, 0);
+        res = rvrecvfrom(sockfd, recv_buf, size, 0);
         if (res < 0) {
             perror("rvrecv failed");
         }

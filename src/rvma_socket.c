@@ -916,13 +916,12 @@ int rvsend(int socket, void *buf, int64_t len) {
 int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
     uint64_t elapsed = 0, frag_setup = 0, buffer_setup = 0, wr_setup = 0, total_poll = 0;
 
-    struct rvsocket *rvs;
-    uint64_t vaddr;
-
-    rvs = idm_at(&idm, socket);
-
-    vaddr = rvs->vaddr;
+    struct rvsocket *rvs = idm_at(&idm, socket);
+    uint64_t vaddr = rvs->vaddr;
+    RVMA_Mailbox *mailbox = rvs->mailboxPtr;
     struct rv_dest *dest = rvs->dest;
+
+    rvmaProgress(mailbox); // Poll to make sure there are enough buffers
 
     int hardware_counter = 0; // Counter to compare with threshold (Should only exist in hardware)
 
@@ -933,52 +932,35 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
     void **notifBuffPtr = malloc(sizeof(void *));
     int *notifLenPtr = malloc(sizeof(int));
 
+    // For each fragment:
     for (int offset = 0; offset < threshold; offset++) {
-        // Define message fragment
-        // i=0->RS_MAX_TRANSFER-1, RS_MAX_TRANSFER->2*RS_MAX_TRANSFER-1, ...
-        int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
-        void *frag_ptr = (uint8_t *)buf + offset * RS_MAX_TRANSFER;
-
-        // Construct fragment header (for ordering at receiver)
-        struct dgram_frag_header header = {
-            .frag_num = offset + 1,
-            .total_frags = threshold
-        };
-
-        size_t total_size = sizeof(header) + frag_size;
-        // Allocate buffer for fragment + header
-        void *full_buf = malloc(total_size);
-        if (!full_buf) {
-            fprintf(stderr, "rvsendto: malloc full_buf failed\n");
-            return -1;
+        // Check for outstanding sends
+        while (mailbox->outstanding_sends >= mailbox->max_outstanding_sends || isEmpty(mailbox->sendBufferQueue) == RVMA_TRUE) {
+            rvmaProgress(mailbox);
         }
 
-        // Copy header and fragment into full buffer
-        memcpy(full_buf, &header, sizeof(header));
-        memcpy((uint8_t *)full_buf + sizeof(header), frag_ptr, frag_size);
-
-        struct dgram_frag_header *hdr = (struct dgram_frag_header *)full_buf;
-        char *payload = (char *)full_buf + sizeof(*hdr);
-
-        /* printf("Sending fragment %d/%d (%zu bytes) | Payload: %.40s...\n",
-            hdr->frag_num, hdr->total_frags, frag_size, payload); */
+        // Define message fragment: i=0 to RS_MAX_TRANSFER-1, RS_MAX_TRANSFER to 2*RS_MAX_TRANSFER-1, ...
+        int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
 
         RVMA_Buffer_Entry *entry = dequeue(rvs->mailboxPtr->sendBufferQueue);
-        if (!entry) {
-            fprintf(stderr, "rvsendto: dequeue failed\n");
-            return -1;
-        }
-        
-        memcpy(entry->realBuff, &header, sizeof(header));
-        memcpy((uint8_t*)entry->realBuff + sizeof(header), frag_ptr, frag_size);
+        if (!entry) return -1;
+
+        struct dgram_frag_header *hdr = (struct dgram_frag_header *)entry->realBuff;
+
+        hdr->frag_num = offset + 1;
+        hdr->total_frags = threshold;
+
+        memcpy((uint8_t *)entry->realBuff + sizeof(*hdr), (uint8_t *)buf + offset * RS_MAX_TRANSFER, frag_size);
 
         /* REMOVE PRINT WHEN COLLECTING RESULTS */
-        //printf("Posting send with size %zu bytes for fragment %d/%d\n", total_size, hdr->frag_num, hdr->total_frags);
-        
+        /* printf("Sending fragment %d/%d (%zu bytes) | Payload: %.40s...\n",
+            hdr->frag_num, hdr->total_frags, frag_size, (char *)buf + offset * RS_MAX_TRANSFER); */
+        // printf("Posting send with size %zu bytes for fragment %d/%d\n", frag_size, hdr->frag_num, hdr->total_frags);
+
         // Build sge, wr
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
-            .length = total_size,
+            .length = sizeof(*hdr) + frag_size,
             .lkey = entry->mr->lkey
         };
 
@@ -1000,78 +982,39 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
             return -1;
         }
 
-        hardware_counter++; // Hardware counter is incremented after every operation (By # ops)
-        if (hardware_counter == threshold) {
-            // Write address of head of buffer to notification pointer
-            *notifBuffPtr = full_buf;
-            // Write length of buffer to notifLenPtr in case buffer is reused
-            *notifLenPtr = total_size;
-        }
-
-        // Poll cq
-        struct ibv_wc wc;
-        int res;
-        do {
-            res = ibv_poll_cq(rvs->mailboxPtr->send_cq, 1, &wc);
-        } while (res == 0);
-        if (res < 0 || wc.status != IBV_WC_SUCCESS) {
-            perror("rvmaSend: ibv_poll_cq failed");
-            return RVMA_ERROR;
-        }
-
-        // Replenish buffer pool
-        RVMA_Buffer_Entry *completed_entry = (RVMA_Buffer_Entry *)wc.wr_id;
-        enqueue(rvs->mailboxPtr->sendBufferQueue, completed_entry);
+        mailbox->outstanding_sends++;
     }
 
     free(notifBuffPtr);
     free(notifLenPtr);
-    return 0;
+    return len;
 }
 
 // Receive buffer pool should already be preposted, manage fragments and poll completion
 int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
-    char *msg_buf = NULL;
     int expected_frags = 0;
     int received_frags = 0;
-    int total_len = 0;
-    struct ibv_wc wc;
-    int num_wc;
+    int write_offset = 0;
 
-    struct rvsocket *rvs;
-    uint64_t vaddr;
-
-    rvs = idm_at(&idm, socket);
-    vaddr = rvs->vaddr;
+    struct rvsocket *rvs = idm_at(&idm, socket);
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
 
     while (1) {
-        // Poll for a completed receive
-        while (1) {
-            do { num_wc = ibv_poll_cq(mailbox->recv_cq, 1, &wc); } while (num_wc == 0);
-            if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) return -1;
-            if (wc.opcode == IBV_WC_RECV) break;
-        }
-
-        // Pull entry from wr
-        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
-        if (!entry) {
-            perror("rvrecvfrom: entry is NULL");
-            return -1;
+        // Poll for entry
+        RVMA_Buffer_Entry *entry = NULL;
+        while (!entry) {
+            rvmaProgress(mailbox);
+            entry = dequeue(mailbox->completedRecvQueue);
         }
 
         char *recv_buf = (char *)entry->realBuff;
-        int len = wc.byte_len;
+        int recv_len = entry->received_len;
 
         // If using a GRH (i.e. ROCE), add space to data buffer
-        int grh = (wc.wc_flags & IBV_WC_GRH) ? 40 : 0;
-        char *data = recv_buf + grh;
-        int data_len = len - grh;
+        int grh = (entry->wc_flags & IBV_WC_GRH) ? 40 : 0;
 
-        if (data_len < (int)sizeof(struct dgram_frag_header)) {
-            fprintf(stderr, "rvrecvfrom: runt packet\n");
-            return -1;
-        }
+        char *data = recv_buf + grh;
+        int data_len = recv_len - grh;
 
         struct dgram_frag_header header;
         memcpy(&header, data, sizeof(header));
@@ -1086,44 +1029,20 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
 
         if (expected_frags == 0) { // If we don't know # of expected frags yet, find out
             expected_frags = header.total_frags;
-            msg_buf = malloc(expected_frags * RS_MAX_TRANSFER);
-            if (!msg_buf) {
-                perror("malloc failed");
-                return -1;
-            }
         }
 
-        int offset = (header.frag_num - 1) * RS_MAX_TRANSFER; // Allocate memory for next fragment
-        memcpy(msg_buf + offset, payload, payload_len);
+        memcpy((char *)buf + write_offset, payload, payload_len);
+        write_offset += payload_len;
 
-        // Repost the same recv buffer for future receives
-        struct ibv_sge sge = {
-            .addr = (uintptr_t)recv_buf,
-            .length = MAX_RECV_SIZE,
-            .lkey = entry->mr->lkey
-        };
-
-        struct ibv_recv_wr recv_wr = {
-            .wr_id = (uintptr_t)entry,
-            .sg_list = &sge,
-            .num_sge = 1,
-            .next = NULL
-        };
-
-        struct ibv_recv_wr *bad_wr = NULL;
-        if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
-            perror("rvrecvfrom: ibv_post_recv failed");
-            free(msg_buf);
-            return -1;
-        }
+        enqueue(mailbox->recvBufferQueue, entry); // Return buffer to recv pool
 
         received_frags++; // Increment receive counter and compare with number expected
         if (received_frags == expected_frags) {
             break;
         }
+
     }
-    free(msg_buf);
-    return 0;
+    return write_offset;
 }
 
 
@@ -1136,7 +1055,7 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
 
     if (rvs->type == SOCK_DGRAM) {
-        if (rvrecvfrom(socket, buf, len, 0) != RVMA_SUCCESS) {
+        if (rvrecvfrom(socket, buf, len, 0) < 0) {
             fprintf(stderr, "rvmaRecvfrom failed\n");
             return -1;
         }

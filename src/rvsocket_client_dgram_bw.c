@@ -10,7 +10,7 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024*256
+#define MSG_SIZE 1024*128
 #define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 int main(int argc, char **argv) {
@@ -76,14 +76,16 @@ int main(int argc, char **argv) {
     int count = 0;
 
     clock_gettime(CLOCK_MONOTONIC, &start_time); // Start timing just before sending
-    
+
     while (bytes_sent < TOTAL_BYTES) {
+
+        rvmaProgress(mailbox);
         int res = rvsendto(sockfd, buffer, MSG_SIZE, windowPtr);
         if (res < 0) {
             fprintf(stderr, "Failed to send message\n");
         }
         else {
-            bytes_sent += MSG_SIZE;
+            bytes_sent += res;
             count += 1;
         }
     }
