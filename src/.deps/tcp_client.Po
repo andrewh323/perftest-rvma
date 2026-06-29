@@ -1,4 +1,4 @@
-src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
+src/tcp_client.o: src/tcp_client.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdc-predef.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdio.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libc-header-start.h \
@@ -78,18 +78,50 @@ src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdint.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/wchar.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdint-uintn.h \
- /home/andrewh8/src/rdma-core/build/include/rdma/rsocket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/time.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/time.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/timex.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_tm.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_itimerspec.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/math.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/math-vector.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libm-simd-decl-stubs.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/flt-eval-method.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-logb.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-fast.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-helper-functions.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-narrow.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/iscanonical.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netinet/in.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/socket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_iovec.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket_type.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sockaddr.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/socket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/socket.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/posix_types.h \
+ /home/andrewh8/src/rdma-core/build/include/linux/stddef.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types_64.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/posix_types.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/bitsperlong.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/bitsperlong.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/sockios.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/sockios.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_osockaddr.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket2.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/in.h \
+ src/rvma_socket.h \
+ /home/andrewh8/src/rdma-core/build/include/rdma/rdma_cma.h \
  /home/andrewh8/src/rdma-core/build/include/infiniband/verbs.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/pthread.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sched.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sched.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_sched_param.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/cpu-set.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/time.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/time.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/timex.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_tm.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_itimerspec.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/setjmp.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct___jmp_buf_tag.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/pthread_stack_min-dynamic.h \
@@ -104,32 +136,12 @@ src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/types.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/types.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/int-ll64.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/bitsperlong.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/bitsperlong.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/posix_types.h \
- /home/andrewh8/src/rdma-core/build/include/linux/stddef.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types_64.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/posix_types.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/if_ether.h \
  /home/andrewh8/src/rdma-core/build/include/infiniband/verbs_api.h \
  /home/andrewh8/src/rdma-core/build/include/infiniband/ib_user_ioctl_verbs.h \
  /home/andrewh8/src/rdma-core/build/include/rdma/ib_user_verbs.h \
- /home/andrewh8/src/rdma-core/build/include/rdma/rdma_cma.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netinet/in.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/socket.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_iovec.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket_type.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sockaddr.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/socket.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/socket.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/sockios.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/sockios.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_osockaddr.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket2.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/in.h \
  /home/andrewh8/src/rdma-core/build/include/infiniband/sa.h \
+ /home/andrewh8/src/rdma-core/build/include/rdma/rsocket.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/poll.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/poll.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/poll.h \
@@ -140,9 +152,7 @@ src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman-linux.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman-shared.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman_ext.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h \
- src/rvma_socket.h src/perftest_resources.h src/rvma_write.h \
- src/rvma_common.h \
+ src/perftest_resources.h src/rvma_write.h src/rvma_common.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdbool.h \
  src/perftest_parameters.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/inttypes.h \
@@ -154,16 +164,6 @@ src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
  /home/andrewh8/src/rdma-core/build/include/infiniband/mlx5_api.h \
  /home/andrewh8/src/rdma-core/build/include/infiniband/mlx5_user_ioctl_verbs.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/byteswap.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/math.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/math-vector.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libm-simd-decl-stubs.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/flt-eval-method.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-logb.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-fast.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-helper-functions.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-narrow.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/iscanonical.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/time.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netdb.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/rpc/netdb.h \
@@ -176,8 +176,7 @@ src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/falloc.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stat.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/struct_stat.h \
- /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl2.h \
- src/rvma_debug.h
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl2.h
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdc-predef.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdio.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libc-header-start.h:
@@ -257,18 +256,50 @@ src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/stdint.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/wchar.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdint-uintn.h:
-/home/andrewh8/src/rdma-core/build/include/rdma/rsocket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/time.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/time.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/timex.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_tm.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_itimerspec.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/math.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/math-vector.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libm-simd-decl-stubs.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/flt-eval-method.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-logb.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-fast.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-helper-functions.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-narrow.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/iscanonical.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netinet/in.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/socket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_iovec.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket_type.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sockaddr.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/socket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/socket.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/posix_types.h:
+/home/andrewh8/src/rdma-core/build/include/linux/stddef.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types_64.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/posix_types.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/bitsperlong.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/bitsperlong.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/sockios.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/sockios.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_osockaddr.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket2.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/in.h:
+src/rvma_socket.h:
+/home/andrewh8/src/rdma-core/build/include/rdma/rdma_cma.h:
 /home/andrewh8/src/rdma-core/build/include/infiniband/verbs.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/pthread.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sched.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sched.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_sched_param.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/cpu-set.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/time.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/time.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/timex.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_tm.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_itimerspec.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/setjmp.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct___jmp_buf_tag.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/pthread_stack_min-dynamic.h:
@@ -283,32 +314,12 @@ src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/types.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/types.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/int-ll64.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/bitsperlong.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/bitsperlong.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/posix_types.h:
-/home/andrewh8/src/rdma-core/build/include/linux/stddef.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/posix_types_64.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/posix_types.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/linux/if_ether.h:
 /home/andrewh8/src/rdma-core/build/include/infiniband/verbs_api.h:
 /home/andrewh8/src/rdma-core/build/include/infiniband/ib_user_ioctl_verbs.h:
 /home/andrewh8/src/rdma-core/build/include/rdma/ib_user_verbs.h:
-/home/andrewh8/src/rdma-core/build/include/rdma/rdma_cma.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netinet/in.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/socket.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_iovec.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket_type.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/sockaddr.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/socket.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/socket.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm/sockios.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/asm-generic/sockios.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/types/struct_osockaddr.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/socket2.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/in.h:
 /home/andrewh8/src/rdma-core/build/include/infiniband/sa.h:
+/home/andrewh8/src/rdma-core/build/include/rdma/rsocket.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/poll.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/poll.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/poll.h:
@@ -319,8 +330,6 @@ src/rvsocket_client_stream.o: src/rvsocket_client_stream.c \
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman-linux.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman-shared.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mman_ext.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/arpa/inet.h:
-src/rvma_socket.h:
 src/perftest_resources.h:
 src/rvma_write.h:
 src/rvma_common.h:
@@ -339,16 +348,6 @@ src/rvma_buffer_queue.h:
 /home/andrewh8/src/rdma-core/build/include/infiniband/mlx5_api.h:
 /home/andrewh8/src/rdma-core/build/include/infiniband/mlx5_user_ioctl_verbs.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/byteswap.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/math.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/math-vector.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libm-simd-decl-stubs.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/flt-eval-method.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-logb.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-fast.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-helper-functions.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-narrow.h:
-/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/iscanonical.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/sys/time.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/netdb.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/rpc/netdb.h:
@@ -362,4 +361,3 @@ src/rvma_buffer_queue.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stat.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/struct_stat.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fcntl2.h:
-src/rvma_debug.h:

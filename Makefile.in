@@ -141,7 +141,8 @@ bin_PROGRAMS = ib_write_lat$(EXEEXT) ib_write_bw$(EXEEXT) \
 	rvsocket_server_dgram_bw$(EXEEXT) \
 	rvsocket_client_dgram_bw$(EXEEXT) \
 	libvma_client_stream$(EXEEXT) libvma_server_stream$(EXEEXT) \
-	$(am__EXEEXT_1) $(am__EXEEXT_2)
+	tcp_client$(EXEEXT) tcp_rvma_mediator$(EXEEXT) \
+	tcp_rvma_server$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2)
 @HAVE_RAW_ETH_TRUE@am__append_5 = src/raw_ethernet_resources.c
 @HAVE_RAW_ETH_TRUE@am__append_6 = src/raw_ethernet_resources.h
 @HAVE_RAW_ETH_TRUE@am__append_7 = raw_ethernet_bw raw_ethernet_lat raw_ethernet_burst_lat raw_ethernet_fs_rate
@@ -369,6 +370,21 @@ rvsocket_server_stream_bw_OBJECTS =  \
 rvsocket_server_stream_bw_DEPENDENCIES = libperftest.a \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_tcp_client_OBJECTS = src/tcp_client.$(OBJEXT)
+tcp_client_OBJECTS = $(am_tcp_client_OBJECTS)
+tcp_client_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_tcp_rvma_mediator_OBJECTS = src/tcp_rvma_mediator.$(OBJEXT)
+tcp_rvma_mediator_OBJECTS = $(am_tcp_rvma_mediator_OBJECTS)
+tcp_rvma_mediator_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_tcp_rvma_server_OBJECTS = src/tcp_rvma_server.$(OBJEXT)
+tcp_rvma_server_OBJECTS = $(am_tcp_rvma_server_OBJECTS)
+tcp_rvma_server_DEPENDENCIES = libperftest.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -450,7 +466,9 @@ am__depfiles_remade = src/$(DEPDIR)/cuda_memory.Po \
 	src/$(DEPDIR)/rvsocket_server_dgram_bw.Po \
 	src/$(DEPDIR)/rvsocket_server_stream.Po \
 	src/$(DEPDIR)/rvsocket_server_stream_bw.Po \
-	src/$(DEPDIR)/write_bw.Po src/$(DEPDIR)/write_lat.Po
+	src/$(DEPDIR)/tcp_client.Po src/$(DEPDIR)/tcp_rvma_mediator.Po \
+	src/$(DEPDIR)/tcp_rvma_server.Po src/$(DEPDIR)/write_bw.Po \
+	src/$(DEPDIR)/write_lat.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -489,7 +507,8 @@ SOURCES = $(libperftest_a_SOURCES) $(ib_write_bw_SOURCES) \
 	$(rvsocket_server_dgram_SOURCES) \
 	$(rvsocket_server_dgram_bw_SOURCES) \
 	$(rvsocket_server_stream_SOURCES) \
-	$(rvsocket_server_stream_bw_SOURCES)
+	$(rvsocket_server_stream_bw_SOURCES) $(tcp_client_SOURCES) \
+	$(tcp_rvma_mediator_SOURCES) $(tcp_rvma_server_SOURCES)
 DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(ib_write_bw_SOURCES) $(ib_write_lat_SOURCES) \
 	$(libvma_client_stream_SOURCES) \
@@ -512,7 +531,8 @@ DIST_SOURCES = $(am__libperftest_a_SOURCES_DIST) \
 	$(rvsocket_server_dgram_SOURCES) \
 	$(rvsocket_server_dgram_bw_SOURCES) \
 	$(rvsocket_server_stream_SOURCES) \
-	$(rvsocket_server_stream_bw_SOURCES)
+	$(rvsocket_server_stream_bw_SOURCES) $(tcp_client_SOURCES) \
+	$(tcp_rvma_mediator_SOURCES) $(tcp_rvma_server_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -730,6 +750,12 @@ noinst_HEADERS = src/get_clock.h src/perftest_communication.h \
 bin_SCRIPTS = run_perftest_loopback run_perftest_multi_devices
 @IS_FREEBSD_FALSE@LIBMLX4 = 
 @IS_FREEBSD_TRUE@LIBMLX4 = -lmlx4
+tcp_client_SOURCES = src/tcp_client.c
+tcp_client_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+tcp_rvma_mediator_SOURCES = src/tcp_rvma_mediator.c
+tcp_rvma_mediator_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
+tcp_rvma_server_SOURCES = src/tcp_rvma_server.c
+tcp_rvma_server_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 libvma_client_stream_SOURCES = src/libvma_client_stream.c
 libvma_client_stream_LDADD = libperftest.a -lrdmacm -libverbs $(LIBMATH) $(LIBMLX4) $(LIBMLX5) $(LIBEFA)
 libvma_server_stream_SOURCES = src/libvma_server_stream.c
@@ -1094,6 +1120,24 @@ src/rvsocket_server_stream_bw.$(OBJEXT): src/$(am__dirstamp) \
 rvsocket_server_stream_bw$(EXEEXT): $(rvsocket_server_stream_bw_OBJECTS) $(rvsocket_server_stream_bw_DEPENDENCIES) $(EXTRA_rvsocket_server_stream_bw_DEPENDENCIES) 
 	@rm -f rvsocket_server_stream_bw$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(rvsocket_server_stream_bw_OBJECTS) $(rvsocket_server_stream_bw_LDADD) $(LIBS)
+src/tcp_client.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+tcp_client$(EXEEXT): $(tcp_client_OBJECTS) $(tcp_client_DEPENDENCIES) $(EXTRA_tcp_client_DEPENDENCIES) 
+	@rm -f tcp_client$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tcp_client_OBJECTS) $(tcp_client_LDADD) $(LIBS)
+src/tcp_rvma_mediator.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+tcp_rvma_mediator$(EXEEXT): $(tcp_rvma_mediator_OBJECTS) $(tcp_rvma_mediator_DEPENDENCIES) $(EXTRA_tcp_rvma_mediator_DEPENDENCIES) 
+	@rm -f tcp_rvma_mediator$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tcp_rvma_mediator_OBJECTS) $(tcp_rvma_mediator_LDADD) $(LIBS)
+src/tcp_rvma_server.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+
+tcp_rvma_server$(EXEEXT): $(tcp_rvma_server_OBJECTS) $(tcp_rvma_server_DEPENDENCIES) $(EXTRA_tcp_rvma_server_DEPENDENCIES) 
+	@rm -f tcp_rvma_server$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tcp_rvma_server_OBJECTS) $(tcp_rvma_server_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -1179,6 +1223,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_server_dgram_bw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_server_stream.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/rvsocket_server_stream_bw.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tcp_client.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tcp_rvma_mediator.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/tcp_rvma_server.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/write_bw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/write_lat.Po@am__quote@ # am--include-marker
 
@@ -1540,6 +1587,9 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/rvsocket_server_dgram_bw.Po
 	-rm -f src/$(DEPDIR)/rvsocket_server_stream.Po
 	-rm -f src/$(DEPDIR)/rvsocket_server_stream_bw.Po
+	-rm -f src/$(DEPDIR)/tcp_client.Po
+	-rm -f src/$(DEPDIR)/tcp_rvma_mediator.Po
+	-rm -f src/$(DEPDIR)/tcp_rvma_server.Po
 	-rm -f src/$(DEPDIR)/write_bw.Po
 	-rm -f src/$(DEPDIR)/write_lat.Po
 	-rm -f Makefile
@@ -1631,6 +1681,9 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/rvsocket_server_dgram_bw.Po
 	-rm -f src/$(DEPDIR)/rvsocket_server_stream.Po
 	-rm -f src/$(DEPDIR)/rvsocket_server_stream_bw.Po
+	-rm -f src/$(DEPDIR)/tcp_client.Po
+	-rm -f src/$(DEPDIR)/tcp_rvma_mediator.Po
+	-rm -f src/$(DEPDIR)/tcp_rvma_server.Po
 	-rm -f src/$(DEPDIR)/write_bw.Po
 	-rm -f src/$(DEPDIR)/write_lat.Po
 	-rm -f Makefile

@@ -12,13 +12,7 @@
 
 #define PORT 7471
 
-
-typedef struct {
-    int fd;
-    int id;
-} client_ctx_t;
-
-
+// Function to measure clock cycles
 static inline uint64_t rdtsc(){
     unsigned int lo, hi;
     // Serialize to prevent out-of-order execution affecting timing
@@ -51,19 +45,6 @@ uint32_t get_host_addr(const char *iface_name) {
     return ip;
 }
 
-void *client_handler(void *arg) {
-	client_ctx_t *ctx = arg;
-	int fd = ctx->fd;
-
-	char recv_buf[1024];
-	for (int i = 0; i < 100; i++) {
-		rvrecv(fd, recv_buf, 1024, 0);
-		rvsend(fd, recv_buf, 1024);
-	}
-
-	return NULL;
-}
-
 
 int main(int argc, char **argv) {
 	uint64_t start, end;
@@ -72,21 +53,15 @@ int main(int argc, char **argv) {
 	uint16_t reserved = 0x0001;
 	struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
+
 	int listen_fd;
+	int rvma_conn_fd; // fd for RVMA side connection
+    int tcp_conn_fd; // fd for client TCP connection
 
 	int size = 1024;
     if (argc > 1) {
         size = atoi(argv[1]);
     }
-
-	int num_clients = 1;
-	if (argc > 2) {
-		num_clients = atoi(argv[2]);
-	}
-	int conn_fd[num_clients];
-
-	int num_sends = 100;
-
 
 	uint32_t host_ip = get_host_addr("ib0");
 	uint64_t vaddr = constructVaddr(reserved, host_ip, PORT);
@@ -107,31 +82,46 @@ int main(int argc, char **argv) {
 	rvlisten(listen_fd, 5);
 	printf("Server listening on port %d...\n", PORT);
 
-	client_ctx_t clients[num_clients];
-	pthread_t threads[num_clients];
+	void *recv_buf = malloc(size);
 
-	for (int i = 0; i < num_clients; i++) {
-		// Accept a connection from client
-		conn_fd[i] = rvaccept(listen_fd, NULL, NULL, windowPtr);
-		if (conn_fd[i] < 0) {
-			perror("rvaccept failed");
-			return -1;
-		}
-		printf("Client %d successfully connected!\n", i+1);
+	// Accept a connection from client
+	rvma_conn_fd = rvaccept(listen_fd, NULL, NULL, windowPtr);
+    if (rvma_conn_fd < 0) {
+        perror("rvaccept failed");
+        return -1;
+    }
+	printf("RVMA server successfully connected!\n");
 
-		clients[i].fd = conn_fd[i];
-		clients[i].id = i;
-		pthread_create(&threads[i], NULL, client_handler, &conn_fd[i]);
-	}
+    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+    bind(listen_fd, (struct sockaddr *)&addr, sizeof(addr)); // Bind to same port for TCP connection
+    
+    listen(listen_fd, 5);
+    printf("RVMA mediation server listening on port %d for TCP connections...\n", PORT);
 
-	for (int i = 0; i < num_clients; i++) {
-		pthread_join(threads[i], NULL);
-	}
+    tcp_conn_fd = accept(listen_fd, NULL, NULL);
+    printf("TCP client connected!\n");
 
-	for (int i = 0; i < num_clients; i++) {
-		rvclose(conn_fd[i]);
-	}
+	uint64_t t1, t2, t3;
 
+    // First receive message from TCP client
+    recv(tcp_conn_fd, recv_buf, size, 0);
+    //printf("Received message from TCP client: %.*s\n", size, (char *)recv_buf);
+    // Send message to the RVMA server
+    t1 = rdtsc();
+    rvsend(rvma_conn_fd, recv_buf, size);
+
+    // Receive message back from RVMA server
+    rvrecv(rvma_conn_fd, recv_buf, size, 0);
+    t2 = rdtsc();
+    double elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
+    printf("Round-trip time for RVMA send and recv: %.2f µs\n", elapsed_us);
+    //printf("Received message back from RVMA server: %.*s\n", size, (char *)recv_buf);
+    // Send message back to TCP client
+    send(tcp_conn_fd, recv_buf, size, 0);
+	
+	// Close the connection
+	rvclose(rvma_conn_fd);
+    close(tcp_conn_fd);
 	close(listen_fd);
 	return 0;
 }

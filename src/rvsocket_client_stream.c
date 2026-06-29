@@ -8,6 +8,7 @@
 
 #include "rvma_socket.h"
 #include "rvma_write.h"
+#include "rvma_debug.h"
 
 #define PORT 7471
 
@@ -20,10 +21,10 @@ static inline uint64_t rdtsc(){
     return ((uint64_t)hi << 32) | lo;
 }
 
+int g_client_id = -1;
 
 int main(int argc, char **argv) {
     double cpu_ghz = get_cpu_ghz();
-    uint16_t reserved = 0x0001;
     int sockfd;
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -41,6 +42,13 @@ int main(int argc, char **argv) {
         size = atoi(argv[2]);
     }
     printf("Sending messages of size %d bytes\n", size);
+
+    // Arg 3 - Reserved field for vaddr for multiple processes on same host
+    uint16_t reserved = 0x0001;
+    if (argc > 3) {
+        g_client_id = atoi(argv[3]);
+        reserved = (uint16_t)atoi(argv[3]);
+    }
 
     // Convert IP to host byte order and construct vaddr
     uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
@@ -74,7 +82,7 @@ int main(int argc, char **argv) {
     }
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
-    int num_sends = 1000;
+    int num_sends = 100;
 
     uint64_t *latencies = malloc(num_sends * sizeof(uint64_t));
 
@@ -96,7 +104,7 @@ int main(int argc, char **argv) {
         rvrecv(sockfd, recv_buf, size, 0);
         t2 = rdtsc();
         if (i > 0) { // Skip warmup round
-            latencies[i - 1] = t2 - t1;
+            latencies[i] = t2 - t1;
             total += (t2 - t1);
         }
     }

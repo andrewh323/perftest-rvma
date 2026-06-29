@@ -13,74 +13,34 @@
 
 
 RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
-    RVMA_Mailbox *mailboxPtr;
-    mailboxPtr = (RVMA_Mailbox*) malloc(sizeof(RVMA_Mailbox));
+    RVMA_Mailbox *mb = (RVMA_Mailbox*) malloc(sizeof(RVMA_Mailbox));
 
-    if(!mailboxPtr) return NULL;
+    if(!mb) return NULL;
 
-    RVMA_Buffer_Queue *sendBufferQueue;
-    sendBufferQueue = createBufferQueue(QUEUE_CAPACITY);
-    if(!sendBufferQueue) {
-        print_error("setupMailbox: Send Buffer Queue failed to be created");
-        free(mailboxPtr);
+    mb->sendBufferQueue = createBufferQueue(QUEUE_CAPACITY);
+    mb->inflightSendQueue = createBufferQueue(QUEUE_CAPACITY);
+    mb->recvBufferQueue = createBufferQueue(QUEUE_CAPACITY);
+    mb->completedRecvQueue = createBufferQueue(QUEUE_CAPACITY);
+    mb->retiredBufferQueue = createBufferQueue(1);
+
+    if (!mb->sendBufferQueue   || !mb->inflightSendQueue ||
+        !mb->recvBufferQueue   || !mb->completedRecvQueue ||
+        !mb->retiredBufferQueue) {
+        print_error("setupMailbox: failed to allocate buffer queues");
+        freeMailbox(&mb);  // freeMailbox must already NULL-check each field
         return NULL;
     }
     
-    RVMA_Buffer_Queue *inflightSendQueue;
-    inflightSendQueue = createBufferQueue(QUEUE_CAPACITY);
-    if(!inflightSendQueue) {
-        print_error("setupMailbox: Inflight Send Buffer Queue failed to be created");
-        free(mailboxPtr);
-        return NULL;
-    }
+    mb->max_outstanding_sends = 1000;
+    mb->outstanding_sends = 0;
+    mb->max_recvs = 128;
+    mb->posted_recvs = 0;
+    mb->sendCount = 0;
+    mb->recvCount = 0;
+    mb->vaddr = vaddr;
+    mb->key = hashFunction(mb->vaddr, hashmapCapacity);
 
-    RVMA_Buffer_Queue *recvBufferQueue;
-    recvBufferQueue = createBufferQueue(QUEUE_CAPACITY);
-    if(!recvBufferQueue) {
-        print_error("setupMailbox: Recv Buffer Queue failed to be created");
-        free(mailboxPtr);
-        free(sendBufferQueue);
-        return NULL;
-    }
-
-    RVMA_Buffer_Queue *completedRecvQueue;
-    completedRecvQueue = createBufferQueue(QUEUE_CAPACITY);
-    if(!completedRecvQueue) {
-        print_error("setupMailbox: Recv Buffer Queue failed to be created");
-        free(mailboxPtr);
-        free(sendBufferQueue);
-        return NULL;
-    }
-
-    RVMA_Buffer_Queue *retiredBufferQueue;
-    retiredBufferQueue = createBufferQueue(1);
-    if(!retiredBufferQueue) {
-        print_error("setupMailbox: Retired Buffer Queue failed to be created");
-        free(mailboxPtr);
-        free(sendBufferQueue);
-        free(recvBufferQueue);
-        return NULL;
-    }
-
-    mailboxPtr->pd = NULL;
-    mailboxPtr->send_cq = NULL;
-    mailboxPtr->recv_cq = NULL;
-    mailboxPtr->qp = NULL;
-    mailboxPtr->max_outstanding_sends = 1000;
-    mailboxPtr->outstanding_sends = 0;
-    mailboxPtr->max_recvs = 128;
-    mailboxPtr->posted_recvs = 0;
-    mailboxPtr->sendCount = 0;
-    mailboxPtr->recvCount = 0;
-    mailboxPtr->sendBufferQueue = sendBufferQueue;
-    mailboxPtr->inflightSendQueue = inflightSendQueue;
-    mailboxPtr->recvBufferQueue = recvBufferQueue;
-    mailboxPtr->completedRecvQueue = completedRecvQueue;
-    mailboxPtr->retiredBufferQueue = retiredBufferQueue;
-    mailboxPtr->vaddr = vaddr;
-    mailboxPtr->key = hashFunction(mailboxPtr->vaddr, hashmapCapacity);
-
-    return mailboxPtr;
+    return mb;
 }
 
 Mailbox_HashMap* initMailboxHashmap(){
@@ -162,46 +122,57 @@ int hashFunction(uint64_t vaddr, int capacity) {
 }
 
 RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr){
-    int hashNum = hashFunction(vaddr, hashMap->capacity);
-    RVMA_Mailbox* mailboxPtr;
-    mailboxPtr = setupMailbox(vaddr, hashMap->capacity);
-
-    if (hashMap->hashmap[hashNum] != NULL) {
-        freeMailbox(&mailboxPtr);
-        print_error("newMailboxIntoHashmap: Virtual address hashed to same hash number, Virtual address rejected....");
+    if (hashMap->numOfElements >= hashMap->capacity) {
+        errno = ENOSPC;
         return RVMA_ERROR;
     }
-    else {
-        hashMap->hashmap[hashNum] = mailboxPtr;
-        hashMap->numOfElements = hashMap->numOfElements + 1;
-        return RVMA_SUCCESS;
+
+    int start = hashFunction(vaddr, hashMap->capacity);
+
+    for (int i = 0; i < hashMap->capacity; i++) {
+        int slot = (start + i) % hashMap->capacity;
+        
+        if (hashMap->hashmap[slot] == NULL) { // Found a free slot
+            RVMA_Mailbox* mb = setupMailbox(vaddr, hashMap->capacity);
+            if (!mb) return RVMA_ERROR;
+            mb->key = slot; // Record slot itself
+            hashMap->hashmap[slot] = mb;
+            hashMap->numOfElements++;
+            return RVMA_SUCCESS;
+        }
+
+        if (hashMap->hashmap[slot]->vaddr == vaddr) {
+            // Collision
+            return RVMA_ERROR;
+        }
     }
+
+    errno = ENOSPC;
+    return RVMA_ERROR;
 }
 
-RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, uint64_t key){
+RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr) {
 
     if(hashMap == NULL) {
         print_error("searchHashmap: hashmap is null");
         return NULL;
     }
-    if(key == NULL) {
+    if(vaddr == NULL) {
         print_error("searchHashmap: key is null");
         return NULL;
     }
 
     // Getting the bucket index for the given key
-    int hashNum = hashFunction(key, hashMap->capacity);
+    int start = hashFunction(vaddr, hashMap->capacity);
 
-    // Head of the linked list present at bucket index
-    RVMA_Mailbox* mailboxPtr = hashMap->hashmap[hashNum];
-    if (mailboxPtr && mailboxPtr->vaddr == key) {
-        return mailboxPtr;
+    for (int i = 0; i < hashMap->capacity; i++) {
+        int slot = (start + i) % hashMap->capacity;
+        if (hashMap->hashmap[slot] == NULL) return NULL;
+        if (hashMap->hashmap[slot]->vaddr == vaddr) return hashMap->hashmap[slot];
     }
-    else{
-        // If no key found in the hashMap equal to the given key
-        print_error("searchHashmap: No Key in Hashmap matches provided key");
-        return NULL;
-    }
+    // If no key found in the hashMap equal to the given vaddr
+    print_error("searchHashmap: No mailbox with that vaddr found");
+    return NULL;
 }
 
 

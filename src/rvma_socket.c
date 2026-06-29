@@ -29,7 +29,7 @@
 #include "rvma_socket.h"
 #include "indexer.h"
 
-#define MAX_POOL_BUFS 64
+#define MAX_POOL_BUFS 16
 #define MAX_RECV_SIZE 1024*1024
 #define SIGNAL_INTERVAL 16
 #define MAX_BYTES 128*1024*1024 // Hardware limit of NIC
@@ -469,8 +469,24 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
 
     // Retrieve IP address and construct actual client virtual address
     struct sockaddr_in *client_addr = rdma_get_peer_addr(client_cm_id);
+
+    struct rdma_event_channel *client_ec = rdma_create_event_channel();
+    if (!client_ec) {
+        perror("rdma_create_event_channel");
+        rdma_ack_cm_event(event);
+        return -1;
+    }
+
+    rdma_ack_cm_event(event);
+
+    if (rdma_migrate_id(client_cm_id, client_ec)) {
+        perror("rdma_migrate_id");
+        rdma_destroy_event_channel(client_ec);
+        return -1;
+    }
+
     uint32_t client_ip = ntohl(client_addr->sin_addr.s_addr);
-    uint16_t client_port = getPort(rvs->vaddr);
+    uint16_t client_port = ntohs(client_addr->sin_port);
 
     uint64_t vaddr = constructVaddr(0x0001, client_ip, client_port);
     
@@ -478,7 +494,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     struct ibv_pd *pd = ibv_alloc_pd(client_cm_id->verbs);
     if (!pd) {
         perror("ibv_alloc_pd failed");
-        ibv_dealloc_pd(pd);
         return -1;
     }
 
@@ -486,13 +501,11 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     struct ibv_cq *send_cq = ibv_create_cq(client_cm_id->verbs, 1024, NULL, NULL, 0);
     if (!send_cq) {
         perror("ibv_create_cq failed");
-        ibv_dealloc_pd(pd);
         return -1;
     }
     struct ibv_cq *recv_cq = ibv_create_cq(client_cm_id->verbs, 1024, NULL, NULL, 0);
     if (!recv_cq) {
         perror("ibv_create_cq failed");
-        ibv_dealloc_pd(pd);
         return -1;
     }
     // Create QP
@@ -546,36 +559,58 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
 
     // Prepost buffer pools
     if (postSendPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
-        perror("postSendPool failed");
+        fprintf(stderr, "postSendPool failed\n");
         return -1;
     }
     
     printf("Posting buffer pools\n");
     if (postRecvPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
-        perror("postRecvPool failed");
+        fprintf(stderr, "postRecvPool failed\n");
         return -1;
     }
 
+    struct rdma_conn_param comm_param = {
+        .rnr_retry_count = 7,
+        .retry_count = 7,
+    };
+
     // Accept connection
-    if (rdma_accept(client_cm_id, NULL)) {
-        perror("rdma_accept");
+    if (rdma_accept(client_cm_id, &comm_param)) {
+        fprintf(stderr, "rdma_accept failed\n");
         rdma_ack_cm_event(event);
         return -1;
     }
 
     // Drain the event channel for established event
-    if (rdma_get_cm_event(rvs->ec, &event)) {
-        perror("rdma_get_cm_event ESTABLISHED");
-        return -1;
-    }
+    while (1) {
+        if (rdma_get_cm_event(client_ec, &event)) {
+            fprintf(stderr, "rdma_get_cm_event ESTABLISHED failed\n");
+            return -1;
+        }
+        if (event->id == client_cm_id && event->event == RDMA_CM_EVENT_ESTABLISHED) {
+            rdma_ack_cm_event(event);
+            break;
+        }
 
-    if (event->event != RDMA_CM_EVENT_ESTABLISHED) {
-        fprintf(stderr, "Expected ESTABLISHED event: %s\n", rdma_event_str(event->event));
+        if (event->id == client_cm_id &&
+            (event->event == RDMA_CM_EVENT_REJECTED || 
+              event->event == RDMA_CM_EVENT_DISCONNECTED)) {
+                fprintf(stderr, "Connection failed: %s\n", rdma_event_str(event->event));
+                
+                rdma_ack_cm_event(event);
+                return -1;
+        }
         rdma_ack_cm_event(event);
-        return -1;
     }
 
-    rdma_ack_cm_event(event);
+    struct ibv_qp_attr rnr_attr = {
+        .min_rnr_timer = 1,   // 0.01ms — minimum possible value
+    };
+    if (ibv_modify_qp(new_rvs->mailboxPtr->qp, &rnr_attr, IBV_QP_MIN_RNR_TIMER)) {
+        perror("ibv_modify_qp min_rnr_timer");
+    }
+
+    new_rvs->ec = client_ec;
 
     // Insert new rvsocket into index map
     rs_insert(new_rvs, new_rvs->index);
@@ -768,22 +803,40 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     rvs->mailboxPtr->qp = rvs->cm_id->qp;
     uint64_t rdmaSetup = rdtsc();
 
+    struct rdma_conn_param comm_param = {
+        .rnr_retry_count = 7,
+        .retry_count = 7,
+    };
+
     // Connect
-    if (rdma_connect(rvs->cm_id, NULL)) {
+    if (rdma_connect(rvs->cm_id, &comm_param)) {
         perror("rdma_connect");
         return -1;
     }
+
     // Wait for CM event
-    if (rdma_get_cm_event(rvs->ec, &event)) {
-        perror("rdma_get_cm_event");
-        return -1;
-    }
-    if(event->event != RDMA_CM_EVENT_ESTABLISHED) {
-        fprintf(stderr, "rdma_connect failed: %s\n", rdma_event_str(event->event));
+    while (1) {
+        if (rdma_get_cm_event(rvs->ec, &event)) {
+            perror("rdma_get_cm_event");
+            return -1;
+        }
+
+        if(event->id == rvs->cm_id && event->event == RDMA_CM_EVENT_ESTABLISHED) {
+            printf("Connection established!\n");
+            rdma_ack_cm_event(event);
+            break;
+        }
+
+        if (event->id == rvs->cm_id &&
+            (event->event == RDMA_CM_EVENT_REJECTED || 
+             event->event == RDMA_CM_EVENT_DISCONNECTED)) {
+                fprintf(stderr, "Connection failed: %s\n", rdma_event_str(event->event));
+                rdma_ack_cm_event(event);
+                return -1;
+        }
+
         rdma_ack_cm_event(event);
-        return -1;
     }
-    rdma_ack_cm_event(event);
 
     uint64_t beforePostRecv = rdtsc();
 

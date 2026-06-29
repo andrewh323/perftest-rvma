@@ -12,9 +12,6 @@
 #include "rvma_write.h"
 #include "rvma_socket.c"
 
-#define MAX_SEND_SIZE 1024*1024
-#define MAX_RECV_SIZE 1024*1024 // 1 MB
-
 // Helper function to get CPU frequency
 double get_cpu_ghz() {
     FILE *fp = fopen("/proc/cpuinfo", "r");
@@ -217,8 +214,6 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
         return RVMA_ERROR;
     }
 
-    printf("Posting send pool of %d buffers\n", num_bufs);
-
     for (int i = 0; i < num_bufs; i++) {
         // Define buffer address for specific entry
         char *send_buf = (char *)mailbox->send_pool + i * buffer_size;
@@ -382,7 +377,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
     return RVMA_SUCCESS;
 }
 
-// Check on completions with a progress engine
+// Check on completions with a progress engine rather than hard polling
 void rvmaProgress(RVMA_Mailbox *mailbox) {
     int num_wc = 128;
     struct ibv_wc send_wc[num_wc];
@@ -392,6 +387,7 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         return;
     }
 
+    // Retrieve send completions
     for (int i = 0; i < sn; i++) {
         if (send_wc[i].status != IBV_WC_SUCCESS) {
             fprintf(stderr, "Completion error: %s (%d)\n", ibv_wc_status_str(send_wc[i].status), send_wc[i].status);
@@ -413,6 +409,7 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         mailbox->outstanding_sends--;
     }
 
+    // Retrieve receive completions
     struct ibv_wc recv_wc[num_wc];
     int rn = ibv_poll_cq(mailbox->recv_cq, num_wc, recv_wc);
     if (rn < 0) {
@@ -435,12 +432,12 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         entry->received_len = recv_wc[i].byte_len;
         entry->wc_flags = recv_wc[i].wc_flags;
         // printf("recv count: %d\n", mailbox->recvCount);
-        // printf("Received message: %.*s\n", len, (char *)entry->realBuff);
+        // printf("Received message: %.*s\n", entry->received_len, (char *)entry->realBuff);
         enqueue(mailbox->completedRecvQueue, entry);
         mailbox->posted_recvs--;
     }
 
-
+    // For each completion received, post a new receive
     while (mailbox->posted_recvs < mailbox->max_recvs) {
         RVMA_Buffer_Entry *e = dequeue(mailbox->recvBufferQueue);
         if (!e) break;
