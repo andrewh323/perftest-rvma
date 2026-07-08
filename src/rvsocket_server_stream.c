@@ -16,6 +16,8 @@
 typedef struct {
     int fd;
     int id;
+	int msg_size;
+	int num_sends;
 } client_ctx_t;
 
 
@@ -52,18 +54,35 @@ uint32_t get_host_addr(const char *iface_name) {
 }
 
 void *client_handler(void *arg) {
-	client_ctx_t *ctx = arg;
-	int fd = ctx->fd;
+    client_ctx_t *ctx = (client_ctx_t *)arg;
 
-	char recv_buf[1024];
-	for (int i = 0; i < 100; i++) {
-		rvrecv(fd, recv_buf, 1024, 0);
-		rvsend(fd, recv_buf, 1024);
-	}
+    int fd = ctx->fd;
+    int size = ctx->msg_size;
+    int exchanges = ctx->num_sends;
 
-	return NULL;
+    char *recv_buf = malloc(size);
+    if (!recv_buf) {
+        perror("malloc");
+        return NULL;
+    }
+
+    for (int i = 0; i < exchanges; i++) {
+        int ret = rvrecv(fd, recv_buf, size, 0);
+        if (ret < 0) {
+            perror("rvrecv");
+            break;
+        }
+
+        ret = rvsend(fd, recv_buf, size);
+        if (ret < 0) {
+            perror("rvsend");
+            break;
+        }
+    }
+
+    free(recv_buf);
+    return NULL;
 }
-
 
 int main(int argc, char **argv) {
 	uint64_t start, end;
@@ -74,6 +93,7 @@ int main(int argc, char **argv) {
     memset(&addr, 0, sizeof(addr));
 	int listen_fd;
 
+	// Test paramters
 	int size = 1024;
     if (argc > 1) {
         size = atoi(argv[1]);
@@ -85,9 +105,9 @@ int main(int argc, char **argv) {
 	}
 	int conn_fd[num_clients];
 
-	int num_sends = 100;
+	int num_sends = 1000;
 
-
+	
 	uint32_t host_ip = get_host_addr("ib0");
 	uint64_t vaddr = constructVaddr(reserved, host_ip, PORT);
 	printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
@@ -111,17 +131,21 @@ int main(int argc, char **argv) {
 	pthread_t threads[num_clients];
 
 	for (int i = 0; i < num_clients; i++) {
-		// Accept a connection from client
 		conn_fd[i] = rvaccept(listen_fd, NULL, NULL, windowPtr);
+
 		if (conn_fd[i] < 0) {
 			perror("rvaccept failed");
 			return -1;
 		}
+
 		printf("Client %d successfully connected!\n", i+1);
 
 		clients[i].fd = conn_fd[i];
 		clients[i].id = i;
-		pthread_create(&threads[i], NULL, client_handler, &conn_fd[i]);
+		clients[i].msg_size = size;
+		clients[i].num_sends = num_sends;
+
+		pthread_create(&threads[i], NULL, client_handler, &clients[i]);
 	}
 
 	for (int i = 0; i < num_clients; i++) {

@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     }
     printf("Connected to server %s:%d!\n", argv[1], PORT);
 
-    int num_sends = 100;
+    int num_sends = 1000;
 
     uint64_t *latencies = malloc(num_sends * sizeof(uint64_t));
 
@@ -103,10 +103,21 @@ int main(int argc, char **argv) {
         rvsend(sockfd, messages[i], size);
         rvrecv(sockfd, recv_buf, size, 0);
         t2 = rdtsc();
-        if (i > 0) { // Skip warmup round
-            latencies[i] = t2 - t1;
-            total += (t2 - t1);
-        }
+        latencies[i] = t2 - t1;
+    }
+
+    uint64_t min = 9999999999999;
+    uint64_t max = 0;
+
+    // Skip first round for warmup
+    for (int i = 1; i < num_sends - 1; i++) {
+        if (latencies[i] < min) min = latencies[i];
+        if (latencies[i] > max) max = latencies[i];
+        total += latencies[i];
+    }
+
+    for (int i = 80; i < 90; i++) {
+        printf("Latency for message %d: %.3f µs\n", i, latencies[i] / (cpu_ghz * 1e3));
     }
 
     double mean_cycles = total / (double)(num_sends - 1);
@@ -121,14 +132,6 @@ int main(int argc, char **argv) {
 
     double stddev_cycles = sqrt(variance);
     double stddev_us = stddev_cycles / (cpu_ghz * 1e3);
-
-    uint64_t min = latencies[0];
-    uint64_t max = latencies[0];
-
-    for (int i = 1; i < num_sends - 1; i++) {
-        if (latencies[i] < min) min = latencies[i];
-        if (latencies[i] > max) max = latencies[i];
-    }
     
     printf("Mean: %.3f µs\n", mean_us);
     printf("Stddev: %.3f µs\n", stddev_us);

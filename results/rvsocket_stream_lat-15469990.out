@@ -1,0 +1,81 @@
+Server Node: rc13218
+Client Node: rc13224
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Infiniband hardware address can be incorrect! Please read BUGS section in ifconfig(8).
+Server IB HW IP: 10.85.32.18
+Client IB HW IP: 10.85.32.24
+=== Run 1 of 10 ===
+Running test with message size: 1 bytes
+Running test with message size: 4 bytes
+Running test with message size: 16 bytes
+Running test with message size: 64 bytes
+Running test with message size: 256 bytes
+Running test with message size: 1024 bytes
+Running test with message size: 4096 bytes
+Running test with message size: 16384 bytes
+Recv CQ error: local length error (1)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Completion error: remote invalid request error (9)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+Recv CQ error: Work Request Flushed Error (5)
+[2026-07-07T22:43:39.265] error: *** JOB 15469990 ON rc13218 CANCELLED AT 2026-07-07T22:43:39 DUE to SIGNAL Terminated ***

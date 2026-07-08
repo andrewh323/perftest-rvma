@@ -454,8 +454,9 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
             .num_sge = 1
         };
 
+        struct ibv_recv_wr *bad_wr = NULL;
         // printf("Posting recv with buffer addr=%p, size=%d\n", e->realBuff, MAX_RECV_SIZE);
-        if(ibv_post_recv(mailbox->qp, &wr, NULL)) {
+        if(ibv_post_recv(mailbox->qp, &wr, &bad_wr)) {
             // If posting fails, put entry back and break
             enqueue(mailbox->recvBufferQueue, e);
             break;
@@ -467,42 +468,17 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
 
 // Redundant now with rvmaProgress
 RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mailbox *mailbox) {
-    struct ibv_wc wc;
-    int num_wc;
-    do {
-        num_wc = ibv_poll_cq(mailbox->recv_cq, 1, &wc);
-    } while (num_wc == 0);
-
-    if (num_wc < 0 || wc.status != IBV_WC_SUCCESS) {
-        fprintf(stderr, "recv completion error: %s (%d)\n", ibv_wc_status_str(wc.status), wc.status);
-        return RVMA_ERROR;
+    RVMA_Buffer_Entry *entry = NULL;
+    while (!entry) {
+        rvmaProgress(mailbox);
+        entry = dequeue(mailbox->completedRecvQueue);
     }
 
-    RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)wc.wr_id;
-    buf = (char *)entry->realBuff;
-    // printf("Received Message: %.*s\n", wc.byte_len, buf);
+    size_t copy_len = len < (size_t)entry->realBuffSize ? len : (size_t)entry->realBuffSize;
+    memcpy(buf, entry->realBuff, copy_len);
+    enqueue(mailbox->recvBufferQueue, entry);
 
-    // Build sge
-    struct ibv_sge sge = {
-        .addr = (uintptr_t)buf,
-        .length = len,
-        .lkey = entry->mr->lkey
-    };
-
-    // Build recv_wr
-    struct ibv_recv_wr recv_wr = {
-        .wr_id = (uintptr_t)entry,
-        .sg_list = &sge,
-        .num_sge = 1,
-        .next = NULL
-    };
-    struct ibv_recv_wr *bad_wr = NULL;
-
-    // Post recv
-    if (ibv_post_recv(mailbox->qp, &recv_wr, &bad_wr)) {
-        perror("ibv_post_recv failed");
-        return RVMA_ERROR;
-    }
+    //printf("Received message: %.*s\n", (int)copy_len, (char *)buf);
     
     return RVMA_SUCCESS;
 }

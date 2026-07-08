@@ -128,10 +128,16 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    mailboxPtr->recv_cq = ibv_create_cq(client_cm_id->verbs, 16, NULL, NULL, 0);
+    if (!mailboxPtr->recv_cq) {
+        perror("ibv_create_cq failed");
+        return -1;
+    }
+
     // Create QP
     struct ibv_qp_init_attr qp_attr = {
         .send_cq = mailboxPtr->send_cq,
-        .recv_cq = mailboxPtr->send_cq,
+        .recv_cq = mailboxPtr->recv_cq,
         .qp_type = IBV_QPT_RC,
         .cap = {
             .max_send_wr = 16,
@@ -167,9 +173,12 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    uint64_t t2;
-    int size = 10000;
-	int num_sends = 100;
+	int num_sends = 1000;
+    int size = 1024;
+    if (argc > 1) {
+        size = atoi(argv[1]);
+    }
+    printf("Sending messages of size %d bytes\n", size);
 
     // Construct messages
 	char *messages[num_sends];
@@ -179,13 +188,20 @@ int main(int argc, char **argv) {
         snprintf(messages[i], size, "Msg %d", i);
     }
 
+    printf("Beginning send/recv loop\n");
+
     void *recv_buf = malloc(size);
+    RVMA_Status status;
     
 	for (int i = 0; i < num_sends; i++) {
-        uint64_t t1 = rdtsc();
-		rvmaRecv(vaddr, recv_buf, size, 0, mailboxPtr);
-		rvmaSend(messages[i], size, vaddr, mailboxPtr);
-        double elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
-        printf("RTT: %.2f microseconds\n", elapsed_us);
-	}
+		if (rvmaRecv(vaddr, recv_buf, size, 0, mailboxPtr) != RVMA_SUCCESS) {
+            fprintf(stderr, "rvmaRecv failed\n");
+            return -1;
+        }
+        do {
+            status = rvmaSend(messages[i], size, vaddr, mailboxPtr);
+        } while (status == RVMA_RETRY);
+    }
+
+    return 0;
 }

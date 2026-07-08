@@ -957,7 +957,6 @@ int rvsend(int socket, void *buf, int64_t len) {
     struct rvsocket *rvs = idm_at(&idm, socket);
     uint64_t vaddr = rvs->vaddr;
     RVMA_Status status;
-    int retries = 0;
     do {
         rvmaProgress(rvs->mailboxPtr);
         status = rvmaSend(buf, len, vaddr, rvs->mailboxPtr);

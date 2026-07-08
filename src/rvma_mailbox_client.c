@@ -79,9 +79,15 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    int num_sends = 100;
-    int size = 10000;
-    uint64_t t2;
+    int num_sends = 1000;
+    int size = 1024;
+    if (argc > 2) {
+        size = atoi(argv[2]);
+    }
+    printf("Sending messages of size %d bytes\n", size);
+
+
+    uint64_t t1, t2;
 
     void *recv_buf = malloc(size);
     char *messages[num_sends];
@@ -91,11 +97,50 @@ int main(int argc, char **argv) {
         snprintf(messages[i], size, "Msg %d", i);
     }
 
+    uint64_t *latencies = malloc(num_sends * sizeof(uint64_t));
+    uint64_t total = 0;
+    RVMA_Status status;
+
     for (int i = 0; i < num_sends; i++) {
-        uint64_t t1 = rdtsc();
-        rvmaSend(messages[i], size, vaddr, mailboxPtr);
-        rvmaRecv(vaddr, recv_buf, size, 0, mailboxPtr);
-        double elapsed_us = (t2 - t1) / (cpu_ghz * 1e3);
-        printf("RTT: %.2f microseconds\n", elapsed_us);
+        t1 = rdtsc();
+        do {
+            status = rvmaSend(messages[i], size, vaddr, mailboxPtr);
+        } while (status == RVMA_RETRY);
+
+        if (rvmaRecv(vaddr, recv_buf, size, 0, mailboxPtr) != RVMA_SUCCESS) {
+            fprintf(stderr, "rvmaRecv failed\n");
+            return -1;
+        }
+        t2 = rdtsc();
+        latencies[i] = t2 - t1;
     }
+    
+    uint64_t min = 999999999999999999;
+    uint64_t max = 0;
+
+    // Skip the first send for warmup
+    for (int i = 1; i < num_sends; i++) {
+        if (latencies[i] < min) min = latencies[i];
+        if (latencies[i] > max) max = latencies[i];
+        total += latencies[i];
+    }
+    double mean_cycles = total / (double)(num_sends - 1);
+    double mean_us = mean_cycles / (cpu_ghz * 1e3);
+
+    double variance = 0.0;
+    for (int i = 1; i < num_sends; i++) {
+        double diff = latencies[i] - mean_cycles;
+        variance += diff * diff;
+    }
+    variance /= (num_sends - 1);
+
+    double stddev_cycles = sqrt(variance);
+    double stddev_us = stddev_cycles / (cpu_ghz * 1e3);
+
+    printf("Mean: %.3f µs\n", mean_us);
+    printf("Stddev: %.3f µs\n", stddev_us);
+    printf("Min: %.3f µs\n", min / (cpu_ghz * 1e3));
+    printf("Max: %.3f µs\n", max / (cpu_ghz * 1e3));
+
+    return 0;
 }

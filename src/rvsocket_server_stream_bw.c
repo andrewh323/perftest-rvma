@@ -87,6 +87,8 @@ int main(int argc, char **argv) {
 	}
 
 	size_t total = 0;
+	struct timespec start_time, end_time;
+	clock_gettime(CLOCK_MONOTONIC, &start_time);
 	while (total < TOTAL_BYTES) {
 		int n = rvrecv(conn_fd[0], buffer, msg_size, 0);
 		if (n < 0) {
@@ -95,6 +97,15 @@ int main(int argc, char **argv) {
 		}
 		total += n;
 	}
+	clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+	double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
+
+    double bandwidth_MBps = (double)total / (1024 * 1024) / elapsed;
+    double bandwidth_GBps = bandwidth_MBps / 1024; // Convert to GiB/s
+
+    printf("Elapsed time: %.2f microseconds\n", elapsed * 1e6);
+    printf("Bandwidth: %.2f MiB/s (%.2f GiB/s)\n", bandwidth_MBps, bandwidth_GBps);
 
 	printf("Server received %zd bytes\n", total);
 
