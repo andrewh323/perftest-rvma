@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 
     // Calls newMailboxIntoHashmap, which calls setupMailbox, which gets the
     // key, bufferQueue, ec, rdma cm_id
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindow();
     if (!windowPtr) {
         fprintf(stderr, "Failed to initialize RVMA window mailbox\n");
         return -1;
@@ -180,14 +180,6 @@ int main(int argc, char **argv) {
     }
     printf("Sending messages of size %d bytes\n", size);
 
-    // Construct messages
-	char *messages[num_sends];
-    for (int i = 0; i < num_sends; i++) {
-        messages[i] = malloc(size);
-        memset(messages[i], 'A', size);
-        snprintf(messages[i], size, "Msg %d", i);
-    }
-
     printf("Beginning send/recv loop\n");
 
     void *recv_buf = malloc(size);
@@ -199,7 +191,10 @@ int main(int argc, char **argv) {
             return -1;
         }
         do {
-            status = rvmaSend(messages[i], size, vaddr, mailboxPtr);
+            status = rvmaSend(recv_buf, size, vaddr, mailboxPtr);
+            if (status == RVMA_RETRY) {
+                rvmaProgress(mailboxPtr);
+            }
         } while (status == RVMA_RETRY);
     }
 

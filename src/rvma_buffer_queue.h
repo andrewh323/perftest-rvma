@@ -21,7 +21,6 @@ typedef struct {
     epoch_type epochType;
     void **notifBuffPtrAddr;
     void **notifLenPtrAddr;
-    struct ibv_mr *mr;
     uint32_t wc_flags;
     uint32_t received_len;
 } RVMA_Buffer_Entry;

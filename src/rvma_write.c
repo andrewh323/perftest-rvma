@@ -241,7 +241,6 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
             return RVMA_ERROR;
         }
 
-        entry->mr = mailbox->send_mr;
         enqueue(mailbox->sendBufferQueue, entry);
     }
     return RVMA_SUCCESS;
@@ -295,15 +294,13 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
             return RVMA_ERROR;
         }
 
-        entry->mr = mailbox->recv_mr;
-
         enqueue(mailbox->recvBufferQueue, entry);
 
         // Build sge and wr, then post recv
         struct ibv_sge sge = {
             .addr = (uintptr_t)recv_ptr,
             .length = buffer_size,
-            .lkey = entry->mr->lkey
+            .lkey = mailbox->recv_mr->lkey
         };
 
         struct ibv_recv_wr recv_wr = {
@@ -330,6 +327,8 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         return RVMA_RETRY;
     }
 
+    // If mailbox has too many outstanding sends, put buffer back and return RETRY
+    // Wait for send_wcs to drain in progress engine
     if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends) {
         enqueue(mailbox->sendBufferQueue, entry);
         return RVMA_RETRY;
@@ -337,6 +336,8 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
 
     // Fill the buffer with data to send
     memcpy(entry->realBuff, buf, size);
+    // memcpy is required here because we must use memory-registered buffers
+    // Alternatively, user/application can register memory, but this is expensive when done in send path
     void *data = entry->realBuff;
     int64_t dataSize = size;
     
@@ -344,7 +345,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
     struct ibv_sge sge = {
         .addr = (uintptr_t)data,
         .length = dataSize,
-        .lkey = entry->mr->lkey
+        .lkey = mailbox->send_mr->lkey
     };
 
     // Build wr
@@ -360,17 +361,6 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
     if (ibv_post_send(mailbox->qp, &send_wr, &bad_wr)) {
         perror("rvmaSend: ibv_post_send failed");
         return RVMA_ERROR;
-    }
-    
-    mailbox->sendCount++;
-
-    // RVMA hardware counter check after posting (by bytes)
-    int64_t hardware_counter = dataSize;
-    if (hardware_counter == entry->epochThreshold) {
-        // Write address of head of buffer to notification pointer
-        entry->notifBuffPtrAddr = data;
-        // Write length of buffer to notifLenPtr in case buffer is reused
-        entry->notifLenPtrAddr = dataSize;
     }
 
     mailbox->outstanding_sends++;
@@ -445,7 +435,7 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         struct ibv_sge sge = {
             .addr = (uintptr_t)e->realBuff,
             .length = MAX_RECV_SIZE,
-            .lkey = e->mr->lkey
+            .lkey = mailbox->recv_mr->lkey
         };
 
         struct ibv_recv_wr wr = {
@@ -461,12 +451,10 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
             enqueue(mailbox->recvBufferQueue, e);
             break;
         }
-
         mailbox->posted_recvs++;
     }
 }
 
-// Redundant now with rvmaProgress
 RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mailbox *mailbox) {
     RVMA_Buffer_Entry *entry = NULL;
     while (!entry) {
@@ -475,10 +463,24 @@ RVMA_Status rvmaRecv(uint64_t vaddr, void *buf, size_t len, int flags, RVMA_Mail
     }
 
     size_t copy_len = len < (size_t)entry->realBuffSize ? len : (size_t)entry->realBuffSize;
+
+    entry->epochCount += copy_len;
+    
+    if (entry->epochCount == entry->epochThreshold) {
+        // Write address of head of buffer to notification pointer
+        entry->notifBuffPtrAddr = entry->realBuff;
+        // Write length of buffer to notifLenPtr in case buffer is reused
+        entry->notifLenPtrAddr = entry->received_len;
+    }
+
     memcpy(buf, entry->realBuff, copy_len);
+
+    entry->received_len = 0;
+    entry->wc_flags = 0;
+    entry->epochCount = 0;
     enqueue(mailbox->recvBufferQueue, entry);
 
-    //printf("Received message: %.*s\n", (int)copy_len, (char *)buf);
+    // printf("Received message: %.*s\n", (int)copy_len, (char *)buf);
     
     return RVMA_SUCCESS;
 }

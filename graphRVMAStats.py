@@ -4,32 +4,44 @@ import os
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-RESULTS_DIR = SCRIPT_DIR / "results"
+RESULTS_DIR = SCRIPT_DIR / "/home/andrewh8/src/perftest-rvma/results/csv_tables"
 
 
 # CSV file list
 files = {
-    "rsocket_stream_lat.csv": {
-        "label": "rsocket-stream",
+    # "rsocket_stream_lat.csv": {
+    #     "label": "rsocket-stream",
+    #     "size_col": "size_bytes",
+    #     "lat_col": "avg_send",
+    #     "std_col": "stddev"
+    # },
+
+    # "rvsocket_stream_progress.csv": {
+    #     "label": "rvsocket-stream",
+    #     "size_col": "size_bytes",
+    #     "lat_col": "avg_send",
+    #     "std_col": "stddev"
+    # },
+
+
+    "ibv_rc_pingpong_lat.csv": {
+        "label": "IB Verbs",
         "size_col": "size_bytes",
-        "lat_col": "avg_send"
+        "lat_col": "avg rtt",
+        "label_offset": (0, 8)
     },
 
-    "rvsocket_stream_progress.csv": {
-        "label": "rvsocket-stream",
-        "size_col": "size_bytes",
-        "lat_col": "avg_send"
-    },
-    
     "rvma_lat.csv": {
         "label": "Raw RVMA",
         "size_col": "size_bytes",
-        "lat_col": "avg rtt"
+        "lat_col": "avg rtt",
+        "std_col": "stddev",
+        "label_offset": (0, 16)
     }
 }
 
 # Plot
-plt.figure(figsize=(10, 7))
+plt.figure(figsize=(10, 6))
 
 def load_batch(filepath, batch_num, points_per_batch=11):
     df = pd.read_csv(filepath)
@@ -41,7 +53,7 @@ def load_batch(filepath, batch_num, points_per_batch=11):
 
 
 # Can change this to use different batch of data
-BATCH_TO_USE = 3
+BATCH_TO_USE = 4
 
 for filename, config in files.items():
 
@@ -49,24 +61,49 @@ for filename, config in files.items():
 
     df = load_batch(filepath, BATCH_TO_USE)
 
-    print(filename)
-    print(df)
-
     sizes = df[config["size_col"]]
     latency = df[config["lat_col"]]
 
-    plt.plot(
-        sizes,
-        latency,
-        marker='o',
-        label=config["label"]
-    )
+    if "std_col" in config:
+        std_dev = df[config["std_col"]]
+
+        line = plt.errorbar(
+            sizes,
+            latency,
+            yerr=std_dev,
+            marker='o',
+            capsize=4,
+            label=config["label"]
+        )
+
+        line_color = line.lines[0].get_color()
+
+    else:
+        line, = plt.plot(
+            sizes,
+            latency,
+            marker='o',
+            label=config["label"]
+        )
+
+        line_color = line.get_color()
+
+    for x, y in zip(sizes, latency):
+        plt.annotate(
+            f"{y:.2f}",
+            (x, y),
+            textcoords="offset points",
+            xytext=config["label_offset"],
+            ha="center",
+            fontsize=8,
+            color=line_color
+        )
 
 
 plt.xscale("log", base=2)
 
-plt.xlabel("Message Size (bytes)")
-plt.ylabel("Average Send Latency (µs)")
+plt.xlabel("Message Size (Bytes)")
+plt.ylabel("Average Round-Trip Latency (µs)")
 
 plt.grid(True)
 
@@ -77,10 +114,10 @@ plt.xticks(
     ["1", "4", "16", "64", "256", "1KiB", "4KiB", "16KiB", "64KiB", "256KiB", "1MiB"]
 )
 
-plt.title("Latency Comparison")
+plt.title("Round-Trip Latency of RVMA vs. IB Verbs")
 
 plt.savefig(
-    "results/graphs/rvma_latency_comparison" + str(BATCH_TO_USE) + ".png",
+    "/home/andrewh8/src/perftest-rvma/results/graphs/rvma-verbs_latency" + str(BATCH_TO_USE) + ".png",
     dpi=300,
     bbox_inches="tight"
 )

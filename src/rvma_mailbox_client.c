@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     uint64_t vaddr = construct_vaddr(reserved, ip_host_order, port);
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr); // Initialize mailbox space
+    RVMA_Win *windowPtr = rvmaInitWindow(); // Initialize mailbox space
     RVMA_Status res = newMailboxIntoHashmap(windowPtr->hashMapPtr, vaddr); // Insert new mailbox into hashmap
     RVMA_Mailbox *mailboxPtr = searchHashmap(windowPtr->hashMapPtr, vaddr); // Retrieve mailbox from hashmap
     if (!mailboxPtr) {
@@ -90,12 +90,8 @@ int main(int argc, char **argv) {
     uint64_t t1, t2;
 
     void *recv_buf = malloc(size);
-    char *messages[num_sends];
-    for (int i = 0; i < num_sends; i++) {
-        messages[i] = malloc(size);
-        memset(messages[i], 'A', size);
-        snprintf(messages[i], size, "Msg %d", i);
-    }
+    char *send_buf = malloc(size);
+    snprintf(send_buf, size, "Msg", 0);
 
     uint64_t *latencies = malloc(num_sends * sizeof(uint64_t));
     uint64_t total = 0;
@@ -104,7 +100,10 @@ int main(int argc, char **argv) {
     for (int i = 0; i < num_sends; i++) {
         t1 = rdtsc();
         do {
-            status = rvmaSend(messages[i], size, vaddr, mailboxPtr);
+            status = rvmaSend(send_buf, size, vaddr, mailboxPtr);
+            if (status == RVMA_RETRY) {
+                rvmaProgress(mailboxPtr);
+            }
         } while (status == RVMA_RETRY);
 
         if (rvmaRecv(vaddr, recv_buf, size, 0, mailboxPtr) != RVMA_SUCCESS) {

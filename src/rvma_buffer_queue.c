@@ -180,9 +180,6 @@ RVMA_Status freeBufferEntry(RVMA_Buffer_Entry *entry)
         return RVMA_ERROR;
     }
 
-    if (ibv_dereg_mr(entry->mr)) {
-        print_error("freeBufferEntry: ibv_dereg_mr failed");
-    }
     free(entry);
 
     return RVMA_SUCCESS;

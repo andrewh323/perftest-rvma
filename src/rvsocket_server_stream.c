@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
     addr.sin_port = htons(PORT);
 	addr.sin_addr.s_addr = INADDR_ANY; // Bind to all interfaces
 
-	RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
+	RVMA_Win *windowPtr = rvmaInitWindow();
 
     listen_fd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
 

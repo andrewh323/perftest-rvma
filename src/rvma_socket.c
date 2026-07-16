@@ -1013,7 +1013,7 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
             .length = sizeof(*hdr) + frag_size,
-            .lkey = entry->mr->lkey
+            .lkey = mailbox->send_mr->lkey
         };
 
         struct ibv_send_wr wr;
@@ -1121,6 +1121,10 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
         }
         size_t copy_len = len < (size_t)entry->realBuffSize ? len : (size_t)entry->realBuffSize;
         memcpy(buf, entry->realBuff, copy_len);
+        entry->received_len = 0;
+        entry->wc_flags = 0;
+        entry->epochCount = 0;
+
         enqueue(mailbox->recvBufferQueue, entry);
 
         return (int)copy_len;

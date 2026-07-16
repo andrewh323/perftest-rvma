@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
     printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
-    RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
+    RVMA_Win *windowPtr = rvmaInitWindow();
 
     sockfd = rvsocket(SOCK_STREAM, vaddr, windowPtr);
     if (sockfd < 0) {
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
     }
 
     for (int i = 80; i < 90; i++) {
-        printf("Latency for message %d: %.3f µs\n", i, latencies[i] / (cpu_ghz * 1e3));
+        // printf("Latency for message %d: %.3f µs\n", i, latencies[i] / (cpu_ghz * 1e3));
     }
 
     double mean_cycles = total / (double)(num_sends - 1);

@@ -1,23 +1,24 @@
 #!/bin/bash
 
-#SBATCH --job-name=rvsocket_stream_lat
+#SBATCH --job-name=rvma_lat
 #SBATCH --exclusive
 #SBATCH --account=def-regrant
 #SBATCH --output=results/%x-%j.out
 #SBATCH --nodes=2
-#SBATCH --mem=16G
 #SBATCH --time=1:00:00
+
+export LD_LIBRARY_PATH=/home/andrewh8/src/rdma-core/build/lib:$LD_LIBRARY_PATH
 
 REPEATS=10
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/csv_tables/rvsocket_stream_bw.csv"
+CSV_FILE="$PATH_TO_BIN/results/csv_tables/ibv_rc_pingpong_lat.csv"
 
 # Create results directory if needed
 mkdir -p "$PATH_TO_BIN/results/temp"
 
 # Write CSV header once
 if [ ! -f "$CSV_FILE" ]; then
-    echo "timestamp,repetition,size_bytes,throughput" > "$CSV_FILE"
+    echo "timestamp,repetition,size_bytes,avg rtt,throughput" > "$CSV_FILE"
 fi
 
 # Get nodes
@@ -33,13 +34,12 @@ CLIENT_IP=$(ssh $client "ifconfig ib0 | grep 'inet ' | awk '{print \$2}'" | tail
 echo "Server IB HW IP: $SERVER_IP"
 echo "Client IB HW IP: $CLIENT_IP"
 
-SERVER_OUT_PATH="$PATH_TO_BIN/results/temp/server-stream-$SLURM_JOB_ID.out"
-CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/client-stream-$SLURM_JOB_ID.out"
+SERVER_OUT_PATH="$PATH_TO_BIN/results/temp/rvma_server_lat-$SLURM_JOB_ID.out"
+CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/rvma_client_lat-$SLURM_JOB_ID.out"
 
-SERVER_EXEC="$PATH_TO_BIN/rvsocket_server_stream_bw"
-CLIENT_EXEC="$PATH_TO_BIN/rvsocket_client_stream_bw"
+PINGPONG="/home/andrewh8/src/rdma-core/build/bin/ibv_rc_pingpong"
 
-declare -a SIZES=(1024 4096 16384 65536 262144 1048576) # 1KB to 1MB
+declare -a SIZES=(1 4 16 64 256 1024 4096 16384 65536 262144 1048576) # 1B to 1MB
 
 # Repeat the tests
 for REP in $(seq 1 $REPEATS); do
@@ -50,22 +50,22 @@ for REP in $(seq 1 $REPEATS); do
         echo "Running test with message size: ${SIZE} bytes"
         
         # Run server
-        $SERVER_EXEC $SIZE > "$SERVER_OUT_PATH" &
+        $PINGPONG -s $SIZE > "$SERVER_OUT_PATH" &
         SERVER_PID=$!
         sleep 1
 
         # Run client
-        $CLIENT_EXEC $SERVER_IP $SIZE > "$CLIENT_OUT_PATH"
+        $PINGPONG $SERVER_IP -s $SIZE > "$CLIENT_OUT_PATH"
         wait $SERVER_PID 2>/dev/null
 
         sleep 0.5
-        pkill -9 rvsocket_server_stream 2>/dev/null
         
         # Extract times from client output
-        THROUGHPUT=$(grep "Bandwidth:" "$CLIENT_OUT_PATH" | awk '{gsub(/[()]/, "", $(NF-1)); print $(NF-1)}')
+        AVG_SEND=$(grep "1000 iters in "   "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
+        THROUGHPUT=$(grep " bytes in " "$CLIENT_OUT_PATH" | awk '{print $(NF-1)}')
 
         # Append to CSV with repetition
-        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$THROUGHPUT" >> "$CSV_FILE"
+        echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$AVG_SEND,$THROUGHPUT" >> "$CSV_FILE"
     done
     # Add empty line between repetitions
     echo "" >> "$CSV_FILE"
