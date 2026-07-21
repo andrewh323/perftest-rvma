@@ -21,11 +21,9 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     mb->inflightSendQueue = createBufferQueue(QUEUE_CAPACITY);
     mb->recvBufferQueue = createBufferQueue(QUEUE_CAPACITY);
     mb->completedRecvQueue = createBufferQueue(QUEUE_CAPACITY);
-    mb->retiredBufferQueue = createBufferQueue(1);
 
     if (!mb->sendBufferQueue   || !mb->inflightSendQueue ||
-        !mb->recvBufferQueue   || !mb->completedRecvQueue ||
-        !mb->retiredBufferQueue) {
+        !mb->recvBufferQueue   || !mb->completedRecvQueue) {
         print_error("setupMailbox: failed to allocate buffer queues");
         freeMailbox(&mb);  // freeMailbox must already NULL-check each field
         return NULL;
@@ -69,18 +67,27 @@ Mailbox_HashMap* initMailboxHashmap(){
 
 RVMA_Status freeMailbox(RVMA_Mailbox** mailboxPtr){
     if (mailboxPtr && *mailboxPtr) {
-        // Here you should also properly free your bufferQueues, which inside them free the possibly allocated buffers
+
         if ((*mailboxPtr)->sendBufferQueue) {
             freeBufferQueue(((*mailboxPtr)->sendBufferQueue));
         }
         if ((*mailboxPtr)->recvBufferQueue) {
             freeBufferQueue(((*mailboxPtr)->recvBufferQueue));
         }
-        if ((*mailboxPtr)->retiredBufferQueue) {
-            freeBufferQueue(((*mailboxPtr)->retiredBufferQueue));
-        }
-        free(*mailboxPtr);
-        *mailboxPtr = NULL;
+
+        if ((*mailboxPtr)->qp) ibv_destroy_qp((*mailboxPtr)->qp);
+
+        if ((*mailboxPtr)->recv_mr) ibv_dereg_mr((*mailboxPtr)->recv_mr);
+        if ((*mailboxPtr)->send_mr) ibv_dereg_mr((*mailboxPtr)->send_mr);
+
+        if ((*mailboxPtr)->send_cq) ibv_destroy_cq((*mailboxPtr)->send_cq);
+        if ((*mailboxPtr)->recv_cq) ibv_destroy_cq((*mailboxPtr)->recv_cq);
+
+        if ((*mailboxPtr)->recv_pool) free((*mailboxPtr)->recv_pool);
+        if ((*mailboxPtr)->send_pool) free((*mailboxPtr)->send_pool);
+
+        if ((*mailboxPtr)->pd) ibv_dealloc_pd((*mailboxPtr)->pd);
+
     }
     return RVMA_SUCCESS;
 }
@@ -105,13 +112,9 @@ RVMA_Status freeAllMailbox(Mailbox_HashMap** hashmapPtr){
 }
 
 RVMA_Status freeHashmap(Mailbox_HashMap** hashmapPtr){
-
-    if(hashmapPtr && *hashmapPtr){
+    if (hashmapPtr && *hashmapPtr) {
         freeAllMailbox(hashmapPtr);
-        free(*hashmapPtr);
-        *hashmapPtr = NULL;
     }
-
     return RVMA_SUCCESS;
 }
 

@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 	rvbind(listen_fd, (struct sockaddr *)&addr, sizeof(addr));
 
 	// Listen for incoming connections
-	rvlisten(listen_fd, 5);
+	rvlisten(listen_fd, 1000);
 	printf("Server listening on port %d...\n", PORT);
 
 	client_ctx_t clients[num_clients];
@@ -152,9 +152,14 @@ int main(int argc, char **argv) {
 		pthread_join(threads[i], NULL);
 	}
 
-	for (int i = 0; i < num_clients; i++) {
+    for (int i = 0; i < num_clients; i++) {
 		rvclose(conn_fd[i]);
 	}
+    
+    if (freeHashmap(&windowPtr->hashMapPtr) != RVMA_SUCCESS) {
+        print_error("Failed to free mailbox hashmap");
+        return -1;
+    }
 
 	close(listen_fd);
 	return 0;

@@ -9,7 +9,7 @@
 #include "rvma_buffer_queue.h"
 #include <arpa/inet.h>
 
-#define HASHMAP_CAPACITY 50
+#define HASHMAP_CAPACITY 1000
 #define RVMA_MAX_BATCH 16
 
 typedef struct {

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SERVER=$1
-SIZE=1024
+SIZE=$2
 NUM_CLIENTS=$3
 
 for ((i=0; i<NUM_CLIENTS; i++)); do

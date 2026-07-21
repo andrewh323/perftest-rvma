@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     printf("Attempting to connect to server with vaddr %" PRIu64 "...\n", vaddr);
 
     if (rvconnect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr) < 0) {
-        perror("rconnect");
+        perror("rvconnect");
         exit(EXIT_FAILURE);
     }
     printf("Connected to server %s:%d!\n", argv[1], PORT);
