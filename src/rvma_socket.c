@@ -33,6 +33,7 @@
 #define MAX_RECV_SIZE 1024*1024
 #define SIGNAL_INTERVAL 16
 #define MAX_BYTES 128*1024*1024 // Hardware limit of NIC
+#define INITIAL_STREAM_BUFFER 1024*1024 // 1 MB
 
 enum {
 	RS_OP_DATA,
@@ -97,6 +98,11 @@ struct rvsocket {
     union {
         struct { // data stream
             struct rdma_cm_id *cm_id; // RDMA CM ID
+            void *recv_stream_buffer;
+            size_t recv_stream_size;
+            size_t recv_stream_head;
+            size_t recv_stream_tail;
+            pthread_mutex_t recv_lock;
         };
         struct { // datagram
             int udp_sock; // UDP socket for exchanging connection data
@@ -156,6 +162,9 @@ int rvclose(int socket) {
 
     while (mb->outstanding_sends > 0) {
         rvmaProgress(mb);
+    }
+    if (rvs->recv_stream_buffer) {
+        free(rvs->recv_stream_buffer);
     }
 
     rdma_disconnect(rvs->cm_id);
@@ -552,6 +561,11 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     new_rvs->mailboxPtr->recv_cq = recv_cq;
     new_rvs->mailboxPtr->qp = client_cm_id->qp;
 
+    new_rvs->recv_stream_buffer = malloc(INITIAL_STREAM_BUFFER);
+    new_rvs->recv_stream_size = INITIAL_STREAM_BUFFER;
+    new_rvs->recv_stream_head = 0;
+    new_rvs->recv_stream_tail = 0;
+
     new_rvs->index = next_fd++;
     new_rvs->state = rs_connected;
 
@@ -854,6 +868,11 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
         return -1;
     }
 
+    rvs->recv_stream_buffer = malloc(INITIAL_STREAM_BUFFER);
+    rvs->recv_stream_size = INITIAL_STREAM_BUFFER;
+    rvs->recv_stream_head = 0;
+    rvs->recv_stream_tail = 0;
+
     end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
     double rdmaTime = (rdmaSetup - addrRouteResolved) / (cpu_ghz * 1e3);
@@ -1098,6 +1117,53 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
 }
 
 
+size_t recv_bytes_avail(struct rvsocket *rvs) {
+    return rvs->recv_stream_tail - rvs->recv_stream_head;
+}
+
+void growStreamBuffer(struct rvsocket *rvs) {
+    size_t new_size = rvs->recv_stream_size * 2;
+    char *new_buf = malloc(new_size);
+    if (!new_buf) {
+        perror("Failed to allocate new stream buffer");
+        return;
+    }
+
+    size_t available = recv_bytes_avail(rvs);
+    memmove(new_buf, rvs->recv_stream_buffer + rvs->recv_stream_head, available);
+
+    free(rvs->recv_stream_buffer);
+    rvs->recv_stream_buffer = new_buf;
+    rvs->recv_stream_size = new_size;
+    rvs->recv_stream_head = 0;
+    rvs->recv_stream_tail = available;
+}
+
+void appendStreamBuffer(struct rvsocket *rvs, RVMA_Buffer_Entry *entry)
+{
+    size_t data_len = entry->received_len;
+
+    // Compact existing data
+    if ((rvs->recv_stream_size - rvs->recv_stream_tail) < data_len && rvs->recv_stream_head > 0) {
+        size_t available = recv_bytes_avail(rvs);
+
+        memmove(rvs->recv_stream_buffer, rvs->recv_stream_buffer + rvs->recv_stream_head, available);
+
+        rvs->recv_stream_head = 0;
+        rvs->recv_stream_tail = available;
+    }
+
+    // Grow if still necessary
+    while ((rvs->recv_stream_size - rvs->recv_stream_tail) < data_len) {
+        growStreamBuffer(rvs);
+    }
+
+    memcpy(rvs->recv_stream_buffer + rvs->recv_stream_tail, entry->realBuff, data_len);
+
+    rvs->recv_stream_tail += data_len;
+}
+
+
 int rvrecv(int socket, void *buf, size_t len, int flags) {
     // Read from mailbox buffer with rvmaRecv
     struct rvsocket *rvs;
@@ -1105,28 +1171,49 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
     rvs = idm_at(&idm, socket);
 
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
+    while (recv_bytes_avail(rvs) == 0) {
+        rvmaProgress(mailbox);
 
-    if (rvs->type == SOCK_DGRAM) {
-        if (rvrecvfrom(socket, buf, len, 0) < 0) {
-            fprintf(stderr, "rvmaRecvfrom failed\n");
-            return -1;
+        if ((isEmpty(mailbox->completedRecvQueue)) == RVMA_TRUE)
+            continue;
+
+        RVMA_Buffer_Entry *entry;
+
+        while ((entry = dequeue(mailbox->completedRecvQueue))) {
+            // Fast path
+            if (entry && recv_bytes_avail(rvs) == 0 && (isEmpty(mailbox->completedRecvQueue) == RVMA_TRUE) && entry->received_len <= len) {
+                memcpy(buf, entry->realBuff, entry->received_len);
+
+                int ret = entry->received_len;
+
+                entry->received_len = 0;
+                entry->wc_flags = 0;
+                entry->epochCount = 0;
+                enqueue(mailbox->recvBufferQueue, entry);
+
+                return ret;
+            }
+
+            // Else buffer received data
+            appendStreamBuffer(rvs, entry);
+
+            entry->received_len = 0;
+            entry->wc_flags = 0;
+            entry->epochCount = 0;
+            // Recyle buffer back to recv pool
+            enqueue(mailbox->recvBufferQueue, entry);
         }
-        return 0;
     }
-    else {
-        RVMA_Buffer_Entry *entry = NULL;
-        while (!entry) {
-            rvmaProgress(mailbox);
-            entry = dequeue(mailbox->completedRecvQueue);
-        }
-        size_t copy_len = len < (size_t)entry->realBuffSize ? len : (size_t)entry->realBuffSize;
-        memcpy(buf, entry->realBuff, copy_len);
-        entry->received_len = 0;
-        entry->wc_flags = 0;
-        entry->epochCount = 0;
 
-        enqueue(mailbox->recvBufferQueue, entry);
-
-        return (int)copy_len;
+    size_t copy_len = len < recv_bytes_avail(rvs) ? len : recv_bytes_avail(rvs);
+    // Copy data from stream buffer to user buffer
+    memcpy(buf, rvs->recv_stream_buffer + rvs->recv_stream_head, copy_len);
+    // Increment head pointer to indicate data was consumed
+    rvs->recv_stream_head += copy_len;
+    if (rvs->recv_stream_head == rvs->recv_stream_tail) {
+        rvs->recv_stream_head = 0;
+        rvs->recv_stream_tail = 0;
     }
+
+    return copy_len;
 }

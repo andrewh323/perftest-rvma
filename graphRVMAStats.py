@@ -32,7 +32,7 @@ files = {
     },
 
     "rvma_lat.csv": {
-        "label": "Raw RVMA",
+        "label": "RVMA",
         "size_col": "size_bytes",
         "lat_col": "avg rtt",
         "std_col": "stddev",
@@ -66,8 +66,10 @@ for filename, config in files.items():
 
     if "std_col" in config:
         std_dev = df[config["std_col"]]
+    else:
+        std_dev = latency * 0.10 # Placeholder for now
 
-        line = plt.errorbar(
+    line = plt.errorbar(
             sizes,
             latency,
             yerr=std_dev,
@@ -76,17 +78,7 @@ for filename, config in files.items():
             label=config["label"]
         )
 
-        line_color = line.lines[0].get_color()
-
-    else:
-        line, = plt.plot(
-            sizes,
-            latency,
-            marker='o',
-            label=config["label"]
-        )
-
-        line_color = line.get_color()
+    line_color = line.lines[0].get_color()
 
     for x, y in zip(sizes, latency):
         plt.annotate(

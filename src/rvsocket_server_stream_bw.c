@@ -12,7 +12,7 @@
 
 #define PORT 7471
 #define MSG_SIZE 1024*4
-#define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
+#define TOTAL_BYTES (128 * 1024 * 1024) // 128 MiB
 
 uint32_t get_host_addr(const char *iface_name) {
     struct ifaddrs *ifaddr, *ifa;
@@ -96,6 +96,7 @@ int main(int argc, char **argv) {
 			break;
 		}
 		total += n;
+		// printf("Received %d bytes\n", total);
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
 

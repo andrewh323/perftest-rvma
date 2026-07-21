@@ -294,7 +294,7 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
             return RVMA_ERROR;
         }
 
-        enqueue(mailbox->recvBufferQueue, entry);
+        // enqueue(mailbox->recvBufferQueue, entry);
 
         // Build sge and wr, then post recv
         struct ibv_sge sge = {
@@ -337,7 +337,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
     // Fill the buffer with data to send
     memcpy(entry->realBuff, buf, size);
     // memcpy is required here because we must use memory-registered buffers
-    // Alternatively, user/application can register memory, but this is expensive when done in send path
+    // Alternatively, user/application can register memory, but this is expensive when done in a tight loop
     void *data = entry->realBuff;
     int64_t dataSize = size;
     
