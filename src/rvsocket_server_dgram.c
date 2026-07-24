@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 
     void *recv_buf = malloc(size);
     for (int i = 0; i < num_sends; i++){
-        ret = rvrecv(dgram_fd, recv_buf, size, 0);
+        ret = rvrecvfrom(dgram_fd, recv_buf, size, 0);
         if (ret < 0) {
             perror("Error receiving message");
         }
@@ -100,6 +100,7 @@ int main(int argc, char **argv) {
         }
     }
 
+    usleep(1000);
     close(dgram_fd);
     close(tcp_listenfd);
     // Wait for test to finish

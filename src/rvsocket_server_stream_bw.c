@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 			break;
 		}
 		total += n;
-		// printf("Received %d bytes\n", total);
+		//printf("Received %d bytes\n", total);
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
 

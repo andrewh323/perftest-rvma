@@ -9,26 +9,28 @@ RESULTS_DIR = SCRIPT_DIR / "/home/andrewh8/src/perftest-rvma/results/csv_tables"
 
 # CSV file list
 files = {
-    # "rsocket_stream_lat.csv": {
-    #     "label": "rsocket-stream",
-    #     "size_col": "size_bytes",
-    #     "lat_col": "avg_send",
-    #     "std_col": "stddev"
-    # },
+    "rsocket_stream_lat.csv": {
+        "label": "rsocket-stream",
+        "size_col": "size_bytes",
+        "lat_col": "avg_send",
+        "std_col": "send_stddev",
+        "label_offset": (0, 8)
+    },
 
-    # "rvsocket_stream_progress.csv": {
-    #     "label": "rvsocket-stream",
-    #     "size_col": "size_bytes",
-    #     "lat_col": "avg_send",
-    #     "std_col": "stddev"
-    # },
+    "rvsocket_stream_progress.csv": {
+        "label": "rvsocket-stream",
+        "size_col": "size_bytes",
+        "lat_col": "avg_send",
+        "std_col": "send_stddev",
+        "label_offset": (0, 16)
+    },
 
 
     "ibv_rc_pingpong_lat.csv": {
         "label": "IB Verbs",
         "size_col": "size_bytes",
         "lat_col": "avg rtt",
-        "label_offset": (0, 8)
+        "label_offset": (0, 24)
     },
 
     "rvma_lat.csv": {
@@ -36,7 +38,7 @@ files = {
         "size_col": "size_bytes",
         "lat_col": "avg rtt",
         "std_col": "stddev",
-        "label_offset": (0, 16)
+        "label_offset": (0, 32)
     }
 }
 
@@ -53,7 +55,7 @@ def load_batch(filepath, batch_num, points_per_batch=11):
 
 
 # Can change this to use different batch of data
-BATCH_TO_USE = 0
+BATCH_TO_USE = 1
 
 for filename, config in files.items():
 
@@ -109,7 +111,7 @@ plt.xticks(
 plt.title("Round-Trip Latency of RVMA vs. IB Verbs")
 
 plt.savefig(
-    "/home/andrewh8/src/perftest-rvma/results/graphs/rvma-verbs_latency" + str(BATCH_TO_USE) + ".png",
+    "/home/andrewh8/src/perftest-rvma/results/graphs/rvsocket" + str(BATCH_TO_USE) + ".png",
     dpi=300,
     bbox_inches="tight"
 )

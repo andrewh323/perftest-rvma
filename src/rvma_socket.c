@@ -158,6 +158,10 @@ static void rs_free(struct rvsocket *rvs) {
 int rvclose(int socket) {
     struct rvsocket *rvs = idm_lookup(&idm, socket);
     if (!rvs) return -1;
+
+    while (rvs->mailboxPtr->outstanding_sends > 0) {
+        rvmaProgress(rvs->mailboxPtr);
+    }
     
     rdma_disconnect(rvs->cm_id);
 
@@ -602,7 +606,7 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     }
 
     struct ibv_qp_attr rnr_attr = {
-        .min_rnr_timer = 1,   // 0.01ms — minimum possible value
+        .min_rnr_timer = 12,   // 0.01ms — minimum possible value
     };
     if (ibv_modify_qp(new_rvs->mailboxPtr->qp, &rnr_attr, IBV_QP_MIN_RNR_TIMER)) {
         perror("ibv_modify_qp min_rnr_timer");
@@ -958,19 +962,22 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
 // Send for stream sockets
 int rvsend(int socket, void *buf, int64_t len) {
     struct rvsocket *rvs = idm_at(&idm, socket);
-    uint64_t vaddr = rvs->vaddr;
+    int sent = 0;
     RVMA_Status status;
-    do {
-        rvmaProgress(rvs->mailboxPtr);
-        status = rvmaSend(buf, len, vaddr, rvs->mailboxPtr);
-    } while (status == RVMA_RETRY);
-    return len;
+    while (sent < len) {
+        int64_t chunk = (len - sent) < MAX_RECV_SIZE ? (len - sent) : MAX_RECV_SIZE;
+        do {
+            rvmaProgress(rvs->mailboxPtr);
+            status = rvmaSend(buf + sent, chunk, rvs->vaddr, rvs->mailboxPtr);
+        } while (status == RVMA_RETRY);
+        if (status != RVMA_SUCCESS) return -1;
+        sent += chunk;
+    }
+    return sent;
 }
 
 // Send for datagram sockets
 int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
-    uint64_t elapsed = 0, frag_setup = 0, buffer_setup = 0, wr_setup = 0, total_poll = 0;
-
     struct rvsocket *rvs = idm_at(&idm, socket);
     uint64_t vaddr = rvs->vaddr;
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
@@ -1011,7 +1018,6 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
         /* printf("Sending fragment %d/%d (%zu bytes) | Payload: %.40s...\n",
             hdr->frag_num, hdr->total_frags, frag_size, (char *)buf + offset * RS_MAX_TRANSFER); */
         // printf("Posting send with size %zu bytes for fragment %d/%d\n", frag_size, hdr->frag_num, hdr->total_frags);
-
         // Build sge, wr
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
@@ -1053,6 +1059,7 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
 
     struct rvsocket *rvs = idm_at(&idm, socket);
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
+    //printf("attempting recvfrom\n");
 
     while (1) {
         // Poll for entry
@@ -1079,8 +1086,8 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
 
         /* REMOVE PRINT WHEN COLLECTING RESULTS */
         
-        /* printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
-            header.frag_num, header.total_frags, payload_len, payload); */
+        // printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
+        //      header.frag_num, header.total_frags, payload_len, payload);
 
         if (expected_frags == 0) { // If we don't know # of expected frags yet, find out
             expected_frags = header.total_frags;
@@ -1090,7 +1097,7 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
         write_offset += payload_len;
 
         enqueue(mailbox->recvBufferQueue, entry); // Return buffer to recv pool
-
+        rvmaProgress(mailbox);
         received_frags++; // Increment receive counter and compare with number expected
         if (received_frags == expected_frags) {
             break;
@@ -1106,6 +1113,7 @@ size_t recv_bytes_avail(struct rvsocket *rvs) {
 }
 
 void growStreamBuffer(struct rvsocket *rvs) {
+    // printf("growStreamBuffer invoked\n");
     size_t new_size = rvs->recv_stream_size * 2;
     char *new_buf = malloc(new_size);
     if (!new_buf) {
@@ -1123,8 +1131,8 @@ void growStreamBuffer(struct rvsocket *rvs) {
     rvs->recv_stream_tail = available;
 }
 
-void appendStreamBuffer(struct rvsocket *rvs, RVMA_Buffer_Entry *entry)
-{
+void appendStreamBuffer(struct rvsocket *rvs, RVMA_Buffer_Entry *entry) {
+    // printf("Append stream buffer invoked\n");
     size_t data_len = entry->received_len;
 
     // Compact existing data
@@ -1163,7 +1171,7 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
 
         RVMA_Buffer_Entry *entry;
 
-        while ((entry = dequeue(mailbox->completedRecvQueue))) {
+        while (entry = dequeue(mailbox->completedRecvQueue)) {
             // Fast path
             if (entry && recv_bytes_avail(rvs) == 0 && (isEmpty(mailbox->completedRecvQueue) == RVMA_TRUE) && entry->received_len <= len) {
                 memcpy(buf, entry->realBuff, entry->received_len);
@@ -1188,7 +1196,7 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
             enqueue(mailbox->recvBufferQueue, entry);
         }
     }
-
+    rvmaProgress(mailbox);
     size_t copy_len = len < recv_bytes_avail(rvs) ? len : recv_bytes_avail(rvs);
     // Copy data from stream buffer to user buffer
     memcpy(buf, rvs->recv_stream_buffer + rvs->recv_stream_head, copy_len);

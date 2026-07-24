@@ -103,6 +103,17 @@ RVMA_Status enqueue(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry) {
     return RVMA_SUCCESS;
 }
 
+RVMA_Buffer_Entry* dequeue(RVMA_Buffer_Queue* queue){
+    if(!queue || isEmpty(queue) == RVMA_TRUE) return NULL;
+
+    RVMA_Buffer_Entry *entry = queue->pBufferEntry[queue->start];
+    queue->pBufferEntry[queue->start] = NULL;
+    queue->start = (queue->start + 1) % queue->capacity;
+    queue->size--;
+
+    return entry;
+}
+
 RVMA_Status enqueueRetiredBuffer(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry){
     if(queue == NULL){
         print_error("enqueue: queue is null");
@@ -128,17 +139,6 @@ RVMA_Status enqueueRetiredBuffer(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* en
     queue->size = queue->size + 1;
 
     return RVMA_SUCCESS;
-}
-
-RVMA_Buffer_Entry* dequeue(RVMA_Buffer_Queue* queue){
-    if(!queue || isEmpty(queue) == RVMA_TRUE) return NULL;
-
-    RVMA_Buffer_Entry *entry = queue->pBufferEntry[queue->start];
-    queue->pBufferEntry[queue->start] = NULL;
-    queue->start = (queue->start + 1) % queue->capacity;
-    queue->size--;
-
-    return entry;
 }
 
 RVMA_Status removeEntry(RVMA_Buffer_Queue* queue, RVMA_Buffer_Entry* entry){

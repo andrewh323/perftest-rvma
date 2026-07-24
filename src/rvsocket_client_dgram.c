@@ -181,6 +181,7 @@ int main(int argc, char **argv) {
     printf("Send time stddev:         %.3f µs\n", stddev);
     printf("====================================\n");
 
+    usleep(10000);
     rclose(sockfd);
     return 0;
 }

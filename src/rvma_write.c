@@ -371,33 +371,38 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
 void rvmaProgress(RVMA_Mailbox *mailbox) {
     int num_wc = 128;
     struct ibv_wc send_wc[num_wc];
-    int sn = ibv_poll_cq(mailbox->send_cq, num_wc, send_wc);
-    if (sn < 0) {
-        fprintf(stderr, "Send CQ error: %s (%d)\n", ibv_wc_status_str(send_wc[0].status), send_wc[0].status);
-        return;
-    }
+    int sn;
 
     // Retrieve send completions
-    for (int i = 0; i < sn; i++) {
-        if (send_wc[i].status != IBV_WC_SUCCESS) {
-            fprintf(stderr, "Completion error: %s (%d)\n", ibv_wc_status_str(send_wc[i].status), send_wc[i].status);
-            continue;
+    do {
+        sn = ibv_poll_cq(mailbox->send_cq, num_wc, send_wc);
+        if (sn < 0) {
+            fprintf(stderr, "Send CQ poll error\n");
+            break;
         }
-        // Check opcode and handle completion
-        if (send_wc[i].opcode != IBV_WC_SEND) {
-            fprintf(stderr, "Unexpected completion opcode: %d\n", send_wc[i].opcode);
-            continue;
-        }
+        for (int i = 0; i < sn; i++) {
+            RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)send_wc[i].wr_id;
 
-        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)send_wc[i].wr_id;
-        if (!entry) {
-            printf("NULL entry in completion!\n");
+            if (send_wc[i].status != IBV_WC_SUCCESS) {
+                fprintf(stderr, "Completion error: %s (%d)\n",
+                        ibv_wc_status_str(send_wc[i].status), send_wc[i].status);
+                if (entry) enqueue(mailbox->sendBufferQueue, entry);
+                mailbox->outstanding_sends--;
+                continue;
+            }
+
+            if (send_wc[i].opcode != IBV_WC_SEND) {
+                fprintf(stderr, "Unexpected completion opcode: %d\n", send_wc[i].opcode);
+                // status was SUCCESS, so entry/counter are still legitimate — recycle anyway
+                if (entry) enqueue(mailbox->sendBufferQueue, entry);
+                mailbox->outstanding_sends--;
+                continue;
+            }
+
+            enqueue(mailbox->sendBufferQueue, entry);
             mailbox->outstanding_sends--;
-            continue;
         }
-        enqueue(mailbox->sendBufferQueue, entry);
-        mailbox->outstanding_sends--;
-    }
+    } while (sn == num_wc);
 
     // Retrieve receive completions
     struct ibv_wc recv_wc[num_wc];
@@ -408,21 +413,25 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
     }
 
     for (int i = 0; i < rn; i++) {
+        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)recv_wc[i].wr_id;
+
         if (recv_wc[i].status != IBV_WC_SUCCESS) {
             fprintf(stderr, "Recv CQ error: %s (%d)\n",
                     ibv_wc_status_str(recv_wc[i].status), recv_wc[i].status);
-            continue;
-        }
-        if (recv_wc[i].opcode != IBV_WC_RECV) {
-            fprintf(stderr, "Unexpected completion opcode: %d\n", recv_wc[i].opcode);
+            if (entry) enqueue(mailbox->recvBufferQueue, entry);
+            mailbox->posted_recvs--;
             continue;
         }
 
-        RVMA_Buffer_Entry *entry = (RVMA_Buffer_Entry *)recv_wc[i].wr_id;
+        if (recv_wc[i].opcode != IBV_WC_RECV) {
+            fprintf(stderr, "Unexpected completion opcode: %d\n", recv_wc[i].opcode);
+            if (entry) enqueue(mailbox->recvBufferQueue, entry);
+            mailbox->posted_recvs--;
+            continue;
+        }
+
         entry->received_len = recv_wc[i].byte_len;
         entry->wc_flags = recv_wc[i].wc_flags;
-        // printf("recv count: %d\n", mailbox->recvCount);
-        // printf("Received message: %.*s\n", entry->received_len, (char *)entry->realBuff);
         enqueue(mailbox->completedRecvQueue, entry);
         mailbox->posted_recvs--;
     }
@@ -434,7 +443,7 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
 
         struct ibv_sge sge = {
             .addr = (uintptr_t)e->realBuff,
-            .length = MAX_RECV_SIZE,
+            .length = e->realBuffSize,
             .lkey = mailbox->recv_mr->lkey
         };
 

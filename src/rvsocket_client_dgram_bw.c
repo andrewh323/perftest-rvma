@@ -10,7 +10,6 @@
 #include "rvma_write.h"
 
 #define PORT 7471
-#define MSG_SIZE 1024*128
 #define TOTAL_BYTES (128 * 1024 * 1024) // 128 MB
 
 int main(int argc, char **argv) {
@@ -67,9 +66,14 @@ int main(int argc, char **argv) {
         exit(1);
     }
     int res;
+    int64_t msg_size = 4096;
+    if (argc > 2) {
+        msg_size = atoi(argv[2]);
+    }
+
 
     // Set to 1 to exclude warm-ups
-    void *buffer = malloc(MSG_SIZE);
+    void *buffer = malloc(msg_size);
 
     struct timespec start_time, end_time;
     size_t bytes_sent = 0;
@@ -80,7 +84,7 @@ int main(int argc, char **argv) {
     while (bytes_sent < TOTAL_BYTES) {
 
         rvmaProgress(mailbox);
-        int res = rvsendto(sockfd, buffer, MSG_SIZE, windowPtr);
+        int res = rvsendto(sockfd, buffer, msg_size, windowPtr);
         if (res < 0) {
             fprintf(stderr, "Failed to send message\n");
         }
