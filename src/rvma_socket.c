@@ -29,7 +29,8 @@
 #include "rvma_socket.h"
 #include "indexer.h"
 
-#define MAX_POOL_BUFS 16
+#define MAX_DGRAM_POOL_BUFS 256
+#define MAX_POOL_BUFS 16 // Supports dgram messages of up to 1 MB
 #define MAX_RECV_SIZE 1024*1024
 #define SIGNAL_INTERVAL 16
 #define MAX_BYTES 128*1024*1024 // Hardware limit of NIC
@@ -291,8 +292,8 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             .recv_cq = recv_cq,
             .qp_type = IBV_QPT_UD,
             .cap = {
-                .max_send_wr = 1024,
-                .max_recv_wr = 1024,
+                .max_send_wr = 2 * MAX_DGRAM_POOL_BUFS,
+                .max_recv_wr = 2 * MAX_DGRAM_POOL_BUFS,
                 .max_send_sge = 1,
                 .max_recv_sge = 1
             },
@@ -337,15 +338,15 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
         // Save qp to rvs
         rvs->mailboxPtr->qp = qp;
 
-        printf("Allocating %d buffers into send and recv pools\n", MAX_POOL_BUFS);
+        printf("Allocating %d buffers into send and recv pools\n", MAX_DGRAM_POOL_BUFS);
         // Post pools to prepare for incoming transmissions
-        if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        if (postSendPool(rvs->mailboxPtr, MAX_DGRAM_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
             perror("postSendPool failed");
             return -1;
         }
-        if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+        if (postRecvPool(rvs->mailboxPtr, MAX_DGRAM_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
             perror("postRecvPool failed");
-            return ;
+            return -1;
         }
         uint64_t rdmaEnd = rdtsc();
         rdmaTime = (rdmaEnd - rdmaStart) / (cpu_ghz * 1e3);
@@ -629,77 +630,6 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
 }
 
 
-// Accepts datagram connection and exchanges endpoint info
-int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen) {
-    uint64_t start, end;
-    double cpu_ghz = get_cpu_ghz();
-    struct rvsocket *rvs;
-    struct rv_dest local_info, remote_info;
-    int tcp_fd;
-
-    rvs = idm_lookup(&idm, dgram_fd);
-
-    if (!rvs->dest) {
-        rvs->dest = calloc(1, sizeof(*rvs->dest));
-        if (!rvs->dest) {
-            perror("calloc rvs->dest");
-            return -1;
-        }
-    }
-
-    tcp_fd = accept(tcp_listenfd, addr, addrlen);
-    if (tcp_fd < 0) {
-        perror("rvaccept_dgram: accept failed");
-        return -1;
-    }
-    start = rdtsc(); // Start timing after accept since accept is blocking
-    struct ibv_port_attr port_attr;
-    ibv_query_port(rvs->mailboxPtr->pd->context, rvs->qp_port, &port_attr);
-    local_info.lid  = port_attr.lid;
-    local_info.qpn  = rvs->mailboxPtr->qp->qp_num;
-    local_info.qkey = 0x11111111;
-    local_info.port_num = rvs->qp_port;
-    
-    ssize_t n;
-    n = write(tcp_fd, &local_info, sizeof(local_info));
-    if (n != sizeof(local_info)) {
-        perror("write local_info");
-        return -1;
-    }
-    n = read(tcp_fd, &remote_info, sizeof(remote_info));
-    if (n != sizeof(remote_info)) {
-        perror("read remote_info");
-        return -1;
-    }
-    
-    struct ibv_ah_attr ah_attr = {
-        .is_global     = 1,
-        .dlid          = remote_info.lid,
-        .sl            = 0,
-        .src_path_bits = 0,
-        .port_num      = rvs->qp_port
-    };
-
-    struct ibv_ah *ah = ibv_create_ah(rvs->mailboxPtr->pd, &ah_attr);
-    if (!ah) {
-        perror("rvaccept_dgram: ibv_create_ah failed");
-        close(tcp_fd);
-        return -1;
-    }
-
-    rvs->dest->ah = ah;
-    rvs->dest->qpn = remote_info.qpn;
-    rvs->dest->qkey = remote_info.qkey;
-
-    end = rdtsc();
-    double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("rvaccept_dgram total time: %.3f µs\n", elapsed_us);
-
-    close(tcp_fd);
-    return 0;
-}
-
-
 int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_Win *window) {
     uint64_t start, end;
     double cpu_ghz = get_cpu_ghz();
@@ -876,6 +806,77 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
 }
 
 
+// Accepts datagram connection and exchanges endpoint info
+int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen) {
+    uint64_t start, end;
+    double cpu_ghz = get_cpu_ghz();
+    struct rvsocket *rvs;
+    struct rv_dest local_info, remote_info;
+    int tcp_fd;
+
+    rvs = idm_lookup(&idm, dgram_fd);
+
+    if (!rvs->dest) {
+        rvs->dest = calloc(1, sizeof(*rvs->dest));
+        if (!rvs->dest) {
+            perror("calloc rvs->dest");
+            return -1;
+        }
+    }
+
+    tcp_fd = accept(tcp_listenfd, addr, addrlen);
+    if (tcp_fd < 0) {
+        perror("rvaccept_dgram: accept failed");
+        return -1;
+    }
+    start = rdtsc(); // Start timing after accept since accept is blocking
+    struct ibv_port_attr port_attr;
+    ibv_query_port(rvs->mailboxPtr->pd->context, rvs->qp_port, &port_attr);
+    local_info.lid  = port_attr.lid;
+    local_info.qpn  = rvs->mailboxPtr->qp->qp_num;
+    local_info.qkey = 0x11111111;
+    local_info.port_num = rvs->qp_port;
+    
+    ssize_t n;
+    n = write(tcp_fd, &local_info, sizeof(local_info));
+    if (n != sizeof(local_info)) {
+        perror("write local_info");
+        return -1;
+    }
+    n = read(tcp_fd, &remote_info, sizeof(remote_info));
+    if (n != sizeof(remote_info)) {
+        perror("read remote_info");
+        return -1;
+    }
+    
+    struct ibv_ah_attr ah_attr = {
+        .is_global     = 1,
+        .dlid          = remote_info.lid,
+        .sl            = 0,
+        .src_path_bits = 0,
+        .port_num      = rvs->qp_port
+    };
+
+    struct ibv_ah *ah = ibv_create_ah(rvs->mailboxPtr->pd, &ah_attr);
+    if (!ah) {
+        perror("rvaccept_dgram: ibv_create_ah failed");
+        close(tcp_fd);
+        return -1;
+    }
+
+    rvs->dest->ah = ah;
+    rvs->dest->qpn = remote_info.qpn;
+    rvs->dest->qkey = remote_info.qkey;
+
+    end = rdtsc();
+    double elapsed_us = (end - start) / (cpu_ghz * 1e3);
+    printf("rvaccept_dgram total time: %.3f µs\n", elapsed_us);
+
+    close(tcp_fd);
+    return 0;
+}
+
+
 // Connects to datagram socket and exchanges endpoint info
 int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     uint64_t start, end;
@@ -1018,6 +1019,7 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
         /* printf("Sending fragment %d/%d (%zu bytes) | Payload: %.40s...\n",
             hdr->frag_num, hdr->total_frags, frag_size, (char *)buf + offset * RS_MAX_TRANSFER); */
         // printf("Posting send with size %zu bytes for fragment %d/%d\n", frag_size, hdr->frag_num, hdr->total_frags);
+        
         // Build sge, wr
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
@@ -1055,11 +1057,10 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
 int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
     int expected_frags = 0;
     int received_frags = 0;
-    int write_offset = 0;
+    int frag_offset = 0;
 
     struct rvsocket *rvs = idm_at(&idm, socket);
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
-    //printf("attempting recvfrom\n");
 
     while (1) {
         // Poll for entry
@@ -1093,8 +1094,8 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
             expected_frags = header.total_frags;
         }
 
-        memcpy((char *)buf + write_offset, payload, payload_len);
-        write_offset += payload_len;
+        frag_offset = (header.frag_num - 1) * RS_MAX_TRANSFER;
+        memcpy((char *)buf + frag_offset, payload, payload_len);
 
         enqueue(mailbox->recvBufferQueue, entry); // Return buffer to recv pool
         rvmaProgress(mailbox);
@@ -1102,9 +1103,8 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
         if (received_frags == expected_frags) {
             break;
         }
-
     }
-    return write_offset;
+    return len;
 }
 
 

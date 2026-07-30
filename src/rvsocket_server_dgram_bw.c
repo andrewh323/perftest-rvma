@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
             exit(1);
         }
         total += bytes_recvd;
-        printf("Total received: %d\n", total);
+        // printf("Total received: %d\n", total);
     }
 
     close(dgram_fd);

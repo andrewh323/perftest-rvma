@@ -31,7 +31,7 @@ RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
     
     mb->max_outstanding_sends = 1000;
     mb->outstanding_sends = 0;
-    mb->max_recvs = 128;
+    mb->max_recvs = 512;
     mb->posted_recvs = 0;
     mb->sendCount = 0;
     mb->recvCount = 0;
