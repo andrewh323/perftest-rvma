@@ -31,6 +31,7 @@
 
 #define MAX_DGRAM_POOL_BUFS 256
 #define MAX_POOL_BUFS 16 // Supports dgram messages of up to 1 MB
+#define CREDIT_BATCH_SIZE 64
 #define MAX_RECV_SIZE 1024*1024
 #define SIGNAL_INTERVAL 16
 #define MAX_BYTES 128*1024*1024 // Hardware limit of NIC
@@ -348,6 +349,10 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
             perror("postRecvPool failed");
             return -1;
         }
+
+        rvs->mailboxPtr->send_credits = MAX_DGRAM_POOL_BUFS;
+        rvs->mailboxPtr->credits_to_grant = 0;
+
         uint64_t rdmaEnd = rdtsc();
         rdmaTime = (rdmaEnd - rdmaStart) / (cpu_ghz * 1e3);
         printf("Time to setup rdma resources in rvsocket: %.3f µs\n", rdmaTime);
@@ -977,6 +982,82 @@ int rvsend(int socket, void *buf, int64_t len) {
     return sent;
 }
 
+static RVMA_Status sendCreditGrant(struct rvsocket *rvs, int credits) {
+    RVMA_Mailbox *mailbox = rvs->mailboxPtr;
+
+    if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends ||
+        isEmpty(mailbox->sendBufferQueue) == RVMA_TRUE) {
+        return RVMA_FALSE;
+    }
+
+    RVMA_Buffer_Entry *entry = dequeue(mailbox->sendBufferQueue);
+    if (!entry) return RVMA_FALSE;
+
+    struct dgram_frag_header *hdr = (struct dgram_frag_header *)entry->realBuff;
+    hdr->frag_num = 0; // sentinel: this is a credit grant, not a data fragment
+    hdr->total_frags = (uint32_t)credits;
+
+    struct ibv_sge sge = {
+        .addr = (uintptr_t)entry->realBuff,
+        .length = sizeof(*hdr),
+        .lkey = mailbox->send_mr->lkey
+    };
+
+    struct ibv_send_wr wr;
+    memset(&wr, 0, sizeof(wr));
+    wr.wr_id             = (uintptr_t)entry;
+    wr.sg_list           = &sge;
+    wr.num_sge           = 1;
+    wr.opcode            = IBV_WR_SEND;
+    wr.send_flags        = IBV_SEND_SIGNALED;
+    wr.wr.ud.ah          = rvs->dest->ah;
+    wr.wr.ud.remote_qpn  = rvs->dest->qpn;
+    wr.wr.ud.remote_qkey = rvs->dest->qkey;
+
+    struct ibv_send_wr *bad_wr = NULL;
+    if (ibv_post_send(mailbox->qp, &wr, &bad_wr)) {
+        enqueue(mailbox->sendBufferQueue, entry);
+        return RVMA_FALSE;
+    }
+
+    mailbox->outstanding_sends++;
+    return RVMA_TRUE;
+}
+
+// Flushes mailbox->credits_to_grant into a credit-grant packet if it has
+// reached the batch size (unconditionally if force is set)
+static void flushCreditGrant(struct rvsocket *rvs, RVMA_Status force) {
+    RVMA_Mailbox *mailbox = rvs->mailboxPtr;
+    if (mailbox->credits_to_grant <= 0) return;
+    if (force == RVMA_FALSE && mailbox->credits_to_grant < CREDIT_BATCH_SIZE) return;
+
+    if (sendCreditGrant(rvs, mailbox->credits_to_grant) == RVMA_TRUE) {
+        mailbox->credits_to_grant = 0;
+    }
+}
+
+// Drains any credit-grant control packets waiting in completedRecvQueue
+static void drainControlPackets(RVMA_Mailbox *mailbox) {
+    rvmaProgress(mailbox);
+
+    int n = mailbox->completedRecvQueue->size;
+    for (int i = 0; i < n; i++) {
+        RVMA_Buffer_Entry *entry = dequeue(mailbox->completedRecvQueue);
+        if (!entry) break;
+
+        int grh = (entry->wc_flags & IBV_WC_GRH) ? 40 : 0;
+        struct dgram_frag_header header;
+        memcpy(&header, (char *)entry->realBuff + grh, sizeof(header));
+
+        if (header.frag_num == 0) {
+            mailbox->send_credits += (int)header.total_frags;
+            enqueue(mailbox->recvBufferQueue, entry);
+        } else {
+            enqueue(mailbox->completedRecvQueue, entry);
+        }
+    }
+}
+
 // Send for datagram sockets
 int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
     struct rvsocket *rvs = idm_at(&idm, socket);
@@ -985,6 +1066,7 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
     struct rv_dest *dest = rvs->dest;
 
     rvmaProgress(mailbox); // Poll to make sure there are enough buffers
+    drainControlPackets(mailbox);
 
     int hardware_counter = 0; // Counter to compare with threshold (Should only exist in hardware)
 
@@ -998,8 +1080,11 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
     // For each fragment:
     for (int offset = 0; offset < threshold; offset++) {
         // Check for outstanding sends
-        while (mailbox->outstanding_sends >= mailbox->max_outstanding_sends || isEmpty(mailbox->sendBufferQueue) == RVMA_TRUE) {
+        while (mailbox->send_credits <= 0 ||
+               mailbox->outstanding_sends >= mailbox->max_outstanding_sends ||
+               isEmpty(mailbox->sendBufferQueue) == RVMA_TRUE) {
             rvmaProgress(mailbox);
+            drainControlPackets(mailbox);
         }
 
         // Define message fragment: i=0 to RS_MAX_TRANSFER-1, RS_MAX_TRANSFER to 2*RS_MAX_TRANSFER-1, ...
@@ -1046,6 +1131,7 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
         }
 
         mailbox->outstanding_sends++;
+        mailbox->send_credits--;
     }
 
     free(notifBuffPtr);
@@ -1082,6 +1168,13 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
         struct dgram_frag_header header;
         memcpy(&header, data, sizeof(header));
 
+        if (header.frag_num == 0) { // Credit-grant packet
+            mailbox->send_credits += (int)header.total_frags;
+            enqueue(mailbox->recvBufferQueue, entry);
+            rvmaProgress(mailbox);
+            continue;
+        }
+
         char *payload = data + sizeof(header);
         int payload_len = data_len - sizeof(header);
 
@@ -1100,10 +1193,15 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
         enqueue(mailbox->recvBufferQueue, entry); // Return buffer to recv pool
         rvmaProgress(mailbox);
         received_frags++; // Increment receive counter and compare with number expected
+        
+        mailbox->credits_to_grant++; 
+        flushCreditGrant(rvs, RVMA_FALSE);
+        
         if (received_frags == expected_frags) {
             break;
         }
     }
+    flushCreditGrant(rvs, RVMA_TRUE);
     return len;
 }
 

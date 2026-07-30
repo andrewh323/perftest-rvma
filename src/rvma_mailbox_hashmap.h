@@ -21,6 +21,9 @@ typedef struct {
     int outstanding_sends;
     int posted_recvs;
     int max_recvs;
+    
+    int send_credits;
+    int credits_to_grant;
 
     void *send_pool;
     void *recv_pool;

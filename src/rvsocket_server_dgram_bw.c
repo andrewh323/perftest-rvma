@@ -97,7 +97,5 @@ int main(int argc, char **argv) {
 
     close(dgram_fd);
     close(tcp_listenfd);
-    // Wait for test to finish
-    usleep(50 * 1000);
 	return 0;
 }
