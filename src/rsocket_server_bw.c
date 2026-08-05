@@ -19,6 +19,7 @@ The client then disconnects from the server
 
 #define PORT 7471
 #define MSG_SIZE 1024*4 // Size of expected message
+#define NUM_REPEATS 30
 
 
 int main(int argc, char **argv) {

@@ -104,9 +104,9 @@ int main(int argc, char **argv) {
     double bandwidth_GBps = bandwidth_MBps / 1024; // Convert to GiB/s
 
     printf("Elapsed time: %.2f microseconds\n", elapsed * 1e6);
-    printf("Bandwidth: %.2f MB/s (%.2f GiB/s)\n", bandwidth_MBps, bandwidth_GBps); //GiB vs GB
+    printf("Bandwidth: %.2f MB/s (%.2f GiB/s)\n", bandwidth_MBps, bandwidth_GBps);
 
-    usleep(500*1000);
+    usleep(50*1000);
     rclose(sockfd);
     return 0;
 }

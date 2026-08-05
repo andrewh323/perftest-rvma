@@ -61,6 +61,16 @@ src/rsocket_client_bw.o: src/rsocket_client_bw.c \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdlib-bsearch.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdlib-float.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdlib.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/math.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/math-vector.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libm-simd-decl-stubs.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/flt-eval-method.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-logb.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-fast.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-helper-functions.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-narrow.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/iscanonical.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/strings.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/strings_fortified.h \
@@ -203,6 +213,16 @@ src/rsocket_client_bw.o: src/rsocket_client_bw.c \
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdlib-bsearch.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdlib-float.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/stdlib.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/math.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/math-vector.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/libm-simd-decl-stubs.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/flt-eval-method.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-logb.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/fp-fast.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-helper-functions.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/mathcalls-narrow.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/iscanonical.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/string.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/strings.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/bits/strings_fortified.h:

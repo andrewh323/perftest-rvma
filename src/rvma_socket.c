@@ -994,7 +994,7 @@ static RVMA_Status sendCreditGrant(struct rvsocket *rvs, int credits) {
     if (!entry) return RVMA_FALSE;
 
     struct dgram_frag_header *hdr = (struct dgram_frag_header *)entry->realBuff;
-    hdr->frag_num = 0; // sentinel: this is a credit grant, not a data fragment
+    hdr->frag_num = 0;
     hdr->total_frags = (uint32_t)credits;
 
     struct ibv_sge sge = {
@@ -1294,7 +1294,6 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
             enqueue(mailbox->recvBufferQueue, entry);
         }
     }
-    rvmaProgress(mailbox);
     size_t copy_len = len < recv_bytes_avail(rvs) ? len : recv_bytes_avail(rvs);
     // Copy data from stream buffer to user buffer
     memcpy(buf, rvs->recv_stream_buffer + rvs->recv_stream_head, copy_len);

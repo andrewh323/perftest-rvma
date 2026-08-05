@@ -321,16 +321,15 @@ RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
 }
 
 RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mailbox) {
-    // Pull a buffer from the mailbox's buffer queue
-    RVMA_Buffer_Entry *entry = dequeue(mailbox->sendBufferQueue);
-    if (!entry) {
+    // If mailbox has too many outstanding sends, return RETRY
+    // Wait for send_wcs to drain in progress engine
+    if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends) {
         return RVMA_RETRY;
     }
 
-    // If mailbox has too many outstanding sends, put buffer back and return RETRY
-    // Wait for send_wcs to drain in progress engine
-    if (mailbox->outstanding_sends >= mailbox->max_outstanding_sends) {
-        enqueue(mailbox->sendBufferQueue, entry);
+    // Pull a buffer from the mailbox's buffer queue
+    RVMA_Buffer_Entry *entry = dequeue(mailbox->sendBufferQueue);
+    if (!entry) {
         return RVMA_RETRY;
     }
 

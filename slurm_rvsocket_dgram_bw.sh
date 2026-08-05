@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=rvsocket_stream_lat
+#SBATCH --job-name=rvsocket_dgram_bw
 #SBATCH --exclusive
 #SBATCH --account=def-regrant
 #SBATCH --output=results/%x-%j.out
@@ -10,14 +10,14 @@
 
 REPEATS=30
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/csv_tables/rvsocket_stream_bw.csv"
+CSV_FILE="$PATH_TO_BIN/results/csv_tables/rvsocket_dgram_bw.csv"
 
 # Create results directory if needed
 mkdir -p "$PATH_TO_BIN/results/temp"
 
 # Write CSV header once
 if [ ! -f "$CSV_FILE" ]; then
-    echo "timestamp,repetition,size_bytes,throughput" > "$CSV_FILE"
+    echo "timestamp,repetition,size_bytes,bandwidth" > "$CSV_FILE"
 fi
 
 # Get nodes
@@ -30,21 +30,22 @@ echo "Client Node: $client"
 # InfiniBand IPs
 SERVER_IP=$(ssh $server "ifconfig ib0 | grep 'inet ' | awk '{print \$2}'" | tail -n 1)
 CLIENT_IP=$(ssh $client "ifconfig ib0 | grep 'inet ' | awk '{print \$2}'" | tail -n 1)
+
 echo "Server IB HW IP: $SERVER_IP"
 echo "Client IB HW IP: $CLIENT_IP"
 
-SERVER_OUT_PATH="$PATH_TO_BIN/results/temp/server-stream-$SLURM_JOB_ID.out"
-CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/client-stream-$SLURM_JOB_ID.out"
+SERVER_OUT_PATH="$PATH_TO_BIN/results/temp/server-dgram-$SLURM_JOB_ID.out"
+CLIENT_OUT_PATH="$PATH_TO_BIN/results/temp/client-dgram-$SLURM_JOB_ID.out"
 
-SERVER_EXEC="$PATH_TO_BIN/rvsocket_server_stream_bw"
-CLIENT_EXEC="$PATH_TO_BIN/rvsocket_client_stream_bw"
+SERVER_EXEC="$PATH_TO_BIN/rvsocket_server_dgram_bw"
+CLIENT_EXEC="$PATH_TO_BIN/rvsocket_client_dgram_bw"
 
+# Repeat the tests
 declare -a SIZES=(1024 2048 4096 8192 16384 32768 65536 131072 262144 524288 1048576) # 1KB to 1MB
 
 # Repeat the tests
-for REP in $(seq 1 $REPEATS); do
-    echo "=== Run $REP of $REPEATS ==="
-    for SIZE in "${SIZES[@]}"; do
+for SIZE in "${SIZES[@]}"; do
+    for REP in $(seq 1 $REPEATS); do
         > "$SERVER_OUT_PATH"
         > "$CLIENT_OUT_PATH"
         echo "Running test with message size: ${SIZE} bytes"
@@ -59,7 +60,7 @@ for REP in $(seq 1 $REPEATS); do
         wait $SERVER_PID 2>/dev/null
 
         sleep 0.5
-        pkill -9 rvsocket_server_stream 2>/dev/null
+        pkill -9 rvsocket_server_dgram_bw 2>/dev/null
         
         # Extract times from client output
         THROUGHPUT=$(grep "Bandwidth:" "$CLIENT_OUT_PATH" | awk '{gsub(/[()]/, "", $(NF-1)); print $(NF-1)}')

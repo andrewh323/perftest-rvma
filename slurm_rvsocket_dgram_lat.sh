@@ -10,7 +10,7 @@
 
 REPEATS=10
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/csv_tables/rvsocket_dgram_exclude_warmup.csv"
+CSV_FILE="$PATH_TO_BIN/results/csv_tables/rvsocket_dgram_lat.csv"
 
 # Create results directory if needed
 mkdir -p "$PATH_TO_BIN/results/temp"
@@ -50,7 +50,7 @@ for REP in $(seq 1 $REPEATS); do
         echo "Running test with message size: ${SIZE} bytes"
         
         # Run server
-        $SERVER_EXEC > "$SERVER_OUT_PATH" &
+        $SERVER_EXEC $SIZE > "$SERVER_OUT_PATH" &
         SERVER_PID=$!
         # Wait on server to setup
         sleep 0.2
@@ -69,7 +69,7 @@ for REP in $(seq 1 $REPEATS); do
         RVBIND=$(grep "rvbind total time:" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         RVACCEPT=$(grep "rvaccept_dgram total time" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
         QPSETUP=$(grep "Time to setup QP in rvsocket" "$SERVER_OUT_PATH" | awk '{print $(NF-1)}')
-        # Append to CSV with repetition
+        # Append to CSV
         echo "$(date +"%H:%M:%S.%3N"),$REP,$SIZE,$AVG_SEND,$STD_DEV_SEND,$WINDOW_INIT,$RVSOCKET_SETUP,$RVBIND,$RVCONNECT,$RVACCEPT,$QPSETUP" >> "$CSV_FILE"
     done
     # Add empty line between repetitions
