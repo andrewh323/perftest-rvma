@@ -37,6 +37,10 @@
 #define MAX_BYTES 128*1024*1024 // Hardware limit of NIC
 #define INITIAL_STREAM_BUFFER 1024*1024 // 1 MB
 
+// Used to ensure dgram destination
+#define DGRAM_CONNECT_RETRIES 50
+#define DGRAM_CONNECT_RETRY_DELAY_US (100 * 1000) // 100 ms
+
 enum {
 	RS_OP_DATA,
 	RS_OP_RSVD_DATA_MORE,
@@ -49,7 +53,7 @@ enum {
 };
 
 static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
-static int next_fd = 100; // Starting fd for rvsockets
+static int next_fd = 0; // Starting fd for rvsockets
 
 #define rvs_send_wr_id(data) ((uint64_t) data)
 
@@ -96,7 +100,6 @@ enum rs_state {
 struct rvsocket {
     int type; // SOCK_STREAM or SOCK_DGRAM
     int index;
-    int size; // Message size
     union {
         struct { // data stream
             struct rdma_cm_id *cm_id; // RDMA CM ID
@@ -108,6 +111,7 @@ struct rvsocket {
         };
         struct { // datagram
             int udp_sock; // UDP socket for exchanging connection data
+            int tcp_listenfd; // TCP listen socket for automatic AH exchange (server role)
         };
     };
     struct rdma_event_channel *ec;
@@ -138,6 +142,13 @@ static void rs_remove(struct rvsocket *rvs)
 static void ds_free(struct rvsocket *rvs) {
     if (rvs->udp_sock >= 0)
         close(rvs->udp_sock);
+    if (rvs->tcp_listenfd >= 0)
+        close(rvs->tcp_listenfd);
+    if (rvs->dest) {
+        if (rvs->dest->ah)
+            ibv_destroy_ah(rvs->dest->ah);
+        free(rvs->dest);
+    }
     if (rvs->index >= 0)
         rs_remove(rvs);
     free(rvs);
@@ -191,6 +202,12 @@ uint32_t getIP(uint64_t vaddr) {
     return (uint32_t)((vaddr >> 16) & 0xFFFFFFFF);
 }
 
+// Several rvsocket functions name their fd parameter "socket", which shadows
+// the libc socket() call
+static inline int sys_socket(int domain, int type, int protocol) {
+    return socket(domain, type, protocol);
+}
+
 // Function to measure clock cycles
 static inline uint64_t rdtsc(){
     unsigned int lo, hi;
@@ -216,7 +233,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     
     rvs->type = type;
 
-    // Set rvsocket vaddr and mailbox
+    // Set rvsocket vaddr, ec, and cm_id
     rvs->vaddr = vaddr;
     rvs->ec = rdma_create_event_channel();
 
@@ -359,6 +376,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
+        rvs->tcp_listenfd = -1; // Set up on rvbind if this socket ends up acting as a server
         rvs->index = next_fd++;
     }
     // Insert rvsocket into index map
@@ -394,10 +412,23 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
         if (!ret)
             rvs->state = rs_bound;
     } else { // Datagram
-        if (rvs->state == rs_init) {
-            ret = bind(rvs->udp_sock, addr, addrlen);
-            if (ret == 0)
-                rvs->state = rs_bound;
+        ret = bind(rvs->udp_sock, addr, addrlen);
+        if (ret == 0) {
+            // Also setup TCP listener on the same address so that
+            // rvrecvfrom can transparently accept a peer's AH exchange
+            int tcp_fd = sys_socket(AF_INET, SOCK_STREAM, 0);
+            int opt = 1;
+            if (tcp_fd < 0 ||
+                setsockopt(tcp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
+                bind(tcp_fd, addr, addrlen) < 0 ||
+                listen(tcp_fd, 1) < 0) {
+                    perror("rvbind: failed to set up dgram AH-exchange listener");
+                if (tcp_fd >= 0)
+                    close(tcp_fd);
+                return -1;
+            }
+            rvs->tcp_listenfd = tcp_fd;
+            rvs->state = rs_bound;
         }
     }
     end = rdtsc();
@@ -820,13 +851,9 @@ int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, sockle
     int tcp_fd;
 
     rvs = idm_lookup(&idm, dgram_fd);
-
-    if (!rvs->dest) {
-        rvs->dest = calloc(1, sizeof(*rvs->dest));
-        if (!rvs->dest) {
-            perror("calloc rvs->dest");
-            return -1;
-        }
+    if (!rvs) {
+        fprintf(stderr, "rvaccept_dgram: rvs is NULL\n");
+        return -1;
     }
 
     tcp_fd = accept(tcp_listenfd, addr, addrlen);
@@ -835,25 +862,41 @@ int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, sockle
         return -1;
     }
     start = rdtsc(); // Start timing after accept since accept is blocking
+
+    if (!rvs->dest) {
+        rvs->dest = calloc(1, sizeof(*rvs->dest));
+        if (!rvs->dest) {
+            perror("calloc rvs->dest");
+            close(tcp_fd);
+            return -1;
+        }
+    }
+
     struct ibv_port_attr port_attr;
     ibv_query_port(rvs->mailboxPtr->pd->context, rvs->qp_port, &port_attr);
     local_info.lid  = port_attr.lid;
     local_info.qpn  = rvs->mailboxPtr->qp->qp_num;
     local_info.qkey = 0x11111111;
     local_info.port_num = rvs->qp_port;
-    
+
     ssize_t n;
     n = write(tcp_fd, &local_info, sizeof(local_info));
     if (n != sizeof(local_info)) {
         perror("write local_info");
+        free(rvs->dest);
+        rvs->dest = NULL;
+        close(tcp_fd);
         return -1;
     }
     n = read(tcp_fd, &remote_info, sizeof(remote_info));
     if (n != sizeof(remote_info)) {
         perror("read remote_info");
+        free(rvs->dest);
+        rvs->dest = NULL;
+        close(tcp_fd);
         return -1;
     }
-    
+
     struct ibv_ah_attr ah_attr = {
         .is_global     = 1,
         .dlid          = remote_info.lid,
@@ -865,6 +908,8 @@ int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, sockle
     struct ibv_ah *ah = ibv_create_ah(rvs->mailboxPtr->pd, &ah_attr);
     if (!ah) {
         perror("rvaccept_dgram: ibv_create_ah failed");
+        free(rvs->dest);
+        rvs->dest = NULL;
         close(tcp_fd);
         return -1;
     }
@@ -896,11 +941,18 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
         fprintf(stderr, "rvconnect_dgram: rvs is NULL\n");
         return -1;
     }
-    tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
+    tcp_fd = sys_socket(AF_INET, SOCK_STREAM, 0);
     if (tcp_fd < 0) {
         perror("socket failed");
         return -1;
     }
+
+    if (connect(tcp_fd, addr, addrlen) < 0) {
+        perror("connect failed");
+        close(tcp_fd);
+        return -1;
+    }
+
     if (!rvs->dest) {
         rvs->dest = calloc(1, sizeof(*rvs->dest));
         if (!rvs->dest) {
@@ -908,12 +960,6 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
             close(tcp_fd);
             return -1;
         }
-    }
-
-    if (connect(tcp_fd, addr, addrlen) < 0) {
-        perror("connect failed");
-        close(tcp_fd);
-        return -1;
     }
 
     // Fill in local UD info
@@ -930,11 +976,17 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
     n = read(tcp_fd, &remote_info, sizeof(remote_info));
     if (n != sizeof(remote_info)) {
         perror("read remote_info");
+        free(rvs->dest);
+        rvs->dest = NULL;
+        close(tcp_fd);
         return -1;
     }
     n = write(tcp_fd, &local_info, sizeof(local_info));
     if (n != sizeof(local_info)) {
         perror("write local_info");
+        free(rvs->dest);
+        rvs->dest = NULL;
+        close(tcp_fd);
         return -1;
     }
 
@@ -950,6 +1002,8 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
     struct ibv_ah *ah = ibv_create_ah(rvs->mailboxPtr->pd, &ah_attr);
     if (!ah) {
         perror("rvconnect_dgram: ibv_create_ah failed");
+        free(rvs->dest);
+        rvs->dest = NULL;
         close(tcp_fd);
         return -1;
     }
@@ -962,6 +1016,28 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
     printf("rvconnect_dgram total time: %.3f µs\n", elapsed_us);
     close(tcp_fd);
     return 0;
+}
+
+
+// Establishes rvs->dest the first time a datagram socket is used to send or
+// receive.
+static int dgram_ensure_dest(struct rvsocket *rvs, const struct sockaddr *dest_addr,
+        socklen_t addrlen, struct sockaddr *src_addr, socklen_t *src_addrlen) {
+    if (rvs->dest)
+        return 0;
+
+    if (dest_addr) {
+        int ret = -1;
+        for (int attempt = 0; attempt < DGRAM_CONNECT_RETRIES; attempt++) {
+            ret = rvconnect_dgram(rvs->index, dest_addr, addrlen);
+            if (ret == 0)
+                return 0;
+            usleep(DGRAM_CONNECT_RETRY_DELAY_US);
+        }
+        return ret;
+    }
+
+    return rvaccept_dgram(rvs->index, rvs->tcp_listenfd, src_addr, src_addrlen);
 }
 
 
@@ -1059,23 +1135,25 @@ static void drainControlPackets(RVMA_Mailbox *mailbox) {
 }
 
 // Send for datagram sockets
-int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
+int rvsendto(int socket, void *buf, int64_t len, const struct sockaddr *dest_addr, 
+        socklen_t addrlen, RVMA_Win *window) {
+
     struct rvsocket *rvs = idm_at(&idm, socket);
+
+    if (dgram_ensure_dest(rvs, dest_addr, addrlen, NULL, NULL) != 0) {
+        fprintf(stderr, "rvsendto: failed to establish datagram destination\n");
+        return -1;
+    }
+
     uint64_t vaddr = rvs->vaddr;
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
     struct rv_dest *dest = rvs->dest;
 
-    rvmaProgress(mailbox); // Poll to make sure there are enough buffers
+    rvmaProgress(mailbox);
     drainControlPackets(mailbox);
-
-    int hardware_counter = 0; // Counter to compare with threshold (Should only exist in hardware)
 
     // Determine number of fragments (bufferLen/MTU)
     int64_t threshold = (len + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER;
-
-    // Initialize notification pointers
-    void **notifBuffPtr = malloc(sizeof(void *));
-    int *notifLenPtr = malloc(sizeof(int));
 
     // For each fragment:
     for (int offset = 0; offset < threshold; offset++) {
@@ -1134,18 +1212,23 @@ int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window) {
         mailbox->send_credits--;
     }
 
-    free(notifBuffPtr);
-    free(notifLenPtr);
     return len;
 }
 
 // Receive buffer pool should already be preposted, manage fragments and poll completion
-int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
+int rvrecvfrom(int socket, void *buf, size_t len, int flags,
+        struct sockaddr *src_addr, socklen_t *addrlen) {
     int expected_frags = 0;
     int received_frags = 0;
     int frag_offset = 0;
 
     struct rvsocket *rvs = idm_at(&idm, socket);
+
+    if (dgram_ensure_dest(rvs, NULL, 0, src_addr, addrlen) != 0) {
+        fprintf(stderr, "rvrecvfrom: failed to establish datagram destination\n");
+        return -1;
+    }
+
     RVMA_Mailbox *mailbox = rvs->mailboxPtr;
 
     while (1) {
@@ -1179,7 +1262,7 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
         int payload_len = data_len - sizeof(header);
 
         /* REMOVE PRINT WHEN COLLECTING RESULTS */
-        
+
         // printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
         //      header.frag_num, header.total_frags, payload_len, payload);
 
@@ -1193,10 +1276,10 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags) {
         enqueue(mailbox->recvBufferQueue, entry); // Return buffer to recv pool
         rvmaProgress(mailbox);
         received_frags++; // Increment receive counter and compare with number expected
-        
+
         mailbox->credits_to_grant++; 
         flushCreditGrant(rvs, RVMA_FALSE);
-        
+
         if (received_frags == expected_frags) {
             break;
         }
@@ -1257,6 +1340,10 @@ void appendStreamBuffer(struct rvsocket *rvs, RVMA_Buffer_Entry *entry) {
 int rvrecv(int socket, void *buf, size_t len, int flags) {
     // Read from mailbox buffer with rvmaRecv
     struct rvsocket *rvs;
+    uint64_t start, end;
+    double cpu_ghz = get_cpu_ghz();
+
+    start = rdtsc();
 
     rvs = idm_at(&idm, socket);
 
@@ -1304,5 +1391,8 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
         rvs->recv_stream_tail = 0;
     }
 
+    end = rdtsc();
+    double elapsed_us = (end - start) / (cpu_ghz * 1e3);
+    printf("rvrecv time: %.3f µs\n", elapsed_us);
     return copy_len;
 }

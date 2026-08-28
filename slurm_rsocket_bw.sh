@@ -9,7 +9,7 @@
 
 export RDMA_CORE_LIB="$HOME/src/rdma-core/build/lib"
 PATH_TO_BIN="/home/andrewh8/src/perftest-rvma"
-CSV_FILE="$PATH_TO_BIN/results/csv_tables/rsocket_stream_bw.csv"
+CSV_FILE="$PATH_TO_BIN/results/csv_tables/rsocket_stream_bw2.csv"
 REPEATS=10
 
 # Create results directory if needed

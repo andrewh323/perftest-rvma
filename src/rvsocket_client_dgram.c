@@ -64,20 +64,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    int ret;
-    // In case server is not yet ready for connection request, reattempt
-    for (int i = 0; i < 50; i++) {
-        ret = rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-        if (ret == 0) {
-            break;  // successfully connected
-        }
-        usleep(1000 * 100); // wait for 100 ms before reattempting
-    }
-
-    if (ret != 0) {
-        fprintf(stderr, "Failed to connect after multiple retries\n");
-        exit(1);
-    }
     int res;
 
     printf("Sending messages of size %d bytes\n", size);
@@ -119,12 +105,12 @@ int main(int argc, char **argv) {
         // printf("Sending message %d: %.40s...\n", i, message);
 
         uint64_t t1 = rdtsc();
-        res = rvsendto(sockfd, message, size, windowPtr);
+        res = rvsendto(sockfd, message, size, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr);
         if (res < 0) {
             fprintf(stderr, "Failed to send message %d\n", i);
         }
 
-        res = rvrecvfrom(sockfd, recv_buf, size, 0);
+        res = rvrecvfrom(sockfd, recv_buf, size, 0, NULL, NULL);
         if (res < 0) {
             perror("rvrecv failed");
         }

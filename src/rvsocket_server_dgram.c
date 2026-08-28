@@ -61,26 +61,11 @@ int main(int argc, char **argv) {
 
     dgram_fd = rvsocket(SOCK_DGRAM, vaddr, windowPtr);
 
-	// Bind host address for datagram socket
+	// Bind host address for datagram socket. This also stands up the
+	// internal TCP listener rvrecvfrom uses to transparently accept a
+	// client's AH exchange on first use.
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));
 	printf("Host IP address bound to socket\n");
-
-    int tcp_listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    int opt = 1;
-
-    setsockopt(tcp_listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (bind(tcp_listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("bind tcp_listenfd");
-        exit(1);
-    }
-
-    if (listen(tcp_listenfd, 1) < 0) {
-        perror("listen");
-        exit(1);
-    }
-    socklen_t addrlen = sizeof(addr);
-    // Accept connection to exchange UD connection info
-    rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
 
     uint64_t t2;
     
@@ -90,11 +75,11 @@ int main(int argc, char **argv) {
 
     void *recv_buf = malloc(size);
     for (int i = 0; i < num_sends; i++){
-        ret = rvrecvfrom(dgram_fd, recv_buf, size, 0);
+        ret = rvrecvfrom(dgram_fd, recv_buf, size, 0, NULL, NULL);
         if (ret < 0) {
             perror("Error receiving message");
         }
-        ret = rvsendto(dgram_fd, recv_buf, size, windowPtr); // Echo the same message back
+        ret = rvsendto(dgram_fd, recv_buf, size, NULL, 0, windowPtr); // Echo the same message back
         if (ret < 0) {
             perror("Error sending ACK");
         }
@@ -102,7 +87,6 @@ int main(int argc, char **argv) {
 
     usleep(1000);
     close(dgram_fd);
-    close(tcp_listenfd);
     // Wait for test to finish
     usleep(50 * 1000);
 	return 0;

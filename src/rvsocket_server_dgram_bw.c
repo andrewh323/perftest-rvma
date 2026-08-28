@@ -63,20 +63,6 @@ int main(int argc, char **argv) {
     int tcp_listenfd = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
 
-    setsockopt(tcp_listenfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (bind(tcp_listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("bind tcp_listenfd");
-        exit(1);
-    }
-
-    if (listen(tcp_listenfd, 1) < 0) {
-        perror("listen");
-        exit(1);
-    }
-    socklen_t addrlen = sizeof(addr);
-    // Accept connection to exchange UD connection info
-    rvaccept_dgram(dgram_fd, tcp_listenfd, (struct sockaddr *)&addr, &addrlen);
-
     ssize_t total = 0;
     int64_t size = 4096;
     if (argc > 1) {
@@ -86,7 +72,7 @@ int main(int argc, char **argv) {
 
     void *recv_buf = malloc(size);
     while (total < TOTAL_BYTES) {
-        bytes_recvd = rvrecvfrom(dgram_fd, recv_buf, size, 0);
+        bytes_recvd = rvrecvfrom(dgram_fd, recv_buf, size, 0, NULL, NULL);
         if (bytes_recvd < 0) {
             perror("rvrecvfrom");
             exit(1);

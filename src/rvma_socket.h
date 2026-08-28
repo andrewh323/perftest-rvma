@@ -37,9 +37,11 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
 int rvsend(int socket, void *buf, int64_t len);
 
-int rvsendto(int socket, void *buf, int64_t len, RVMA_Win *window);
+int rvsendto(int socket, void *buf, int64_t len, const struct sockaddr *dest_addr, 
+    socklen_t addrlen, RVMA_Win *window);
 
-int rvrecvfrom(int socket, void *buf, size_t len, int flags);
+int rvrecvfrom(int socket, void *buf, size_t len, int flags,
+    struct sockaddr *src_addr, socklen_t *addrlen);
 
 int rvrecv(int socket, void *buf, size_t len, int flags);
 

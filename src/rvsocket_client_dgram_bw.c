@@ -51,20 +51,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    int ret;
-    // In case server is not yet ready for connection request, reattempt
-    for (int i = 0; i < 50; i++) {
-        ret = rvconnect_dgram(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-        if (ret == 0) {
-            break;  // successfully connected
-        }
-        usleep(1000 * 100); // wait for 100 ms before reattempting
-    }
-
-    if (ret != 0) {
-        fprintf(stderr, "Failed to connect after multiple retries\n");
-        exit(1);
-    }
     int res;
     int64_t msg_size = 4096;
     if (argc > 2) {
@@ -84,7 +70,7 @@ int main(int argc, char **argv) {
     while (bytes_sent < TOTAL_BYTES) {
 
         rvmaProgress(mailbox);
-        int res = rvsendto(sockfd, buffer, msg_size, windowPtr);
+        int res = rvsendto(sockfd, buffer, msg_size, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr);
         if (res < 0) {
             fprintf(stderr, "Failed to send message\n");
         }
