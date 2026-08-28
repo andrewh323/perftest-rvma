@@ -191,11 +191,12 @@ RVMA_Status rvmaCloseWin(RVMA_Win *window) {
     return RVMA_SUCCESS;
 }
 
-RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
+RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType,
+        size_t max_buf_size) {
     size_t total_size = MAX_BYTES;
     size_t buffer_size = total_size / num_bufs;
-    if (buffer_size > MAX_RECV_SIZE) {
-        buffer_size = MAX_RECV_SIZE;
+    if (buffer_size > max_buf_size) {
+        buffer_size = max_buf_size;
     }
     total_size = buffer_size * num_bufs;
     
@@ -246,11 +247,12 @@ RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, ep
     return RVMA_SUCCESS;
 }
 
-RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType) {
+RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType,
+        size_t max_buf_size) {
     size_t total_size = MAX_BYTES;
     size_t buffer_size = total_size / num_bufs; // Divide buffers into chunks
-    if (buffer_size > MAX_RECV_SIZE) {
-        buffer_size = MAX_RECV_SIZE;
+    if (buffer_size > max_buf_size) {
+        buffer_size = max_buf_size;
     }
     total_size = buffer_size * num_bufs;
 

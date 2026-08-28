@@ -8,6 +8,7 @@
 #include "rvma_common.h"
 #include "rvma_buffer_queue.h"
 #include <arpa/inet.h>
+#include <pthread.h>
 
 #define HASHMAP_CAPACITY 1000
 #define RVMA_MAX_BATCH 16
@@ -49,6 +50,10 @@ typedef struct {
 typedef struct  {
     int numOfElements, capacity;
     RVMA_Mailbox** hashmap;
+    // Guards inserts/lookups. A dgram server accepting many clients at once
+    // hands each one off to its own worker thread, which each insert their
+    // own mailbox into this same hashmap concurrently.
+    pthread_mutex_t lock;
 } Mailbox_HashMap;
 
 RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity);

@@ -29,7 +29,12 @@ int rvlisten(int socket, int backlog);
 
 int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *window);
 
-int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen);
+int rvaccept_dgram(int listen_dgram_fd, RVMA_Win *window, struct sockaddr *addr,
+    socklen_t *addrlen);
+
+int rvaccept_dgram_begin(int listen_dgram_fd, struct sockaddr *addr, socklen_t *addrlen);
+
+int rvaccept_dgram_finish(int tcp_fd, RVMA_Win *window);
 
 int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_Win *window);
 

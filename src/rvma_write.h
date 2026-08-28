@@ -34,9 +34,16 @@ int64_t rvmaWinGetEpoch(RVMA_Win*);
 
 RVMA_Buffer_Entry* rvmaPostBuffer(void *buffer, int64_t size, void **notificationPtr, void **notificationLenPtr, uint64_t virtualAddress, RVMA_Mailbox *mailbox, int64_t epochThreshold, epoch_type epochType);
 
-RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType);
+// Default per-buffer cap for postSendPool/postRecvPool callers that hold
+// whole reassembled messages (e.g. stream sockets) rather than single
+// wire-sized fragments.
+#define RVMA_DEFAULT_MAX_BUF_SIZE (1024*1024)
 
-RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType);
+RVMA_Status postSendPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType,
+    size_t max_buf_size);
+
+RVMA_Status postRecvPool(RVMA_Mailbox *mailbox, int num_bufs, uint64_t vaddr, epoch_type epochType,
+    size_t max_buf_size);
 
 RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mailbox);
 

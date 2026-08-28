@@ -8,6 +8,7 @@
 
 #include "rvma_socket.h"
 #include "rvma_write.h"
+#include "rvma_debug.h"
 
 #define PORT 7471
 
@@ -19,7 +20,6 @@ static inline uint64_t rdtsc(){
     return ((uint64_t)hi << 32) | lo;
 }
 
-
 int main(int argc, char **argv) {
     uint16_t reserved = 0x0001;
     int sockfd;
@@ -29,21 +29,29 @@ int main(int argc, char **argv) {
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(PORT);
+    // Arg 1 - Server address
     if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) != 1) {
         perror("inet_pton failed");
         return -1;
     };
-    
+
+    // Arg 2 - Message size (Default to 1 KB)
     int size = 1024;
     if (argc > 2) {
         size = atoi(argv[2]);
+    }
+
+    // Arg 3 - Reserved field for vaddr and used in rvsocket_client_dgram_script.sh
+    // for multiple clients
+    if (argc > 3) {
+        reserved = (uint16_t)atoi(argv[3]);
     }
 
     // Convert IP to host byte order and construct vaddr
     uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
 
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
+    // printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
     RVMA_Win *windowPtr = rvmaInitWindowMailbox(vaddr);
     
@@ -66,7 +74,7 @@ int main(int argc, char **argv) {
 
     int res;
 
-    printf("Sending messages of size %d bytes\n", size);
+    // printf("Sending messages of size %d bytes\n", size);
 
     int num_sends = 1000;
     int warmup_sends = 10; // number of warmup sends
@@ -107,25 +115,19 @@ int main(int argc, char **argv) {
         uint64_t t1 = rdtsc();
         res = rvsendto(sockfd, message, size, (struct sockaddr *)&server_addr, sizeof(server_addr), windowPtr);
         if (res < 0) {
-            fprintf(stderr, "Failed to send message %d\n", i);
+            // dgram_ensure_dest already retried for several seconds before giving up
+            fprintf(stderr, "Failed to send message %d, giving up\n", i);
+            exit(1);
         }
 
         res = rvrecvfrom(sockfd, recv_buf, size, 0, NULL, NULL);
         if (res < 0) {
-            perror("rvrecv failed");
+            fprintf(stderr, "Failed to receive echo for message %d, giving up\n", i);
+            exit(1);
         }
         uint64_t t2 = rdtsc();
         elapsed_us = (t2 - t1) / (cpu_ghz *1e3);
 
-        // Convert cycles to microseconds
-/*         double fragSetup_us = mailbox->fragSetupCycles / (cpu_ghz * 1e3);
-        double bufferSetup_us = mailbox->bufferSetupCycles / (cpu_ghz * 1e3);
-        double wrSetup_us = mailbox->wrSetupCycles / (cpu_ghz * 1e3);
-        double poll_us = mailbox->pollCycles / (cpu_ghz * 1e3);
-*/
-
-        /* printf("Message %d send time: %.3f µs (Frag setup: %.3f µs, Buffer setup: %.3f µs, WR setup: %.3f µs, Poll: %.3f µs)\n",
-            i, elapsed_us, fragSetup_us, bufferSetup_us, wrSetup_us, poll_us); */
         int record = 1;
 
         // Exclude warm-ups if configured
@@ -143,7 +145,7 @@ int main(int argc, char **argv) {
         free(message);
     }
 
-    // Compute averages
+    /* // Compute averages
     double avg_time = sum_time / measured_sends;
 
     // Compute standard deviation
@@ -165,7 +167,7 @@ int main(int argc, char **argv) {
     printf("Max send time:            %.3f µs\n", max_time);
     printf("Avg send time:            %.3f µs\n", avg_time);
     printf("Send time stddev:         %.3f µs\n", stddev);
-    printf("====================================\n");
+    printf("====================================\n"); */
 
     usleep(10000);
     rclose(sockfd);

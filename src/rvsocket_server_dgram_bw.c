@@ -60,8 +60,11 @@ int main(int argc, char **argv) {
 	rvbind(dgram_fd, (struct sockaddr *)&addr, sizeof(addr));
 	printf("Host IP address bound to socket\n");
 
-    int tcp_listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    int opt = 1;
+    int conn_fd = rvaccept_dgram(dgram_fd, windowPtr, NULL, NULL);
+    if (conn_fd < 0) {
+        fprintf(stderr, "rvaccept_dgram failed\n");
+        exit(1);
+    }
 
     ssize_t total = 0;
     int64_t size = 4096;
@@ -72,7 +75,7 @@ int main(int argc, char **argv) {
 
     void *recv_buf = malloc(size);
     while (total < TOTAL_BYTES) {
-        bytes_recvd = rvrecvfrom(dgram_fd, recv_buf, size, 0, NULL, NULL);
+        bytes_recvd = rvrecvfrom(conn_fd, recv_buf, size, 0, NULL, NULL);
         if (bytes_recvd < 0) {
             perror("rvrecvfrom");
             exit(1);
@@ -81,7 +84,7 @@ int main(int argc, char **argv) {
         // printf("Total received: %d\n", total);
     }
 
+    close(conn_fd);
     close(dgram_fd);
-    close(tcp_listenfd);
 	return 0;
 }

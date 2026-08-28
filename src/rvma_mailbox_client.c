@@ -68,12 +68,12 @@ int main(int argc, char **argv) {
     printf("Client connected to server %s:%d\n", argv[1], port);
 
     // Prepost buffers
-    res = postSendPool(mailboxPtr, 16, vaddr, EPOCH_BYTES);
+    res = postSendPool(mailboxPtr, 16, vaddr, EPOCH_BYTES, RVMA_DEFAULT_MAX_BUF_SIZE);
     if (res != RVMA_SUCCESS) {
         perror("postSendPool failed");
         return -1;
     }
-    res = postRecvPool(mailboxPtr, 16, vaddr, EPOCH_BYTES);
+    res = postRecvPool(mailboxPtr, 16, vaddr, EPOCH_BYTES, RVMA_DEFAULT_MAX_BUF_SIZE);
     if (res != RVMA_SUCCESS) {
         perror("postRecvPool failed");
         return -1;

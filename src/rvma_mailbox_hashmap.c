@@ -64,6 +64,8 @@ Mailbox_HashMap* initMailboxHashmap(){
         memset(hashmapPtr->hashmap, 0, hashmapPtr->capacity * sizeof(RVMA_Mailbox*));
     }
 
+    pthread_mutex_init(&hashmapPtr->lock, NULL);
+
     return hashmapPtr;
 }
 
@@ -127,8 +129,11 @@ int hashFunction(uint64_t vaddr, int capacity) {
 }
 
 RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr){
+    pthread_mutex_lock(&hashMap->lock);
+
     if (hashMap->numOfElements >= hashMap->capacity) {
         errno = ENOSPC;
+        pthread_mutex_unlock(&hashMap->lock);
         return RVMA_ERROR;
     }
 
@@ -136,23 +141,29 @@ RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr){
 
     for (int i = 0; i < hashMap->capacity; i++) {
         int slot = (start + i) % hashMap->capacity;
-        
+
         if (hashMap->hashmap[slot] == NULL) { // Found a free slot
             RVMA_Mailbox* mb = setupMailbox(vaddr, hashMap->capacity);
-            if (!mb) return RVMA_ERROR;
+            if (!mb) {
+                pthread_mutex_unlock(&hashMap->lock);
+                return RVMA_ERROR;
+            }
             mb->key = slot; // Record slot itself
             hashMap->hashmap[slot] = mb;
             hashMap->numOfElements++;
+            pthread_mutex_unlock(&hashMap->lock);
             return RVMA_SUCCESS;
         }
 
         if (hashMap->hashmap[slot]->vaddr == vaddr) {
             // Collision
+            pthread_mutex_unlock(&hashMap->lock);
             return RVMA_ERROR;
         }
     }
 
     errno = ENOSPC;
+    pthread_mutex_unlock(&hashMap->lock);
     return RVMA_ERROR;
 }
 
@@ -167,14 +178,23 @@ RVMA_Mailbox* searchHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr) {
         return NULL;
     }
 
+    pthread_mutex_lock(&hashMap->lock);
+
     // Getting the bucket index for the given key
     int start = hashFunction(vaddr, hashMap->capacity);
 
     for (int i = 0; i < hashMap->capacity; i++) {
         int slot = (start + i) % hashMap->capacity;
-        if (hashMap->hashmap[slot] == NULL) return NULL;
-        if (hashMap->hashmap[slot]->vaddr == vaddr) return hashMap->hashmap[slot];
+        if (hashMap->hashmap[slot] == NULL) {
+            pthread_mutex_unlock(&hashMap->lock);
+            return NULL;
+        }
+        if (hashMap->hashmap[slot]->vaddr == vaddr) {
+            pthread_mutex_unlock(&hashMap->lock);
+            return hashMap->hashmap[slot];
+        }
     }
+    pthread_mutex_unlock(&hashMap->lock);
     // If no key found in the hashMap equal to the given vaddr
     print_error("searchHashmap: No mailbox with that vaddr found");
     return NULL;

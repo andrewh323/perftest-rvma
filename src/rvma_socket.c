@@ -30,12 +30,14 @@
 #include "indexer.h"
 
 #define MAX_DGRAM_POOL_BUFS 256
-#define MAX_POOL_BUFS 16 // Supports dgram messages of up to 1 MB
+#define MAX_POOL_BUFS 16 // Supports stream messages of up to 1 MB
 #define CREDIT_BATCH_SIZE 64
 #define MAX_RECV_SIZE 1024*1024
 #define SIGNAL_INTERVAL 16
 #define MAX_BYTES 128*1024*1024 // Hardware limit of NIC
 #define INITIAL_STREAM_BUFFER 1024*1024 // 1 MB
+
+#define MAX_DGRAM_BUF_SIZE (40 + sizeof(struct dgram_frag_header) + RS_MAX_TRANSFER)
 
 // Used to ensure dgram destination
 #define DGRAM_CONNECT_RETRIES 50
@@ -123,6 +125,13 @@ struct rvsocket {
     struct rv_dest *dest;
 };
 
+static int rs_alloc_index(void)
+{
+	pthread_mutex_lock(&mut);
+	int index = next_fd++;
+	pthread_mutex_unlock(&mut);
+	return index;
+}
 
 static int rs_insert(struct rvsocket *rvs, int index)
 {
@@ -152,6 +161,126 @@ static void ds_free(struct rvsocket *rvs) {
     if (rvs->index >= 0)
         rs_remove(rvs);
     free(rvs);
+}
+
+// Allocates a mailbox, PD, CQs, and a UD QP for vaddr, and posts send/recv
+// buffer pools into it. Used both for a socket's own datagram QP (rvsocket)
+// and for the per-client QPs handed out by rvaccept_dgram
+static int dgram_setup_rdma(struct rvsocket *rvs, uint64_t vaddr, RVMA_Win *window) {
+    RVMA_Status res = newMailboxIntoHashmap(window->hashMapPtr, vaddr);
+    if (res != RVMA_SUCCESS) {
+        print_error("dgram_setup_rdma: Failure creating mailbox");
+        return -1;
+    }
+    rvs->mailboxPtr = searchHashmap(window->hashMapPtr, vaddr);
+
+    char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
+    struct ibv_device *ib_dev = ctx_find_dev(&devname);
+    if (!ib_dev) {
+        fprintf(stderr, "dgram_setup_rdma: Failed to find IB device\n");
+        return -1;
+    }
+    struct ibv_context *ctx = ibv_open_device(ib_dev);
+    if (!ctx) {
+        fprintf(stderr, "dgram_setup_rdma: Failed to open device\n");
+        return -1;
+    }
+
+    struct ibv_device_attr dev_attr;
+    if (ibv_query_device(ctx, &dev_attr)) {
+        perror("ibv_query_device");
+        return -1;
+    }
+    struct ibv_port_attr port_attr;
+    if (ibv_query_port(ctx, 1, &port_attr)) {
+        perror("ibv_query_port failed");
+        return -1;
+    }
+    rvs->qp_port = 1;
+
+    // Allocate pd, cq, and qp here
+    struct ibv_pd *pd = ibv_alloc_pd(ctx);
+    if (!pd) {
+        fprintf(stderr, "dgram_setup_rdma: Failed to allocate pd\n");
+        return -1;
+    }
+    rvs->mailboxPtr->pd = pd;
+
+    struct ibv_cq *send_cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
+    if (!send_cq) {
+        fprintf(stderr, "dgram_setup_rdma: Failed to create cq\n");
+        return -1;
+    }
+    struct ibv_cq *recv_cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
+    if (!recv_cq) {
+        fprintf(stderr, "dgram_setup_rdma: Failed to create cq\n");
+        return -1;
+    }
+    rvs->mailboxPtr->send_cq = send_cq;
+    rvs->mailboxPtr->recv_cq = recv_cq;
+
+    // Define QP
+    struct ibv_qp_init_attr qp_attr = {
+        .send_cq = send_cq,
+        .recv_cq = recv_cq,
+        .qp_type = IBV_QPT_UD,
+        .cap = {
+            .max_send_wr = 2 * MAX_DGRAM_POOL_BUFS,
+            .max_recv_wr = 2 * MAX_DGRAM_POOL_BUFS,
+            .max_send_sge = 1,
+            .max_recv_sge = 1
+        },
+    };
+    struct ibv_qp *qp = ibv_create_qp(pd, &qp_attr);
+    if (!qp) {
+        perror("ibv_create_qp failed");
+        return -1;
+    }
+
+    // Now transition the qp to RTS
+    // INIT
+    struct ibv_qp_attr attr = {0};
+    attr.qp_state   = IBV_QPS_INIT;
+    attr.pkey_index = 0;
+    attr.port_num   = rvs->qp_port;
+    attr.qkey       = 0x11111111;
+    int mask = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_QKEY;
+    if (ibv_modify_qp(qp, &attr, mask)) {
+        perror("INIT transition failed");
+        return -1;
+    }
+    // RTR
+    attr.qp_state = IBV_QPS_RTR;
+    if (ibv_modify_qp(qp, &attr, IBV_QP_STATE)) {
+        perror("RTR transition failed");
+        return -1;
+    }
+    // RTS
+    attr.qp_state = IBV_QPS_RTS;
+    attr.sq_psn = lrand48() & 0xffffff;
+    mask = IBV_QP_STATE | IBV_QP_SQ_PSN;
+    if (ibv_modify_qp(qp, &attr, mask)) {
+        perror("RTS transition failed");
+        return -1;
+    }
+
+    // Save qp to mailbox
+    rvs->mailboxPtr->qp = qp;
+
+    // Prepost buffers to prepare for incoming transmissions
+    if (postSendPool(rvs->mailboxPtr, MAX_DGRAM_POOL_BUFS, vaddr, EPOCH_OPS, MAX_DGRAM_BUF_SIZE) != RVMA_SUCCESS) {
+        perror("postSendPool failed");
+        return -1;
+    }
+    if (postRecvPool(rvs->mailboxPtr, MAX_DGRAM_POOL_BUFS, vaddr, EPOCH_OPS, MAX_DGRAM_BUF_SIZE) != RVMA_SUCCESS) {
+        perror("postRecvPool failed");
+        return -1;
+    }
+
+    rvs->mailboxPtr->send_credits = MAX_DGRAM_POOL_BUFS;
+    rvs->mailboxPtr->credits_to_grant = 0;
+
+    return 0;
 }
 
 static void rs_free(struct rvsocket *rvs) {
@@ -246,138 +375,22 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
 
     if (type == SOCK_STREAM) {
         // For stream sockets, pd, cq, and qp are allocated in accept/connect
-        rvs->index = next_fd++;
+        rvs->index = rs_alloc_index();
     } else { // datagram
         // Datagrams do not accept/connect, so we must setup pd, cq, and qp here
-        // To allocate pd, we need a valid context and mailbox
         uint64_t rdmaStart = rdtsc();
-        RVMA_Status res = newMailboxIntoHashmap(window->hashMapPtr, vaddr);
-        if (res != RVMA_SUCCESS) {
-            print_error("rvsocket: Failure creating mailbox");
+        if (dgram_setup_rdma(rvs, vaddr, window) != 0) {
             free(rvs);
             return -1;
         }
-        rvs->mailboxPtr = searchHashmap(window->hashMapPtr, vaddr);
-        char *devname = "mlx5_0"; // mlx_0/1/2 probably - change as needed
-        struct ibv_device *ib_dev = ctx_find_dev(&devname);
-        if (!ib_dev) {
-            fprintf(stderr, "rvsocket: Failed to find IB device\n");
-            return -1;
-        }
-        struct ibv_context *ctx = ibv_open_device(ib_dev);
-        if (!ctx) {
-            fprintf(stderr, "rvsocket: Failed to open device\n");
-            return -1;
-        }
-
-        struct ibv_device_attr dev_attr;
-        if (ibv_query_device(ctx, &dev_attr)) {
-            perror("ibv_query_device");
-            return -1;
-        }
-        struct ibv_port_attr port_attr;
-        int ret = ibv_query_port(ctx, 1, &port_attr);
-        if (ret) {
-            perror("ibv_query_port failed");
-            return -1;
-        }
-        rvs->qp_port = 1;
-
-        // Allocate pd, cq, and qp here
-        struct ibv_pd *pd = ibv_alloc_pd(ctx);
-        if (!pd) {
-            fprintf(stderr, "rvsocket: Failed to allocate pd\n");
-            return -1;
-        }
-        rvs->mailboxPtr->pd = pd;
-
-        struct ibv_cq *send_cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
-        if (!send_cq) {
-            fprintf(stderr, "rvsocket: Failed to create cq\n");
-            return -1;
-        }
-        struct ibv_cq *recv_cq = ibv_create_cq(ctx, 128, NULL, NULL, 0);
-        if (!recv_cq) {
-            fprintf(stderr, "rvsocket: Failed to create cq\n");
-            return -1;
-        }
-        rvs->mailboxPtr->send_cq = send_cq;
-        rvs->mailboxPtr->recv_cq = recv_cq;
-
-        // Define QP
-        struct ibv_qp_init_attr qp_attr = {
-            .send_cq = send_cq,
-            .recv_cq = recv_cq,
-            .qp_type = IBV_QPT_UD,
-            .cap = {
-                .max_send_wr = 2 * MAX_DGRAM_POOL_BUFS,
-                .max_recv_wr = 2 * MAX_DGRAM_POOL_BUFS,
-                .max_send_sge = 1,
-                .max_recv_sge = 1
-            },
-        };
-        struct ibv_qp *qp = ibv_create_qp(pd, &qp_attr);
-        if (!qp) {
-            perror("ibv_create_qp failed");
-            return -1;
-        }
-
-        // Now transition the qp to RTS
-        // INIT
-        struct ibv_qp_attr attr = {0};
-        attr.qp_state   = IBV_QPS_INIT;
-        attr.pkey_index = 0;
-        attr.port_num   = rvs->qp_port;
-        attr.qkey       = 0x11111111;
-        int mask = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_QKEY;
-        if(ibv_modify_qp(qp, &attr, mask)) {
-            perror("INIT transition failed");
-            return -1;
-        }
-        // RTR
-        attr.qp_state = IBV_QPS_RTR;
-        if(ibv_modify_qp(qp, &attr, IBV_QP_STATE)) {
-            perror("RTR transition failed");
-            return -1;
-        }
-        // RTS
-        attr.qp_state = IBV_QPS_RTS;
-        attr.sq_psn = lrand48() & 0xffffff;
-        mask = IBV_QP_STATE | IBV_QP_SQ_PSN;
-        if (ibv_modify_qp(qp, &attr, mask)) {
-            perror("RTS transition failed");
-            return -1;
-        }
-
-        uint64_t setupQPend = rdtsc();
-        double setupQPtime = (setupQPend - rdmaStart) / (cpu_ghz * 1e3);
-        printf("Time to setup QP in rvsocket: %.3f µs\n", setupQPtime);
-
-        // Save qp to rvs
-        rvs->mailboxPtr->qp = qp;
-
-        printf("Allocating %d buffers into send and recv pools\n", MAX_DGRAM_POOL_BUFS);
-        // Post pools to prepare for incoming transmissions
-        if (postSendPool(rvs->mailboxPtr, MAX_DGRAM_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
-            perror("postSendPool failed");
-            return -1;
-        }
-        if (postRecvPool(rvs->mailboxPtr, MAX_DGRAM_POOL_BUFS, vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
-            perror("postRecvPool failed");
-            return -1;
-        }
-
-        rvs->mailboxPtr->send_credits = MAX_DGRAM_POOL_BUFS;
-        rvs->mailboxPtr->credits_to_grant = 0;
-
         uint64_t rdmaEnd = rdtsc();
         rdmaTime = (rdmaEnd - rdmaStart) / (cpu_ghz * 1e3);
-        printf("Time to setup rdma resources in rvsocket: %.3f µs\n", rdmaTime);
+        // printf("Time to setup rdma resources in rvsocket: %.3f µs\n", rdmaTime);
 
         // Create socket index for insertion
         rvs->udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
         rvs->tcp_listenfd = -1; // Set up on rvbind if this socket ends up acting as a server
-        rvs->index = next_fd++;
+        rvs->index = rs_alloc_index();
     }
     // Insert rvsocket into index map
     ret = rs_insert(rvs, rvs->index);
@@ -389,7 +402,7 @@ uint64_t rvsocket(int type, uint64_t vaddr, RVMA_Win *window) {
     end = rdtsc();
 
     double elapsed_us = (end - start) / (cpu_ghz * 1e3) - rdmaTime;
-    printf("rvsocket total setup time: %.3f µs\n", elapsed_us);
+    // printf("rvsocket total setup time: %.3f µs\n", elapsed_us);
     // return rvsocket index
     return rvs->index;
 }
@@ -414,14 +427,14 @@ int rvbind(int socket, const struct sockaddr *addr, socklen_t addrlen) {
     } else { // Datagram
         ret = bind(rvs->udp_sock, addr, addrlen);
         if (ret == 0) {
-            // Also setup TCP listener on the same address so that
-            // rvrecvfrom can transparently accept a peer's AH exchange
+            // Setup a TCP listener on the same address that rvaccept_dgram
+            // uses to exchange AH info with each client
             int tcp_fd = sys_socket(AF_INET, SOCK_STREAM, 0);
             int opt = 1;
             if (tcp_fd < 0 ||
                 setsockopt(tcp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
                 bind(tcp_fd, addr, addrlen) < 0 ||
-                listen(tcp_fd, 1) < 0) {
+                listen(tcp_fd, 1024) < 0) {
                     perror("rvbind: failed to set up dgram AH-exchange listener");
                 if (tcp_fd >= 0)
                     close(tcp_fd);
@@ -591,19 +604,19 @@ int rvaccept(int socket, struct sockaddr *addr, socklen_t *addrlen, RVMA_Win *wi
     new_rvs->recv_stream_head = 0;
     new_rvs->recv_stream_tail = 0;
 
-    new_rvs->index = next_fd++;
+    new_rvs->index = rs_alloc_index();
     new_rvs->state = rs_connected;
 
     printf("Allocating %d buffers into send and recv pools\n", MAX_POOL_BUFS);
 
     // Prepost buffer pools
-    if (postSendPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+    if (postSendPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS, RVMA_DEFAULT_MAX_BUF_SIZE) != RVMA_SUCCESS) {
         fprintf(stderr, "postSendPool failed\n");
         return -1;
     }
-    
+
     printf("Posting buffer pools\n");
-    if (postRecvPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+    if (postRecvPool(new_rvs->mailboxPtr, MAX_POOL_BUFS, new_rvs->vaddr, EPOCH_OPS, RVMA_DEFAULT_MAX_BUF_SIZE) != RVMA_SUCCESS) {
         fprintf(stderr, "postRecvPool failed\n");
         return -1;
     }
@@ -811,13 +824,13 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
     printf("Allocating %d buffer into send and recv pools\n", MAX_POOL_BUFS);
     
     // Prepost buffer pools
-    if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+    if (postSendPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS, RVMA_DEFAULT_MAX_BUF_SIZE) != RVMA_SUCCESS) {
         perror("postSendPool failed");
         return -1;
     }
-    
+
     printf("Posting buffer pools\n");
-    if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS) != RVMA_SUCCESS) {
+    if (postRecvPool(rvs->mailboxPtr, MAX_POOL_BUFS, rvs->vaddr, EPOCH_OPS, RVMA_DEFAULT_MAX_BUF_SIZE) != RVMA_SUCCESS) {
         perror("postRecvPool failed");
         return -1;
     }
@@ -842,34 +855,67 @@ int rvconnect(int socket, const struct sockaddr *addr, socklen_t addrlen, RVMA_W
 }
 
 
-// Accepts datagram connection and exchanges endpoint info
-int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, socklen_t *addrlen) {
+// Accepts the raw AH-exchange TCP connection off a listening dgram socket,
+// without doing any of the (slow) per-client RDMA setup or AH handshake
+int rvaccept_dgram_begin(int listen_dgram_fd, struct sockaddr *addr, socklen_t *addrlen) {
+    struct rvsocket *listen_rvs = idm_lookup(&idm, listen_dgram_fd);
+    if (!listen_rvs) {
+        fprintf(stderr, "rvaccept_dgram_begin: rvs is NULL\n");
+        return -1;
+    }
+
+    int tcp_fd = accept(listen_rvs->tcp_listenfd, addr, addrlen);
+    if (tcp_fd < 0) {
+        perror("rvaccept_dgram_begin: accept failed");
+        return -1;
+    }
+    return tcp_fd;
+}
+
+// Finishes a datagram accept started by rvaccept_dgram_begin: allocates a
+// mailbox and UD QP dedicated to this client and exchanges AH info over tcp_fd
+int rvaccept_dgram_finish(int tcp_fd, RVMA_Win *window) {
     uint64_t start, end;
     double cpu_ghz = get_cpu_ghz();
-    struct rvsocket *rvs;
-    struct rv_dest local_info, remote_info;
-    int tcp_fd;
+    struct rv_dest remote_info, local_info;
+    struct rvsocket *rvs = NULL;
 
-    rvs = idm_lookup(&idm, dgram_fd);
+    start = rdtsc();
+
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    if (getpeername(tcp_fd, (struct sockaddr *)&client_addr, &client_len) < 0) {
+        perror("rvaccept_dgram_finish: getpeername failed");
+        close(tcp_fd);
+        return -1;
+    }
+    uint32_t client_ip = ntohl(client_addr.sin_addr.s_addr);
+    uint16_t client_port = ntohs(client_addr.sin_port);
+    uint64_t vaddr = constructVaddr(0x0001, client_ip, client_port);
+
+    rvs = calloc(1, sizeof(*rvs));
     if (!rvs) {
-        fprintf(stderr, "rvaccept_dgram: rvs is NULL\n");
+        perror("calloc");
+        close(tcp_fd);
+        return -1;
+    }
+    rvs->type = SOCK_DGRAM;
+    rvs->vaddr = vaddr;
+    rvs->udp_sock = -1;
+    rvs->tcp_listenfd = -1;
+
+    if (dgram_setup_rdma(rvs, vaddr, window) != 0) {
+        free(rvs);
+        close(tcp_fd);
         return -1;
     }
 
-    tcp_fd = accept(tcp_listenfd, addr, addrlen);
-    if (tcp_fd < 0) {
-        perror("rvaccept_dgram: accept failed");
-        return -1;
-    }
-    start = rdtsc(); // Start timing after accept since accept is blocking
-
+    rvs->dest = calloc(1, sizeof(*rvs->dest));
     if (!rvs->dest) {
-        rvs->dest = calloc(1, sizeof(*rvs->dest));
-        if (!rvs->dest) {
-            perror("calloc rvs->dest");
-            close(tcp_fd);
-            return -1;
-        }
+        perror("calloc rvs->dest");
+        free(rvs);
+        close(tcp_fd);
+        return -1;
     }
 
     struct ibv_port_attr port_attr;
@@ -884,7 +930,7 @@ int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, sockle
     if (n != sizeof(local_info)) {
         perror("write local_info");
         free(rvs->dest);
-        rvs->dest = NULL;
+        free(rvs);
         close(tcp_fd);
         return -1;
     }
@@ -892,7 +938,7 @@ int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, sockle
     if (n != sizeof(remote_info)) {
         perror("read remote_info");
         free(rvs->dest);
-        rvs->dest = NULL;
+        free(rvs);
         close(tcp_fd);
         return -1;
     }
@@ -904,26 +950,44 @@ int rvaccept_dgram(int dgram_fd, int tcp_listenfd, struct sockaddr *addr, sockle
         .src_path_bits = 0,
         .port_num      = rvs->qp_port
     };
-
     struct ibv_ah *ah = ibv_create_ah(rvs->mailboxPtr->pd, &ah_attr);
     if (!ah) {
-        perror("rvaccept_dgram: ibv_create_ah failed");
+        perror("rvaccept_dgram_finish: ibv_create_ah failed");
         free(rvs->dest);
-        rvs->dest = NULL;
+        free(rvs);
         close(tcp_fd);
         return -1;
     }
-
     rvs->dest->ah = ah;
     rvs->dest->qpn = remote_info.qpn;
     rvs->dest->qkey = remote_info.qkey;
 
+    close(tcp_fd);
+
+    rvs->index = rs_alloc_index();
+    if (rs_insert(rvs, rvs->index) < 0) {
+        fprintf(stderr, "rvaccept_dgram_finish: failed to insert new rvsocket\n");
+        ibv_destroy_ah(ah);
+        free(rvs->dest);
+        free(rvs);
+        return -1;
+    }
+
     end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("rvaccept_dgram total time: %.3f µs\n", elapsed_us);
+    //printf("rvaccept_dgram_finish total time: %.3f µs\n", elapsed_us);
 
-    close(tcp_fd);
-    return 0;
+    return rvs->index;
+}
+
+// Convenience wrapper for servers that only need to accept one datagram
+// client at a time
+int rvaccept_dgram(int listen_dgram_fd, RVMA_Win *window, struct sockaddr *addr,
+        socklen_t *addrlen) {
+    int tcp_fd = rvaccept_dgram_begin(listen_dgram_fd, addr, addrlen);
+    if (tcp_fd < 0)
+        return -1;
+    return rvaccept_dgram_finish(tcp_fd, window);
 }
 
 
@@ -1013,31 +1077,33 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
 
     end = rdtsc();
     double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("rvconnect_dgram total time: %.3f µs\n", elapsed_us);
+    // printf("rvconnect_dgram total time: %.3f µs\n", elapsed_us);
     close(tcp_fd);
     return 0;
 }
 
 
-// Establishes rvs->dest the first time a datagram socket is used to send or
-// receive.
+// Establishes rvs->dest the first time a client's datagram socket is used to
+// send or receive
 static int dgram_ensure_dest(struct rvsocket *rvs, const struct sockaddr *dest_addr,
-        socklen_t addrlen, struct sockaddr *src_addr, socklen_t *src_addrlen) {
+        socklen_t addrlen) {
     if (rvs->dest)
         return 0;
 
-    if (dest_addr) {
-        int ret = -1;
-        for (int attempt = 0; attempt < DGRAM_CONNECT_RETRIES; attempt++) {
-            ret = rvconnect_dgram(rvs->index, dest_addr, addrlen);
-            if (ret == 0)
-                return 0;
-            usleep(DGRAM_CONNECT_RETRY_DELAY_US);
-        }
-        return ret;
+    if (!dest_addr) {
+        fprintf(stderr, "dgram_ensure_dest: no destination set; call rvaccept_dgram "
+                "before sending/receiving on a server-side datagram socket\n");
+        return -1;
     }
 
-    return rvaccept_dgram(rvs->index, rvs->tcp_listenfd, src_addr, src_addrlen);
+    int ret = -1;
+    for (int attempt = 0; attempt < DGRAM_CONNECT_RETRIES; attempt++) {
+        ret = rvconnect_dgram(rvs->index, dest_addr, addrlen);
+        if (ret == 0)
+            return 0;
+        usleep(DGRAM_CONNECT_RETRY_DELAY_US);
+    }
+    return ret;
 }
 
 
@@ -1140,7 +1206,7 @@ int rvsendto(int socket, void *buf, int64_t len, const struct sockaddr *dest_add
 
     struct rvsocket *rvs = idm_at(&idm, socket);
 
-    if (dgram_ensure_dest(rvs, dest_addr, addrlen, NULL, NULL) != 0) {
+    if (dgram_ensure_dest(rvs, dest_addr, addrlen) != 0) {
         fprintf(stderr, "rvsendto: failed to establish datagram destination\n");
         return -1;
     }
@@ -1224,7 +1290,7 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags,
 
     struct rvsocket *rvs = idm_at(&idm, socket);
 
-    if (dgram_ensure_dest(rvs, NULL, 0, src_addr, addrlen) != 0) {
+    if (dgram_ensure_dest(rvs, NULL, 0) != 0) {
         fprintf(stderr, "rvrecvfrom: failed to establish datagram destination\n");
         return -1;
     }
