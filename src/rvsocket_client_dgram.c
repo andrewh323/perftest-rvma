@@ -3,12 +3,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <math.h>
 #include <rdma/rsocket.h>
 #include <arpa/inet.h>
 
 #include "rvma_socket.h"
 #include "rvma_write.h"
-#include "rvma_debug.h"
 
 #define PORT 7471
 
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
         free(message);
     }
 
-    /* // Compute averages
+    // Compute averages
     double avg_time = sum_time / measured_sends;
 
     // Compute standard deviation
@@ -157,6 +157,12 @@ int main(int argc, char **argv) {
     variance /= (measured_sends - 1);
     double stddev = sqrt(variance);
 
+    double bufferTime = mailbox->buffer_cycles / (cpu_ghz * 1e3) / measured_sends;
+    double flowControlTime = mailbox->flow_control_cycles / (cpu_ghz * 1e3) / measured_sends;
+    double memcpyTime = mailbox->memcpy_cycles / (cpu_ghz * 1e3) / measured_sends;
+    double wrTime = mailbox->wr_cycles / (cpu_ghz * 1e3) / measured_sends;
+    double cqPollTime = mailbox->cq_poll_cycles / (cpu_ghz * 1e3) / measured_sends;
+
     // Print results
     printf("\n===== RVMA Send Timing Results =====\n");
     printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
@@ -167,7 +173,13 @@ int main(int argc, char **argv) {
     printf("Max send time:            %.3f µs\n", max_time);
     printf("Avg send time:            %.3f µs\n", avg_time);
     printf("Send time stddev:         %.3f µs\n", stddev);
-    printf("====================================\n"); */
+    printf("Average flow control time:          %.3f µs\n", flowControlTime);
+    printf("Average buffer setup time:          %.3f µs\n", bufferTime);
+    printf("Average memcpy time:                %.3f µs\n", memcpyTime);
+    printf("Average work request setup time:    %.3f µs\n", wrTime);
+    printf("Average CQ poll time:               %.3f µs\n", cqPollTime);
+
+    printf("====================================\n");
 
     usleep(10000);
     rclose(sockfd);

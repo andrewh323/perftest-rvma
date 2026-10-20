@@ -8,7 +8,6 @@
 
 #include "rvma_socket.h"
 #include "rvma_write.h"
-#include "rvma_debug.h"
 
 #define PORT 7471
 
@@ -20,8 +19,6 @@ static inline uint64_t rdtsc(){
     asm volatile ("rdtsc" : "=a"(lo), "=d"(hi));
     return ((uint64_t)hi << 32) | lo;
 }
-
-int g_client_id = -1;
 
 int main(int argc, char **argv) {
     double cpu_ghz = get_cpu_ghz();
@@ -46,7 +43,6 @@ int main(int argc, char **argv) {
     // Arg 3 - Reserved field for vaddr for multiple processes on same host
     uint16_t reserved = 0x0001;
     if (argc > 3) {
-        g_client_id = atoi(argv[3]);
         reserved = (uint16_t)atoi(argv[3]);
     }
 
@@ -116,27 +112,33 @@ int main(int argc, char **argv) {
         total += latencies[i];
     }
 
-    for (int i = 80; i < 90; i++) {
-        // printf("Latency for message %d: %.3f µs\n", i, latencies[i] / (cpu_ghz * 1e3));
-    }
-
     double mean_cycles = total / (double)(num_sends - 1);
     double mean_us = mean_cycles / (cpu_ghz * 1e3);
 
     double variance = 0.0;
-    for (int i = 0; i < num_sends - 1; i++) {
+    for (int i = 1; i < num_sends - 1; i++) {
         double diff = latencies[i] - mean_cycles;
         variance += diff * diff;
     }
-    variance /= (num_sends - 1);
+    variance /= (num_sends - 2);
 
     double stddev_cycles = sqrt(variance);
     double stddev_us = stddev_cycles / (cpu_ghz * 1e3);
-    
+
+    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
+
+    double memcpy_avg_cycles = mailbox->memcpy_cycles / (double)(num_sends - 1);
+    double memcpy_avg_us = memcpy_avg_cycles / (cpu_ghz * 1e3);
+
+    double buffer_avg_cycles = mailbox->buffer_cycles / (double)(num_sends - 1);
+    double buffer_avg_us = buffer_avg_cycles / (cpu_ghz * 1e3);
+
     printf("Mean: %.3f µs\n", mean_us);
     printf("Stddev: %.3f µs\n", stddev_us);
     printf("Min: %.3f µs\n", min / (cpu_ghz * 1e3));
     printf("Max: %.3f µs\n", max / (cpu_ghz * 1e3));
+    printf("Average memcpy time: %.3f µs\n", memcpy_avg_us);
+    printf("Average buffer management time: %.3f µs\n", buffer_avg_us);
 
     free(latencies);
     rvclose(sockfd);

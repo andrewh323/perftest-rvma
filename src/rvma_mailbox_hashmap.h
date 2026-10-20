@@ -30,30 +30,34 @@ typedef struct {
     void *recv_pool;
     
     uint64_t vaddr;
-    struct ibv_pd *pd; // Protection domain
+    struct ibv_pd *pd;
     struct ibv_cq *send_cq;
     struct ibv_cq *recv_cq;
-    struct ibv_qp *qp; // Queue pair
+    struct ibv_qp *qp;
     struct ibv_mr *send_mr;
     struct ibv_mr *recv_mr;
-    struct rdma_cm_id *cm_id; // RDMA connection manager
-    struct rdma_event_channel *ec; // Event channel
-    struct ibv_context *ctx; // Device context
+    struct rdma_cm_id *cm_id;
+    struct rdma_event_channel *ec;
+    struct ibv_context *ctx;
 
     RVMA_Buffer_Queue *sendBufferQueue;
     RVMA_Buffer_Queue *inflightSendQueue;
     RVMA_Buffer_Queue *recvBufferQueue;
     RVMA_Buffer_Queue *completedRecvQueue;
     RVMA_Buffer_Queue *retiredBufferQueue;
+
+    // Timing and performance metrics
+    uint64_t flow_control_cycles;
+    uint64_t buffer_cycles;
+    uint64_t memcpy_cycles;
+    uint64_t wr_cycles;
+    uint64_t cq_poll_cycles;
 } RVMA_Mailbox;
 
 typedef struct  {
     int numOfElements, capacity;
     RVMA_Mailbox** hashmap;
-    // Guards inserts/lookups. A dgram server accepting many clients at once
-    // hands each one off to its own worker thread, which each insert their
-    // own mailbox into this same hashmap concurrently.
-    pthread_mutex_t lock;
+    pthread_mutex_t lock; // Guards inserts/lookups
 } Mailbox_HashMap;
 
 RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity);

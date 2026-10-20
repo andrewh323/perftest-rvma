@@ -1087,7 +1087,7 @@ int rvconnect_dgram(int sockfd, const struct sockaddr *addr, socklen_t addrlen) 
 // send or receive
 static int dgram_ensure_dest(struct rvsocket *rvs, const struct sockaddr *dest_addr,
         socklen_t addrlen) {
-    if (rvs->dest)
+    if (rvs->dest) // Destination has already been set
         return 0;
 
     if (!dest_addr) {
@@ -1180,8 +1180,6 @@ static void flushCreditGrant(struct rvsocket *rvs, RVMA_Status force) {
 
 // Drains any credit-grant control packets waiting in completedRecvQueue
 static void drainControlPackets(RVMA_Mailbox *mailbox) {
-    rvmaProgress(mailbox);
-
     int n = mailbox->completedRecvQueue->size;
     for (int i = 0; i < n; i++) {
         RVMA_Buffer_Entry *entry = dequeue(mailbox->completedRecvQueue);
@@ -1224,12 +1222,15 @@ int rvsendto(int socket, void *buf, int64_t len, const struct sockaddr *dest_add
     // For each fragment:
     for (int offset = 0; offset < threshold; offset++) {
         // Check for outstanding sends
+        uint64_t t1 = rdtsc();
         while (mailbox->send_credits <= 0 ||
                mailbox->outstanding_sends >= mailbox->max_outstanding_sends ||
                isEmpty(mailbox->sendBufferQueue) == RVMA_TRUE) {
             rvmaProgress(mailbox);
             drainControlPackets(mailbox);
         }
+        uint64_t t2 = rdtsc();
+        mailbox->flow_control_cycles += (t2 - t1);
 
         // Define message fragment: i=0 to RS_MAX_TRANSFER-1, RS_MAX_TRANSFER to 2*RS_MAX_TRANSFER-1, ...
         int64_t frag_size = (offset == threshold - 1) ? (len - offset * RS_MAX_TRANSFER) : RS_MAX_TRANSFER;
@@ -1242,13 +1243,19 @@ int rvsendto(int socket, void *buf, int64_t len, const struct sockaddr *dest_add
         hdr->frag_num = offset + 1;
         hdr->total_frags = threshold;
 
+        uint64_t t3 = rdtsc();
+        mailbox->buffer_cycles += (t3 - t2);
+
         memcpy((uint8_t *)entry->realBuff + sizeof(*hdr), (uint8_t *)buf + offset * RS_MAX_TRANSFER, frag_size);
 
+        uint64_t t4 = rdtsc();
+        mailbox->memcpy_cycles += (t4 - t3);
         /* REMOVE PRINT WHEN COLLECTING RESULTS */
         /* printf("Sending fragment %d/%d (%zu bytes) | Payload: %.40s...\n",
             hdr->frag_num, hdr->total_frags, frag_size, (char *)buf + offset * RS_MAX_TRANSFER); */
         // printf("Posting send with size %zu bytes for fragment %d/%d\n", frag_size, hdr->frag_num, hdr->total_frags);
         
+        uint64_t wrStart = rdtsc();
         // Build sge, wr
         struct ibv_sge sge = {
             .addr = (uintptr_t)entry->realBuff,
@@ -1273,7 +1280,8 @@ int rvsendto(int socket, void *buf, int64_t len, const struct sockaddr *dest_add
             perror("rvmasendto: ibv_post_send failed");
             return -1;
         }
-
+        uint64_t wrEnd = rdtsc();
+        mailbox->wr_cycles += (wrEnd - wrStart);
         mailbox->outstanding_sends++;
         mailbox->send_credits--;
     }
@@ -1300,10 +1308,13 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags,
     while (1) {
         // Poll for entry
         RVMA_Buffer_Entry *entry = NULL;
+        uint64_t t1 = rdtsc();
         while (!entry) {
             rvmaProgress(mailbox);
             entry = dequeue(mailbox->completedRecvQueue);
         }
+        uint64_t t2 = rdtsc();
+        mailbox->cq_poll_cycles += (t2 - t1);
 
         char *recv_buf = (char *)entry->realBuff;
         int recv_len = entry->received_len;
@@ -1317,6 +1328,9 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags,
         struct dgram_frag_header header;
         memcpy(&header, data, sizeof(header));
 
+        uint64_t t3 = rdtsc();
+        mailbox->buffer_cycles += (t3 - t2);
+
         if (header.frag_num == 0) { // Credit-grant packet
             mailbox->send_credits += (int)header.total_frags;
             enqueue(mailbox->recvBufferQueue, entry);
@@ -1324,11 +1338,13 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags,
             continue;
         }
 
+        uint64_t t4 = rdtsc();
+        mailbox->flow_control_cycles += (t4 - t3);
+
         char *payload = data + sizeof(header);
         int payload_len = data_len - sizeof(header);
 
         /* REMOVE PRINT WHEN COLLECTING RESULTS */
-
         // printf("Received fragment %d/%d (%d bytes) | Payload: %.40s...\n",
         //      header.frag_num, header.total_frags, payload_len, payload);
 
@@ -1337,9 +1353,15 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags,
         }
 
         frag_offset = (header.frag_num - 1) * RS_MAX_TRANSFER;
+        uint64_t t5 = rdtsc();
+        mailbox->buffer_cycles += (t5 - t4);
         memcpy((char *)buf + frag_offset, payload, payload_len);
+        uint64_t t6 = rdtsc();
+        mailbox->memcpy_cycles += (t6 - t5);
 
         enqueue(mailbox->recvBufferQueue, entry); // Return buffer to recv pool
+        uint64_t t7 = rdtsc();
+        mailbox->buffer_cycles += (t7 - t6);
         rvmaProgress(mailbox);
         received_frags++; // Increment receive counter and compare with number expected
 
@@ -1349,8 +1371,13 @@ int rvrecvfrom(int socket, void *buf, size_t len, int flags,
         if (received_frags == expected_frags) {
             break;
         }
+        uint64_t t8 = rdtsc();
+        mailbox->flow_control_cycles += (t8 - t7);
     }
+    uint64_t t9 = rdtsc();
     flushCreditGrant(rvs, RVMA_TRUE);
+    uint64_t t10 = rdtsc();
+    mailbox->flow_control_cycles += (t10 - t9);
     return len;
 }
 
@@ -1425,19 +1452,26 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
         while (entry = dequeue(mailbox->completedRecvQueue)) {
             // Fast path
             if (entry && recv_bytes_avail(rvs) == 0 && (isEmpty(mailbox->completedRecvQueue) == RVMA_TRUE) && entry->received_len <= len) {
+                uint64_t t1 = rdtsc();
                 memcpy(buf, entry->realBuff, entry->received_len);
+                uint64_t t2 = rdtsc();
+                mailbox->memcpy_cycles += (t2 - t1);
 
                 int ret = entry->received_len;
 
                 entry->received_len = 0;
                 entry->wc_flags = 0;
                 entry->epochCount = 0;
+                uint64_t t3 = rdtsc();
                 enqueue(mailbox->recvBufferQueue, entry);
+                uint64_t t4 = rdtsc();
+                mailbox->buffer_cycles += (t4 - t3);
 
                 return ret;
             }
 
             // Else buffer received data
+            uint64_t t5 = rdtsc();
             appendStreamBuffer(rvs, entry);
 
             entry->received_len = 0;
@@ -1445,11 +1479,17 @@ int rvrecv(int socket, void *buf, size_t len, int flags) {
             entry->epochCount = 0;
             // Recyle buffer back to recv pool
             enqueue(mailbox->recvBufferQueue, entry);
+            uint64_t t6 = rdtsc();
+            mailbox->buffer_cycles += (t6 - t5);
         }
     }
     size_t copy_len = len < recv_bytes_avail(rvs) ? len : recv_bytes_avail(rvs);
     // Copy data from stream buffer to user buffer
+    uint64_t t3 = rdtsc();
     memcpy(buf, rvs->recv_stream_buffer + rvs->recv_stream_head, copy_len);
+    uint64_t t4 = rdtsc();
+    mailbox->memcpy_cycles += (t4 - t3);
+
     // Increment head pointer to indicate data was consumed
     rvs->recv_stream_head += copy_len;
     if (rvs->recv_stream_head == rvs->recv_stream_tail) {

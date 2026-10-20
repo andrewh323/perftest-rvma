@@ -330,13 +330,20 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
     }
 
     // Pull a buffer from the mailbox's buffer queue
+    uint64_t t1 = rdtsc();
     RVMA_Buffer_Entry *entry = dequeue(mailbox->sendBufferQueue);
     if (!entry) {
         return RVMA_RETRY;
     }
+    uint64_t t2 = rdtsc();
 
-    // Fill the buffer with data to send
+    mailbox->buffer_cycles += (t2 - t1);
+
+    t1 = rdtsc();
     memcpy(entry->realBuff, buf, size);
+    t2 = rdtsc();
+    mailbox->memcpy_cycles += (t2 - t1);
+
     // memcpy is required here because we must use memory-registered buffers
     // Alternatively, user/application can register memory, but this is expensive when done in a tight loop
     void *data = entry->realBuff;
@@ -355,7 +362,7 @@ RVMA_Status rvmaSend(void *buf, int64_t size, uint64_t vaddr, RVMA_Mailbox *mail
         .sg_list = &sge,
         .num_sge = 1,
         .opcode = IBV_WR_SEND,
-        .send_flags = IBV_SEND_SIGNALED // TODO: signal every N sends
+        .send_flags = IBV_SEND_SIGNALED
     };
 
     struct ibv_send_wr *bad_wr = NULL;
@@ -400,7 +407,10 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
                 continue;
             }
 
+            uint64_t t1 = rdtsc();
             enqueue(mailbox->sendBufferQueue, entry);
+            uint64_t t2 = rdtsc();
+            mailbox->buffer_cycles += (t2 - t1);
             mailbox->outstanding_sends--;
         }
     } while (sn == num_wc);
@@ -419,7 +429,10 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
         if (recv_wc[i].status != IBV_WC_SUCCESS) {
             fprintf(stderr, "Recv CQ error: %s (%d)\n",
                     ibv_wc_status_str(recv_wc[i].status), recv_wc[i].status);
+            uint64_t t3 = rdtsc();
             if (entry) enqueue(mailbox->recvBufferQueue, entry);
+            uint64_t t4 = rdtsc();
+            mailbox->buffer_cycles += (t4 - t3);
             mailbox->posted_recvs--;
             continue;
         }
@@ -433,13 +446,19 @@ void rvmaProgress(RVMA_Mailbox *mailbox) {
 
         entry->received_len = recv_wc[i].byte_len;
         entry->wc_flags = recv_wc[i].wc_flags;
+        uint64_t t5 = rdtsc();
         enqueue(mailbox->completedRecvQueue, entry);
+        uint64_t t6 = rdtsc();
+        mailbox->buffer_cycles += (t6 - t5);
         mailbox->posted_recvs--;
     }
 
     // For each completion received, post a new receive
     while (mailbox->posted_recvs < mailbox->max_recvs) {
+        uint64_t t7 = rdtsc();
         RVMA_Buffer_Entry *e = dequeue(mailbox->recvBufferQueue);
+        uint64_t t8 = rdtsc();
+        mailbox->buffer_cycles += (t8 - t7);
         if (!e) break;
 
         struct ibv_sge sge = {
