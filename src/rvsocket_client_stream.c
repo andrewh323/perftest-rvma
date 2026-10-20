@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     if (argc > 2) {
         size = atoi(argv[2]);
     }
-    printf("Sending messages of size %d bytes\n", size);
+    //printf("Sending messages of size %d bytes\n", size);
 
     // Arg 3 - Reserved field for vaddr for multiple processes on same host
     uint16_t reserved = 0x0001;
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     uint32_t ip_host_order = ntohl(server_addr.sin_addr.s_addr);
 
     uint64_t vaddr = constructVaddr(reserved, ip_host_order, PORT);
-    printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
+    //printf("Constructed virtual address: %" PRIu64 "\n", vaddr);
 
     RVMA_Win *windowPtr = rvmaInitWindow();
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
         perror("rvconnect");
         exit(EXIT_FAILURE);
     }
-    printf("Connected to server %s:%d!\n", argv[1], PORT);
+    // printf("Connected to server %s:%d!\n", argv[1], PORT);
 
     int num_sends = 1000;
 
@@ -115,32 +115,9 @@ int main(int argc, char **argv) {
     double mean_cycles = total / (double)(num_sends - 1);
     double mean_us = mean_cycles / (cpu_ghz * 1e3);
 
-    double variance = 0.0;
-    for (int i = 1; i < num_sends - 1; i++) {
-        double diff = latencies[i] - mean_cycles;
-        variance += diff * diff;
-    }
-    variance /= (num_sends - 2);
-
-    double stddev_cycles = sqrt(variance);
-    double stddev_us = stddev_cycles / (cpu_ghz * 1e3);
-
-    RVMA_Mailbox *mailbox = searchHashmap(windowPtr->hashMapPtr, vaddr);
-
-    double memcpy_avg_cycles = mailbox->memcpy_cycles / (double)(num_sends - 1);
-    double memcpy_avg_us = memcpy_avg_cycles / (cpu_ghz * 1e3);
-
-    double buffer_avg_cycles = mailbox->buffer_cycles / (double)(num_sends - 1);
-    double buffer_avg_us = buffer_avg_cycles / (cpu_ghz * 1e3);
-
     printf("Mean: %.3f µs\n", mean_us);
-    printf("Stddev: %.3f µs\n", stddev_us);
-    printf("Min: %.3f µs\n", min / (cpu_ghz * 1e3));
-    printf("Max: %.3f µs\n", max / (cpu_ghz * 1e3));
-    printf("Average memcpy time: %.3f µs\n", memcpy_avg_us);
-    printf("Average buffer management time: %.3f µs\n", buffer_avg_us);
 
     free(latencies);
-    rvclose(sockfd);
+    rvclose(sockfd, windowPtr);
     return 0;
 }

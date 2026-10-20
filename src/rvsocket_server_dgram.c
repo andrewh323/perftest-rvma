@@ -217,11 +217,6 @@ int main(int argc, char **argv) {
         pthread_join(workers[w], NULL);
     }
 
-    if (freeHashmap(&windowPtr->hashMapPtr) != RVMA_SUCCESS) {
-        print_error("Failed to free mailbox hashmap");
-        return -1;
-    }
-
     close(listen_fd);
     return 0;
 }

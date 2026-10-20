@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
     send(tcp_conn_fd, recv_buf, size, 0);
 	
 	// Close the connection
-	rvclose(rvma_conn_fd);
+	rvclose(rvma_conn_fd, windowPtr);
     close(tcp_conn_fd);
 	close(listen_fd);
 	return 0;

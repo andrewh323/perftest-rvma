@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define HASHMAP_CAPACITY 1000
+#define HASHMAP_CAPACITY 5000
 #define RVMA_MAX_BATCH 16
 
 typedef struct {

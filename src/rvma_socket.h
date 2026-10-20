@@ -19,7 +19,7 @@ struct dgram_frag_header {
 };
 
 
-int rvclose(int socket);
+int rvclose(int socket, RVMA_Win *window);
 
 uint64_t constructVaddr(uint16_t reserved, uint32_t ip_host_order, uint16_t port);
 

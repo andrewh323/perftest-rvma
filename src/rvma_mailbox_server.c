@@ -82,7 +82,6 @@ int main(int argc, char **argv) {
 
     RVMA_Status res = newMailboxIntoHashmap(windowPtr->hashMapPtr, vaddr);
     if (res != RVMA_SUCCESS) {
-        freeHashmap(&windowPtr->hashMapPtr);
         free(windowPtr);
         print_error("rvmaInitWindowMailbox: Failure creating mailbox in the hashmap...");
         return -1;

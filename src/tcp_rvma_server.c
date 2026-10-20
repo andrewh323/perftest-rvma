@@ -60,6 +60,6 @@ int main(int argc, char **argv) {
     rvsend(sockfd, recv_buf, size); // Echo back message
 	
 	// Close the connection
-	rvclose(sockfd);
+	rvclose(sockfd, windowPtr);
 	return 0;
 }

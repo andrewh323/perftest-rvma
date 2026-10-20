@@ -10,6 +10,7 @@
 
 #include "rvma_mailbox_hashmap.h"
 #include <rdma/rdma_cma.h>
+#include <inttypes.h>
 
 
 RVMA_Mailbox* setupMailbox(uint64_t vaddr, int hashmapCapacity){
@@ -69,56 +70,129 @@ Mailbox_HashMap* initMailboxHashmap(){
     return hashmapPtr;
 }
 
-RVMA_Status freeMailbox(RVMA_Mailbox** mailboxPtr){
-    if (mailboxPtr && *mailboxPtr) {
 
-        if ((*mailboxPtr)->sendBufferQueue) {
-            freeBufferQueue(((*mailboxPtr)->sendBufferQueue));
+RVMA_Status removeMailboxFromHashmap(Mailbox_HashMap *hashMap, uint64_t vaddr) {
+    if (!hashMap || !hashMap->hashmap)
+        return RVMA_ERROR;
+
+    pthread_mutex_lock(&hashMap->lock);
+
+    int start = hashFunction(vaddr, hashMap->capacity);
+    int found = -1;
+    
+    for (int i = 0; i < hashMap->capacity; i++) {
+        int slot = (start + i) % hashMap->capacity;
+
+        if (hashMap->hashmap[slot] == NULL)
+            break;
+
+        if (hashMap->hashmap[slot]->vaddr == vaddr) {
+            found = slot;
+            break;
         }
-        if ((*mailboxPtr)->recvBufferQueue) {
-            freeBufferQueue(((*mailboxPtr)->recvBufferQueue));
-        }
-
-        if ((*mailboxPtr)->qp) ibv_destroy_qp((*mailboxPtr)->qp);
-
-        if ((*mailboxPtr)->recv_mr) ibv_dereg_mr((*mailboxPtr)->recv_mr);
-        if ((*mailboxPtr)->send_mr) ibv_dereg_mr((*mailboxPtr)->send_mr);
-
-        if ((*mailboxPtr)->send_cq) ibv_destroy_cq((*mailboxPtr)->send_cq);
-        if ((*mailboxPtr)->recv_cq) ibv_destroy_cq((*mailboxPtr)->recv_cq);
-
-        if ((*mailboxPtr)->recv_pool) free((*mailboxPtr)->recv_pool);
-        if ((*mailboxPtr)->send_pool) free((*mailboxPtr)->send_pool);
-
-        if ((*mailboxPtr)->pd) ibv_dealloc_pd((*mailboxPtr)->pd);
-
     }
-    return RVMA_SUCCESS;
-}
 
-RVMA_Status freeAllMailbox(Mailbox_HashMap** hashmapPtr){
+    if (found == -1) {
+        pthread_mutex_unlock(&hashMap->lock);
+        return RVMA_ERROR;
+    }
 
-    for(int i = 0; i < (*hashmapPtr)->capacity; i++){
-        if((*hashmapPtr)->hashmap[i]) {
-            if ((*hashmapPtr)->hashmap[i]->key == i) {
-                freeMailbox(&((*hashmapPtr)->hashmap[i]));
-            } else {
-                (*hashmapPtr)->hashmap[i] = NULL;
+    RVMA_Mailbox *removed = hashMap->hashmap[found];
+    hashMap->hashmap[found] = NULL;
+    hashMap->numOfElements--;
+    int slot = (found + 1) % hashMap->capacity;
+
+    while (hashMap->hashmap[slot] != NULL) {
+        RVMA_Mailbox *mb = hashMap->hashmap[slot];
+
+        hashMap->hashmap[slot] = NULL;
+
+        int new_start = hashFunction(mb->vaddr, hashMap->capacity);
+
+        for (int i = 0; i < hashMap->capacity; i++) {
+            int dest = (new_start + i) % hashMap->capacity;
+
+            if (hashMap->hashmap[dest] == NULL) {
+                hashMap->hashmap[dest] = mb;
+                mb->key = dest;  // Keep the stored slot index correct.
+                break;
             }
         }
+        slot = (slot + 1) % hashMap->capacity;
     }
 
-    free((*hashmapPtr)->hashmap);
-    free(*hashmapPtr);
-    *hashmapPtr = NULL;
+    pthread_mutex_unlock(&hashMap->lock);
 
-    return RVMA_SUCCESS;
+    return freeMailbox(&removed);
 }
 
-RVMA_Status freeHashmap(Mailbox_HashMap** hashmapPtr){
-    if (hashmapPtr && *hashmapPtr) {
-        freeAllMailbox(hashmapPtr);
+
+RVMA_Status freeMailbox(RVMA_Mailbox **mailboxPtr)
+{
+    if (!mailboxPtr || !*mailboxPtr)
+        return RVMA_SUCCESS;
+
+    RVMA_Mailbox *mb = *mailboxPtr;
+
+    if (mb->qp) {
+        if (ibv_destroy_qp(mb->qp) != 0)
+            return RVMA_ERROR;
+        mb->qp = NULL;
     }
+
+    if (mb->send_cq) {
+        if (ibv_destroy_cq(mb->send_cq) != 0)
+            return RVMA_ERROR;
+        mb->send_cq = NULL;
+    }
+
+    if (mb->recv_cq) {
+        if (ibv_destroy_cq(mb->recv_cq) != 0)
+            return RVMA_ERROR;
+        mb->recv_cq = NULL;
+    }
+
+    if (mb->recv_mr) {
+        if (ibv_dereg_mr(mb->recv_mr) != 0)
+            return RVMA_ERROR;
+        mb->recv_mr = NULL;
+    }
+
+    if (mb->send_mr) {
+        if (ibv_dereg_mr(mb->send_mr) != 0)
+            return RVMA_ERROR;
+        mb->send_mr = NULL;
+    }
+
+    if (mb->recv_pool) {
+        free(mb->recv_pool);
+        mb->recv_pool = NULL;
+    }
+
+    if (mb->send_pool) {
+        free(mb->send_pool);
+        mb->send_pool = NULL;
+    }
+
+    if (mb->recvBufferQueue) {
+        freeBufferQueue(mb->recvBufferQueue);
+        mb->recvBufferQueue = NULL;
+    }
+
+    if (mb->sendBufferQueue) {
+        freeBufferQueue(mb->sendBufferQueue);
+        mb->sendBufferQueue = NULL;
+    }
+
+    if (mb->pd) {
+        if (ibv_dealloc_pd(mb->pd) != 0)
+            return RVMA_ERROR;
+        mb->pd = NULL;
+    }
+
+    free(mb);
+    *mailboxPtr = NULL;
+
     return RVMA_SUCCESS;
 }
 
@@ -128,12 +202,15 @@ int hashFunction(uint64_t vaddr, int capacity) {
     return (int) (hash % capacity);
 }
 
-RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr){
+RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr) {
     pthread_mutex_lock(&hashMap->lock);
 
     if (hashMap->numOfElements >= hashMap->capacity) {
         errno = ENOSPC;
         pthread_mutex_unlock(&hashMap->lock);
+        fprintf(stderr,
+            "Mailbox hashmap: elements=%d capacity=%d vaddr=%016lx\n",
+            hashMap->numOfElements, hashMap->capacity, (unsigned long)vaddr);
         return RVMA_ERROR;
     }
 
@@ -157,6 +234,10 @@ RVMA_Status newMailboxIntoHashmap(Mailbox_HashMap* hashMap, uint64_t vaddr){
 
         if (hashMap->hashmap[slot]->vaddr == vaddr) {
             // Collision
+            RVMA_Mailbox *existing = hashMap->hashmap[slot];
+            fprintf(stderr, "Duplicate vaddr=%016" PRIx64 " slot=%d existing_key=%d elements=%d capacity=%d\n",
+                    vaddr, slot, existing->key, hashMap->numOfElements, hashMap->capacity);
+            errno = EEXIST;
             pthread_mutex_unlock(&hashMap->lock);
             return RVMA_ERROR;
         }

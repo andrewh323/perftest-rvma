@@ -137,9 +137,6 @@ int main(int argc, char **argv) {
         if (record) {
             int idx = exclude_warmup ? (i - warmup_sends) : i;
             send_times[idx] = elapsed_us;
-
-            if (elapsed_us < min_time) min_time = elapsed_us;
-            if (elapsed_us > max_time) max_time = elapsed_us;
             sum_time += elapsed_us;
         }
         free(message);
@@ -148,38 +145,7 @@ int main(int argc, char **argv) {
     // Compute averages
     double avg_time = sum_time / measured_sends;
 
-    // Compute standard deviation
-    double variance = 0.0;
-    for (int i = 0; i < measured_sends; i++) {
-        double diff = send_times[i] - avg_time;
-        variance += diff * diff;
-    }
-    variance /= (measured_sends - 1);
-    double stddev = sqrt(variance);
-
-    double bufferTime = mailbox->buffer_cycles / (cpu_ghz * 1e3) / measured_sends;
-    double flowControlTime = mailbox->flow_control_cycles / (cpu_ghz * 1e3) / measured_sends;
-    double memcpyTime = mailbox->memcpy_cycles / (cpu_ghz * 1e3) / measured_sends;
-    double wrTime = mailbox->wr_cycles / (cpu_ghz * 1e3) / measured_sends;
-    double cqPollTime = mailbox->cq_poll_cycles / (cpu_ghz * 1e3) / measured_sends;
-
-    // Print results
-    printf("\n===== RVMA Send Timing Results =====\n");
-    printf("Exclude warm-up:          %s\n", exclude_warmup ? "Yes" : "No");
-    printf("Messages measured:        %d of %d\n", measured_sends, num_sends);
-    printf("Size of each message:     %d bytes\n", size);
-    printf("Fragments per message:    %d\n", (size + RS_MAX_TRANSFER - 1) / RS_MAX_TRANSFER);
-    printf("Min send time:            %.3f µs\n", min_time);
-    printf("Max send time:            %.3f µs\n", max_time);
-    printf("Avg send time:            %.3f µs\n", avg_time);
-    printf("Send time stddev:         %.3f µs\n", stddev);
-    printf("Average flow control time:          %.3f µs\n", flowControlTime);
-    printf("Average buffer setup time:          %.3f µs\n", bufferTime);
-    printf("Average memcpy time:                %.3f µs\n", memcpyTime);
-    printf("Average work request setup time:    %.3f µs\n", wrTime);
-    printf("Average CQ poll time:               %.3f µs\n", cqPollTime);
-
-    printf("====================================\n");
+    printf("Avg send time: %.3f µs\n", avg_time);
 
     usleep(10000);
     rclose(sockfd);

@@ -56,7 +56,6 @@ RVMA_Win *rvmaInitWindowMailboxKey(uint64_t virtualAddress, key_t key) {
 
     RVMA_Status res = newMailboxIntoHashmap(hashMapPtr, virtualAddress);
     if (res != RVMA_SUCCESS) {
-        freeHashmap(&hashMapPtr);
         free(windowPtr);
         print_error("rvmaInitWindowMailboxKey: Failure creating mailbox in the hashmap...");
         return NULL;
@@ -69,9 +68,6 @@ RVMA_Win *rvmaInitWindowMailboxKey(uint64_t virtualAddress, key_t key) {
 }
 
 RVMA_Win *rvmaInitWindowMailbox(uint64_t virtualAddress) {
-    double cpu_ghz = get_cpu_ghz();
-    uint64_t start, end, cycles;
-    start = rdtsc();
     if (!virtualAddress){
         print_error("rvmaInitWindowMailbox: Virtual address is null");
         return NULL;
@@ -91,22 +87,9 @@ RVMA_Win *rvmaInitWindowMailbox(uint64_t virtualAddress) {
         print_error("rvmaInitWindowMailbox: Failure creating mailbox hashmap...");
         return NULL;
     }
-    /* 
-    RVMA_Status res = newMailboxIntoHashmap(hashMapPtr, virtualAddress);
-    if (res != RVMA_SUCCESS) {
-        freeHashmap(&hashMapPtr);
-        free(windowPtr);
-        print_error("rvmaInitWindowMailbox: Failure creating mailbox in the hashmap...");
-        return NULL;
-    }
-    */
 
     windowPtr->hashMapPtr = hashMapPtr;
     windowPtr->key = -1;
-
-    end = rdtsc();
-    double elapsed_us = (end - start) / (cpu_ghz * 1e3);
-    printf("Window init setup time: %.3f µs\n", elapsed_us);
 
     return windowPtr;
 }
@@ -173,20 +156,6 @@ RVMA_Status rvmaAddMailboxtoWindow(RVMA_Win *window, uint64_t virtualAddress, ke
         print_error("rvmaAddMailboxtoWindow: Failure creating new mailbox in the hashmap...");
         return RVMA_FAILURE;
     }
-
-    return RVMA_SUCCESS;
-}
-
-RVMA_Status rvmaCloseWin(RVMA_Win *window) {
-    if (window == NULL){
-        print_error("rvmaCloseWin: window is null");
-        return RVMA_ERROR;
-    }
-
-    freeHashmap(&window->hashMapPtr);
-    window->hashMapPtr = NULL;
-    free(window);
-    window = NULL;
 
     return RVMA_SUCCESS;
 }

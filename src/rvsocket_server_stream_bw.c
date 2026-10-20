@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 
 	// Close connections
 	for (int i = 0; i < num_clients; i++) {
-		rvclose(conn_fd[i]);
+		rvclose(conn_fd[i], windowPtr);
 	}
 	close(listen_fd);
 	return 0;

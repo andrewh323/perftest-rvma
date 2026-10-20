@@ -135,6 +135,7 @@ src/rvma_socket.o: src/rvma_socket.c \
  /home/andrewh8/src/rdma-core/build/include/ccan/container_of.h \
  /home/andrewh8/src/rdma-core/build/include/ccan/check_type.h \
  /home/andrewh8/src/rdma-core/build/include/ccan/build_assert.h \
+ /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdatomic.h \
  /home/andrewh8/src/rdma-core/build/include/rdma/rdma_cma.h \
  /home/andrewh8/src/rdma-core/build/include/infiniband/verbs.h \
  /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/pthread.h \
@@ -339,6 +340,7 @@ config.h:
 /home/andrewh8/src/rdma-core/build/include/ccan/container_of.h:
 /home/andrewh8/src/rdma-core/build/include/ccan/check_type.h:
 /home/andrewh8/src/rdma-core/build/include/ccan/build_assert.h:
+/cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/lib/gcc/x86_64-pc-linux-gnu/12/include/stdatomic.h:
 /home/andrewh8/src/rdma-core/build/include/rdma/rdma_cma.h:
 /home/andrewh8/src/rdma-core/build/include/infiniband/verbs.h:
 /cvmfs/soft.computecanada.ca/gentoo/2023/x86-64-v3/usr/include/pthread.h:
